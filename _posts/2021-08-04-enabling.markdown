@@ -1,0 +1,14 @@
+---
+layout: post
+title:  "Enabling Lightweight Fine-tuning for Pre-trained Language Model Compression based on Matrix Product Operators"
+date:   2021-08-04 18:04:44 +00:00
+image: images/enabling_pic.png
+categories: research
+author: Peiyu Liu
+authors: "<strong>Peiyu Liu</strong>, Ze-Feng Gao, Wayne Xin Zhao, Z.Y. Xie, Zhong-Yi Lu and Ji-Rong Wen"
+venue: "ACL 2021 main conference"
+arxiv: https://arxiv.org/abs/2106.02205
+slides: /pdfs/acl_liupeiyu_4113.pdf
+code: https://github.com/RUCAIBox/MPOP
+---
+This paper presents a novel pre-trained language models (PLM) compression approach based on the matrix product operator (short as MPO) from quantum many-body physics.
