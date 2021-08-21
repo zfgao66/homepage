@@ -65,7 +65,7 @@
               
             </td>
           </tr>
-        </table>
+        
         <h3>2021</h3>
         <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;">
 
@@ -151,6 +151,7 @@
           {% endfor %}
           {% endfor %}
         </table>
+      </table>
         <br>
         <br>
         <br>
@@ -235,7 +236,7 @@
 
           {% for post in site.posts %}
           {% for cat in post.categories %}
-          {% if cat != 'research' and cat != 'zhihu' %}
+          {% if cat != '2020_research' and cat != '2021_research' %}
           <tr>
             <td style="padding:2.5%;width:25%;vertical-align:middle;min-width:120px">
               <img src="/_site/{{post.image}}" alt="project image" style="width:auto; height:auto; max-width:100%;" />
