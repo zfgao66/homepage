@@ -3,9 +3,9 @@ layout: post
 title:  "A Model Compression Method With Matrix Product Operators for Speech Enhancement"
 date:   2020-10-19 18:04:44 +00:00
 image: images/speech_pic.png
-categories: research
+categories: 2020_research
 author: Ze-Feng Gao
-authors: "Xingwei Sun, <strong>Ze-Feng Gao</strong>, Zhong-Yi Lu, Junfeng Li, Yonghong Yan"
+authors: "Xingwei Sun*, <strong>Ze-Feng Gao*</strong>, Zhong-Yi Lu, Junfeng Li, Yonghong Yan"
 venue: "IEEE/ACM Transactions on Audio, Speech, and Language Processing 28, 2837-2847"
 URL: https://ieeexplore.ieee.org/abstract/document/9222236
 # slides: /pdfs/acl_liupeiyu_4113.pdf
