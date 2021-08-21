@@ -1,0 +1,14 @@
+---
+layout: post
+title:  "A Model Compression Method With Matrix Product Operators for Speech Enhancement"
+date:   2020-10-19 18:04:44 +00:00
+image: images/speech_pic.png
+categories: research
+author: Ze-Feng Gao
+authors: "Xingwei Sun, <strong>Ze-Feng Gao</strong>, Zhong-Yi Lu, Junfeng Li, Yonghong Yan"
+venue: "IEEE/ACM Transactions on Audio, Speech, and Language Processing 28, 2837-2847"
+URL: https://ieeexplore.ieee.org/abstract/document/9222236
+# slides: /pdfs/acl_liupeiyu_4113.pdf
+# code: https://github.com/RUCAIBox/MPOP
+---
+The deep neural network (DNN) based speech enhancement approaches have achieved promising performance. However, the number of parameters involved in these methods is usually enormous for the real applications of speech enhancement on the device with the limited resources. This seriously restricts the applications. To deal with this issue, model compression techniques are being widely studied. In this paper, we propose a model compression method based on matrix product operators (MPO) to substantially reduce the number of parameters in DNN models for speech enhancement. In this method, the weight matrices in the linear transformations of neural network model are replaced by the MPO decomposition format before training. In experiment, this process is applied to the causal neural network models, such as the feedforward multilayer perceptron (MLP) and long short-term memory (LSTM) models. Both MLP and LSTM models with/without compression are then utilized to estimate the ideal ratio mask for monaural speech enhancement. The experimental results show that our proposed MPO-based method outperforms the widely-used pruning method for speech enhancement under various compression rates, and further improvement can be achieved with respect to low compression rates. Our proposal provides an effective model compression method for speech enhancement, especially in cloud-free application.

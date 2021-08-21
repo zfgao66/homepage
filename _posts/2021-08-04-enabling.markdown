@@ -5,10 +5,10 @@ date:   2021-08-04 18:04:44 +00:00
 image: images/enabling_pic.png
 categories: research
 author: Peiyu Liu
-authors: "<strong>Peiyu Liu</strong>, Ze-Feng Gao, Wayne Xin Zhao, Z.Y. Xie, Zhong-Yi Lu and Ji-Rong Wen"
+authors: "Peiyu Liu, <strong>Ze-Feng Gao</strong>, Wayne Xin Zhao, Z.Y. Xie, Zhong-Yi Lu and Ji-Rong Wen"
 venue: "ACL 2021 main conference"
 arxiv: https://arxiv.org/abs/2106.02205
 slides: /pdfs/acl_liupeiyu_4113.pdf
 code: https://github.com/RUCAIBox/MPOP
 ---
-This paper presents a novel pre-trained language models (PLM) compression approach based on the matrix product operator (short as MPO) from quantum many-body physics.
+This paper presents a novel pre-trained language models (PLM) compression approach based on the matrix product operator (short as MPO) from quantum many-body physics. It can decompose an original matrix into central tensors (containing the core information) and auxiliary tensors (with only a small proportion of parameters). With the decomposed MPO structure, we propose a novel fine-tuning strategy by only updating the parameters from the auxiliary tensors, and design an optimization algorithm for MPO-based approximation over stacked network architectures. Our approach can be applied to the original or the compressed PLMs in a general way, which derives a lighter network and significantly reduces the parameters to be fine-tuned. Extensive experiments have demonstrated the effectiveness of the proposed approach in model compression, especially the reduction in finetuning parameters (91% reduction on average).
