@@ -7,7 +7,7 @@ categories: 2021_research
 author: Ze-Feng Gao
 authors: "Peiyu Liu*, <strong>Ze-Feng Gao*</strong>, Wayne Xin Zhao<sup>#</sup>, Z.Y. Xie, Zhong-Yi Lu<sup>#</sup>, Ji-Rong Wen"
 venue: "ACL 2021 main conference"
-arxiv: https://arxiv.org/abs/2106.02205
+URL: https://aclanthology.org/2021.acl-long.418/
 slides: /pdfs/acl_liupeiyu_4113.pdf
 code: https://github.com/RUCAIBox/MPOP
 ---
