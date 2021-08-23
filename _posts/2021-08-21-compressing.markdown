@@ -7,7 +7,7 @@ categories: 2020_research
 author: Ze-Feng Gao
 authors: "<strong>Ze-Feng Gao*</strong>,Song Cheng*, Rong-Qiang He, Zhi-Yuan Xie<sup>#</sup>, Hui-Hai Zhao<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>, Tao Xiang<sup>#</sup>"
 venue: "Physical Review Research 2 (2), 023300"
-URL: https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.023300
+paper: https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.023300
 code: https://github.com/zfgao66/deeplearning-mpo
 ---
 In this paper, we show that neural network can be effectively solved by representing linear transformations with matrix product operators (MPOs), which is a tensor network originally proposed in physics to characterize the short-range entanglement in one-dimensional quantum states.
