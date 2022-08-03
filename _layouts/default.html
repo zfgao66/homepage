@@ -27,14 +27,14 @@
               <h1>
                 Ze-Feng Gao / 高泽峰
               </h1>
-              <p>I am Postdoctor at the <a href="http://ai.ruc.edu.cn/">Gaoling School of Artificial Intelligence</a> at <a href="https://www.ruc.edu.cn/">Renmin University of China</a>. 
-                My Cooperative tutor is <a href="http://ai.ruc.edu.cn/academicfaculty/teachers/20190813021.html">Prof. Ji-Rong Wen</a>.
+              <p>I am a Postdoctoral at the <a href="http://ai.ruc.edu.cn/">Gaoling School of Artificial Intelligence</a> at <a href="https://www.ruc.edu.cn/">Renmin University of China</a>. 
+                My Co-operative tutor is <a href="http://ai.ruc.edu.cn/academicfaculty/teachers/20190813021.html">Prof. Ji-Rong Wen</a>.
               </p>
               <p>
-                Currently, my primary research interests include model compression, data compression and pre training language model based on tensor network.
+                Currently, my primary research interests include model compression, data compression and pre-training language model based on tensor networks.
               </p>
               <p>
-                I have an Ph.D of Science in Department of Physics, Renmin University of China, advised by <a href="http://www.phys.ruc.edu.cn/info/1145/1454.htm">Prof. Zhong-Yi Lu</a>.
+                I have a Ph.D. of Science in the Department of Physics, Renmin University of China, advised by <a href="http://www.phys.ruc.edu.cn/info/1145/1454.htm">Prof. Zhong-Yi Lu</a>.
               </p>
               <p>
                 Email: zfgao@ruc.edu.cn
@@ -65,6 +65,62 @@
         </table>
 
         <!-- Add Pubulications  -->
+        <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;">
+          <tr>
+            <td style="padding:2.5%;width:100%;vertical-align:middle">
+              <h2>Publications</h2>
+              <p> </p>
+              <h3>2022</h3>
+            </td>
+          </tr>
+        </table>
+        
+        <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;">
+
+          {% for post in site.posts %}
+          {% for cat in post.categories %}
+          {% if cat == '2022_research' %}
+          <tr>
+            <td style="padding:2.5%;width:25%;vertical-align:middle;min-width:120px">
+              <img src="{{post.image}}" alt="project image" style="width:auto; height:auto; max-width:100%;" />
+            </td>
+            <td style="padding:2.5%;width:75%;vertical-align:middle">
+              <h3>{{post.title}}</h3>
+              <br>
+              {{post.authors}}
+
+              <br>
+              <em>{{post.venue}}</em>, {{ post.date | date: "%Y" }}
+              <br>
+              {% if post.paper %}
+              <a href="{{post.paper}}">paper</a> /
+              {% endif %}
+              {% if post.arxiv %}
+              <a href="{{post.arxiv}}">arxiv</a> /
+              {% endif %}
+              {% if post.video %}
+              <a href="{{post.video}}">video</a> /
+              {% endif %}
+              {% if post.code %}
+              <a href="{{post.code}}">code</a> /
+              {% endif %}
+              {% if post.poster %}
+              <a href="{{post.poster}}">poster</a> /
+              {% endif %}
+              {% if post.slides %}
+              <a href="{{post.slides}}">slides</a> /
+              {% endif %}
+              <p></p>
+              {{ post.excerpt }}
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+          {% endfor %}
+        </table>
+        <br>
+        <br>
+        <br>
         <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;">
           <tr>
             <td style="padding:2.5%;width:100%;vertical-align:middle">
