@@ -151,6 +151,9 @@
               {% if post.slides %}
               <a href="{{post.slides}}">slides</a> /
               {% endif %}
+              {% if post.link %}
+              <a href="{{post.link}}">link</a> /
+              {% endif %}
               <p></p>
               {{ post.excerpt }}
             </td>
@@ -206,6 +209,9 @@
               {% if post.slides %}
               <a href="{{post.slides}}">slides</a> /
               {% endif %}
+              {% if post.link %}
+              <a href="{{post.link}}">link</a> /
+              {% endif %}
               <p></p>
               {{ post.excerpt }}
             </td>
@@ -258,6 +264,9 @@
               {% endif %}
               {% if post.slides %}
               <a href="{{post.slides}}">slides</a> /
+              {% endif %}
+              {% if post.link %}
+              <a href="{{post.link}}">link</a> /
               {% endif %}
               <p></p>
               {{ post.excerpt }}
