@@ -7,7 +7,9 @@ categories: 2020_research
 author: Ze-Feng Gao
 authors: "Xingwei Sun*, <strong>Ze-Feng Gao*</strong>, Zhong-Yi Lu<sup>#</sup>, Junfeng Li<sup>#</sup>, Yonghong Yan"
 venue: "IEEE/ACM Transactions on Audio, Speech, and Language Processing 28, 2837-2847"
-paper: https://ieeexplore.ieee.org/abstract/document/9222236
+paper: /pdfs/ieee2020.pdf
+link: https://ieeexplore.ieee.org/abstract/document/9222236
+arxiv: https://arxiv.org/abs/2010.04950
 # slides: /pdfs/acl_liupeiyu_4113.pdf
 # code: https://github.com/RUCAIBox/MPOP
 ---

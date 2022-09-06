@@ -7,8 +7,10 @@ categories: 2021_research
 author: Ze-Feng Gao
 authors: "Peiyu Liu*, <strong>Ze-Feng Gao*</strong>, Wayne Xin Zhao<sup>#</sup>, Z.Y. Xie, Zhong-Yi Lu<sup>#</sup>, Ji-Rong Wen"
 venue: "ACL 2021 main conference"
-paper: https://aclanthology.org/2021.acl-long.418/
+paper: /pdfs/acl2021.pdf
+arxiv: https://arxiv.org/abs/2106.02205
 slides: /pdfs/acl_liupeiyu_4113.pdf
 code: https://github.com/RUCAIBox/MPOP
+link: https://aclanthology.org/2021.acl-long.418/
 ---
 This paper presents a novel pre-trained language models (PLM) compression approach based on the matrix product operator (short as MPO) from quantum many-body physics.
