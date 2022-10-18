@@ -9,7 +9,7 @@ authors: "<strong>Ze-Feng Gao*</strong>, Peiyu Liu*, Wayne Xin Zhao<sup>#</sup>,
 venue: "COLING 2022, Oral Presentation"
 paper: /pdfs/coling2022.pdf
 arxiv: https://arxiv.org/abs/2203.01104
-code: https://github.com/RUCAIBox/MPO/MPOE
+code: https://github.com/RUCAIBox/MPOE
 
 ---
 In this paper, we can reduce the parameters of the original MoE architecture by sharing a global central tensor across experts and keeping expert-specific auxiliary tensors. We also design the gradient mask strategy for the tensor structure of MPO to alleviate the overfitting problem.
