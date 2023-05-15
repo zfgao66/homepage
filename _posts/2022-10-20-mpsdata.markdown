@@ -1,0 +1,14 @@
+---
+layout: post
+title:  "Image Dataset Compression Based on Matrix Product States"
+date:   2022-10-21 18:04:44 +00:00
+image: images/mpsdata.png
+categories: 2022_research
+author: Ze-Feng Gao
+authors: "<strong>Ze-Feng Gao</strong>, Peiyu Liu, Xiao-Hui Zhang, Wayne Xin Zhao, Zhi-Yuan Xie, Zhong-Yi Lu, Ji-Rong Wen"
+venue: "Openreview"
+paper: /pdfs/mpsdata.pdf
+arxiv: https://openreview.net/pdf?id=hkXZKTAH5g-
+
+---
+In this paper, we propose a new dataset compression method that compresses datasets by filtering long-range correlation information in task-agnostic scenarios and uses dataset distillation to supplement the information in task-specific scenarios. Extensive experiments have demonstrated the effectiveness of the proposed approach in dataset compression, especially obtained better model performance (3.19% on average) than state-of-the-art methods for the same compression rate.
