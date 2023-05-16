@@ -5,8 +5,8 @@ date:   2023-05-07 18:04:44 +00:00
 image: images/mpobert.png
 categories: 2023_research
 author: Ze-Feng Gao
-authors: "<strong>Ze-Feng Gao</strong>, Kun Zhou,Peiyu Liu, Wayne Xin Zhao, Ji-Rong Wen"
-venue: "ACL 2023, Main Conference"
+authors: "Peiyu Liu*, <strong>Ze-Feng Gao*</strong>, Wayne Xin Zhao, Ji-Rong Wen"
+venue: "Arxiv"
 paper: /pdfs/mpobert.pdf
 arxiv: https://arxiv.org/abs/2303.16753
 code: https://github.com/zfgao66/OPF
