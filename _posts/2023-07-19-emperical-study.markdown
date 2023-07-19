@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Scaling Pre-trained Language Models to Deeper via Parameter-efficient Architecture"
+title:  "Do Emergent Abilities Exist in Quantized Large Language Models: An Empirical Study"
 date:   2023-07-16 18:04:44 +00:00
 image: images/emergency.png
 categories: 2023_research
