@@ -6,7 +6,7 @@ image: images/lstm_pic.png
 categories: 2020_research
 author: Ze-Feng Gao
 authors: "<strong>Ze-Feng Gao*</strong>, Xingwei Sun*, Lan Gao, Junfeng Li<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
-venue: "Preprint"
+venue: "Arxiv Preprint"
 paper: /pdfs/lstm2020.pdf
 arxiv: https://arxiv.org/pdf/2012.11943.pdf
 ---
