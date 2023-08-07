@@ -6,7 +6,7 @@ image: images/overparameter.png
 categories: 2023_research
 author: Ze-Feng Gao
 authors: "<strong>Ze-Feng Gao</strong>, Kun Zhou,Peiyu Liu, Wayne Xin Zhao, Ji-Rong Wen"
-venue: "ACL 2023, Oral (Nominated for Best Paper Reward)"
+venue: "Annual Meeting of the Association for Computational Linguistics (ACL2023), Oral (Nominated for Best Paper Reward)"
 paper: /pdfs/acl2023.pdf
 code: https://github.com/zfgao66/OPF
 link: https://aclanthology.org/2023.acl-long.212/
