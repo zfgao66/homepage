@@ -1,0 +1,15 @@
+---
+layout: post
+title:  "Compression Image Dataset Based on Multiple Matrix Product States"
+date:   2023-8-7 18:04:44 +00:00
+image: images/mpsdata.png
+categories: 2023_research
+author: Ze-Feng Gao
+authors: "<strong>Ze-Feng Gao</strong>, Peiyu Liu, Wayne Xin Zhao, Zhi-Yuan Xie, Ji-Rong Wen and Zhong-Yi Lu"
+venue: "FICC2024"
+paper: /pdfs/mpsdata.pdf
+# arxiv: https://openreview.net/pdf?id=hkXZKTAH5g-
+
+---
+In this paper, we present an effective dataset compression approach based on the matrix product states (short as MPS) and
+knowledge distillation. MPS can decompose image samples into a sequential product of tensors to achieve task-agnostic image compression by preserving the low-rank information of the images. Based on this property, we use multiple MPS to represent the image datasets samples. Meanwhile, we also designed a task-related component based on knowledge distillation to enhance the generality of the compressed dataset.
