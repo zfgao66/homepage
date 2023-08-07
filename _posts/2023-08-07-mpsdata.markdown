@@ -8,7 +8,6 @@ author: Ze-Feng Gao
 authors: "<strong>Ze-Feng Gao</strong>, Peiyu Liu, Wayne Xin Zhao, Zhi-Yuan Xie, Ji-Rong Wen and Zhong-Yi Lu"
 venue: "FICC2024"
 paper: /pdfs/mpsdata.pdf
-# arxiv: https://openreview.net/pdf?id=hkXZKTAH5g-
 
 ---
 In this paper, we present an effective dataset compression approach based on the matrix product states (short as MPS) and
