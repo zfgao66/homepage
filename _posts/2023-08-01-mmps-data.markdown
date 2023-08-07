@@ -1,13 +1,13 @@
 ---
 layout: post
 title:  "Compression Image Dataset Based on Multiple Matrix Product States"
-date:   2023-08-07 18:04:44 +00:00
-image: images/mpsdata.png
+date:   2023-08-01 18:04:44 +00:00
+image: images/mmps-data.png
 categories: 2023_research
 author: Ze-Feng Gao
 authors: "<strong>Ze-Feng Gao</strong>, Peiyu Liu, Wayne Xin Zhao, Zhi-Yuan Xie, Ji-Rong Wen and Zhong-Yi Lu"
 venue: "FICC2024"
-paper: /pdfs/mpsdata.pdf
+paper: /pdfs/mmps-data.pdf
 
 ---
 In this paper, we present an effective dataset compression approach based on the matrix product states (short as MPS) and
