@@ -2,7 +2,7 @@
 layout: post
 title:  "Parameter-Efficient Mixture-of-Experts Architecture for Pre-trained Language Models"
 date:   2022-12-21 18:04:44 +00:00
-image: images/mpoe.png
+image: images/2022/mpoe.png
 categories: 2022_research
 author: Ze-Feng Gao
 authors: "<strong>Ze-Feng Gao*</strong>, Peiyu Liu*, Wayne Xin Zhao<sup>#</sup>, Zhong-Yi Lu, Ji-Rong Wen"
