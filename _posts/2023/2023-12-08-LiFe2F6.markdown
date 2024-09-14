@@ -5,7 +5,7 @@ date:   2023-12-08 18:04:44 +00:00
 image: images/2023/LiFe2F6.png
 categories: 2023_research
 author: Ze-Feng Gao
-authors: "Peng-Jie Guo, Yuhao Gu, <strong>Ze-Feng Gao*</strong>, Zhong-Yi Lu"
+authors: "Peng-Jie Guo, Yuhao Gu, <strong>Ze-Feng Gao</strong>, Zhong-Yi Lu"
 venue: "Arxiv"
 paper: /pdfs/2023/LiFe2F6.pdf
 arxiv: https://arxiv.org/abs/2312.13911
