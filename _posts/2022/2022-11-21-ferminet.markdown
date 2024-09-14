@@ -1,0 +1,14 @@
+---
+layout: post
+title:  "利用自注意力机制优化费米网络的数值研究"
+date:   2022-11-21 18:04:44 +00:00
+image: images/2022/ferminet.png
+categories: 2022_research
+author: Ze-Feng Gao
+authors: "王佳奇, <strong>高泽峰<sup>#</sup></strong>, 李永峰，王璐<sup>#</sup>"
+venue: "天津师范大学学报(自然科学版)"
+paper: /pdfs/2022/ferminet.pdf
+arxiv: https://kns.cnki.net/kcms2/article/abstract?v=XRthMH6b-fnxI3HELjZTq4roD-S4MIcR1ZTkESoMEt6qfoPY1KdjSHiVxRSl6VLw6yHZsEhNNVurMOW8E7rPW5mPRRu3wHvxCP51FVDLwvr59h5_YgUgTTz8bw7865ciytr2Nbox4aFyAtDjYHROEJZiHUBgbztD&uniplatform=NZKPT
+
+---
+为了探索不使用特定形式的试探态研究多电子系统基态性质的方法，以至多约10个原子的小分子为例，利用神经网络的方法对多电子系统进行求解.此外，利用包含自注意力机制的Transformer结构对费米网络（FermiNet）进行改进, 结果表明：Transformer-FermiNet能够在保证原费米网络结果精度的同时将网络参数的规模缩减为原来的3/4.

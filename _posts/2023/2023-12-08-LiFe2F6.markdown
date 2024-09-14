@@ -1,0 +1,16 @@
+---
+layout: post
+title:  "Altermagnetic ferroelectric LiFe2F6 and spin-triplet excitonic insulator phase"
+date:   2023-12-08 18:04:44 +00:00
+image: images/2023/LiFe2F6.png
+categories: 2023_research
+author: Ze-Feng Gao
+authors: "Peng-Jie Guo, Yuhao Gu, <strong>Ze-Feng Gao*</strong>, Zhong-Yi Lu"
+venue: "Arxiv"
+paper: /pdfs/2023/LiFe2F6.pdf
+arxiv: https://arxiv.org/abs/2312.13911
+
+
+
+---
+In this paper, we predict that LiFe2F6 is a d-wave altermagnetic and charge-ordering-mediated ferroelectric material. Moreover, the LiFe2F6 transforms into a ferrimagnetic and ferroelectric phase with strong magnetoelectric coupling under biaxial compressive strain. Interestingly, the spins of the valence band and the conduction band are opposite in ferrimagnetic LiFe2F6, which facilitates a simultaneous spin-triplet excitonic insulator phase. 

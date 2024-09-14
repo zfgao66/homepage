@@ -1,0 +1,15 @@
+---
+layout: post
+title:  "Parameter-Efficient Mixture-of-Experts Architecture for Pre-trained Language Models"
+date:   2022-12-21 18:04:44 +00:00
+image: images/mpoe.png
+categories: 2022_research
+author: Ze-Feng Gao
+authors: "<strong>Ze-Feng Gao*</strong>, Peiyu Liu*, Wayne Xin Zhao<sup>#</sup>, Zhong-Yi Lu, Ji-Rong Wen"
+venue: "International Conference on Computational Linguistic (COLING2022), Oral Presentation"
+paper: /pdfs/2022/coling2022.pdf
+arxiv: https://arxiv.org/abs/2203.01104
+code: https://github.com/RUCAIBox/MPOE
+
+---
+In this paper, we can reduce the parameters of the original MoE architecture by sharing a global central tensor across experts and keeping expert-specific auxiliary tensors. We also design the gradient mask strategy for the tensor structure of MPO to alleviate the overfitting problem.

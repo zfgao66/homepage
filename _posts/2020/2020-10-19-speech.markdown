@@ -1,0 +1,16 @@
+---
+layout: post
+title:  "A Model Compression Method With Matrix Product Operators for Speech Enhancement"
+date:   2020-10-19 18:04:44 +00:00
+image: images/2020/speech_pic.png
+categories: 2020_research
+author: Ze-Feng Gao
+authors: "Xingwei Sun*, <strong>Ze-Feng Gao*</strong>, Zhong-Yi Lu<sup>#</sup>, Junfeng Li<sup>#</sup>, Yonghong Yan"
+venue: "IEEE/ACM Transactions on Audio, Speech, and Language Processing 28, 2837-2847"
+paper: /pdfs/2020/ieee2020.pdf
+link: https://ieeexplore.ieee.org/abstract/document/9222236
+arxiv: https://arxiv.org/abs/2010.04950
+# slides: /pdfs/acl_liupeiyu_4113.pdf
+# code: https://github.com/RUCAIBox/MPOP
+---
+In this paper, we propose a model compression method based on matrix product operators (MPO) to substantially reduce the number of parameters in DNN models for speech enhancement.
