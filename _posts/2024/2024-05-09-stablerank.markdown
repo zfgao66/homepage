@@ -3,7 +3,7 @@ layout: post
 title:  "Enhancing Parameter-efficient Fine-tuning with Simple Calibration Based on Stable Rank"
 date:   2024-05-09 18:04:44 +00:00
 image: images/2024/stablerank.png
-categories: 2023_research
+categories: 2024_research
 author: Ze-Feng Gao
 authors: "Peiyu Liu, <strong>Ze-Feng Gao</strong>, Xiao Zhang, Wayne Xin Zhao, Ji-Rong Wen"
 venue: "Proceedings of the 2024 Joint International Conference on Computational Linguistics, Language Resources and Evaluation (LREC-COLING 2024)"
