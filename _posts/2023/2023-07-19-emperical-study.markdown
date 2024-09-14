@@ -6,7 +6,7 @@ image: images/2023/emergency.png
 categories: 2023_research
 author: Ze-Feng Gao
 authors: "Peiyu Liu, Zikang Liu, <strong>Ze-Feng Gao</strong>, Dawei Gao, Wayne Xin Zhao,Yaliang Li, Bolin Ding, Ji-Rong Wen"
-venue: "Proceedings of the 2024 Joint International Conference on Computational Linguistics, Language Resources and Evaluation (LREC-COLING 2024)"
+venue: "Proceedings of the 2024 Joint International Conference on Computational Linguistics, Language Resources and Evaluation (COLING 2024)"
 paper: /pdfs/2023/emergency.pdf
 arxiv: https://arxiv.org/abs/2307.08072
 link: https://aclanthology.org/2024.lrec-main.461/

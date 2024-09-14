@@ -105,7 +105,6 @@
           <tr>
             <td style="padding:2.5%;width:100%;vertical-align:middle">
               <h2>科研项目</h2>
-              主持项目：
               <li> 国家自然科学基金委，面上项目，大规模预训练语言模型的高效压缩方法研究(Nos. 62476278)，主持</li>
               <li type="disc"> 国家自然科学基金委，青年项目，大规模预训练语言模型的轻量化微调与模型扩容方法研究(Nos. 62206299)，主持</li>
               <li type="disc">国家自然科学基金委，重点项目子课题，强关联电子材料超快动力学的第一性原理多体计算方法研究（Nos.12434009），主持</li>
@@ -141,8 +140,7 @@
       </table>
 
       <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;">
-
-        {% for post in site.posts.2024 %}
+        {% for post in site.posts %}
         {% for cat in post.categories %}
         {% if cat == '2024_research' %}
         <tr>
@@ -201,10 +199,6 @@
             </td>
           </tr>
         </table>
-        
-
-
-
         <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;">
 
           {% for post in site.posts %}
