@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "YuLan: An Open-source Large Language Model"
-date:   2024-10-12 18:04:44 +00:00
+date:   2024-08-23 18:04:44 +00:00
 image: images/2024/yulan.png
 categories: 2024_research
 author: Ze-Feng Gao

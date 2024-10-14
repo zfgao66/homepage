@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "基于矩阵乘积算符表示的序列化推荐模型"
-date:   2024-06-24 18:04:44 +00:00
+date:   2024-06-30 18:04:44 +00:00
 image: images/2024/recommand.png
 categories: 2024_research
 author: Ze-Feng Gao
