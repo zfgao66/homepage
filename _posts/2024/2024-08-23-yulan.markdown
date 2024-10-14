@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Crystal valley Hall effect"
+title:  "YuLan: An Open-source Large Language Model"
 date:   2024-10-12 18:04:44 +00:00
 image: images/2024/yulan.png
 categories: 2024_research
