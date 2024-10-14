@@ -1,0 +1,15 @@
+---
+layout: post
+title:  "Crystal valley Hall effect"
+date:   2024-10-12 18:04:44 +00:00
+image: images/2024/yulan.png
+categories: 2024_research
+author: Ze-Feng Gao
+authors: "Yutao Zhu, Kun Zhou, Kelong Mao, Wentong Chen, Yiding Sun, Zhipeng Chen, Qian Cao, Yihan Wu, Yushuo Chen, Feng Wang, Lei Zhang, Junyi Li, Xiaolei Wang, Lei Wang, Beichen Zhang, Zican Dong, Xiaoxue Cheng, Yuhan Chen, Xinyu Tang, Yupeng Hou, Qiangqiang Ren, Xincheng Pang, Shufang Xie, Wayne Xin Zhao, Zhicheng Dou, Jiaxin Mao, Yankai Lin, Ruihua Song, Jun Xu, Xu Chen, Rui Yan, Zhewei Wei, Di Hu, Wenbing Huang, <strong>Ze-Feng Gao#</strong>， Yueguo Chen, Weizheng Lu, Ji-Rong Wen"
+venue: "Arxiv"
+paper: /pdfs/2024/yulan.pdf
+arxiv: https://arxiv.org/abs/2406.19853
+
+
+---
+In this paper, we design a three-stage pre-training method to enhance YuLan's overall capabilities. Subsequent phases of training incorporate instruction-tuning and human alignment, employing a substantial volume of high-quality synthesized data. To facilitate the learning of complex and long-tail knowledge, we devise a curriculum-learning framework throughout across these stages, which helps LLMs learn knowledge in an easy-to-hard manner. 

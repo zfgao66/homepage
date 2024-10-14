@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Scaling Pre-trained Language Models to Deeper via Parameter-efficient Architecture"
+title:  "Enhancing Scalability of Pre-trained Language Models via Efficient Parameter Sharing"
 date:   2023-05-07 18:04:44 +00:00
 image: images/2023/mpobert.png
 categories: 2023_research
