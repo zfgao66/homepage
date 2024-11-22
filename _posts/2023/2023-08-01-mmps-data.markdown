@@ -8,6 +8,7 @@ author: Ze-Feng Gao
 authors: "<strong>Ze-Feng Gao</strong>, Peiyu Liu, Wayne Xin Zhao, Zhi-Yuan Xie, Ji-Rong Wen and Zhong-Yi Lu"
 venue: "Future of Information and Communication Conference (FICC2024)"
 paper: /pdfs/2023/mmps-data.pdf
+link: https://link.springer.com/chapter/10.1007/978-3-031-53963-3_43
 
 ---
 In this paper, we present an effective dataset compression approach based on the matrix product states (short as MPS) and
