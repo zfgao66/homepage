@@ -9,6 +9,8 @@ authors: "Xiao-Qi Han, Zhenfeng Ouyang, Peng-Jie Guo, Hao Sun, <strong>Ze-Feng G
 venue: "Arxiv"
 paper: /pdfs/2024/superconductor.pdf
 arxiv: https://arxiv.org/abs/2409.08065
+code: https://github.com/xqh19970407/InvDesFlow
+
 
 
 ---
