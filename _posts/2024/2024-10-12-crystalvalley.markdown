@@ -5,7 +5,7 @@ date:   2024-10-12 18:04:44 +00:00
 image: images/2024/Crystal-valley-Hall-effect.png
 categories: 2024_research
 author: Ze-Feng Gao
-authors: "Chao-Yang Tan, <strong>Ze-Feng Gao#</strong>, Huan-Cheng Yang, Zheng-Xin Liu, Kai Liu, Peng-Jie Guo, Zhong-Yi Lu"
+authors: "Chao-Yang Tan, <strong>Ze-Feng Gao</strong>, Huan-Cheng Yang, Zheng-Xin Liu, Kai Liu, Peng-Jie Guo<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
 venue: "Arxiv"
 paper: /pdfs/2024/Crystal-valley-Hall-effect.pdf
 arxiv: https://arxiv.org/abs/2410.00073

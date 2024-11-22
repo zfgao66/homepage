@@ -5,7 +5,7 @@ date:   2024-05-21 18:04:44 +00:00
 image: images/2024/quantization.png
 categories: 2024_research
 author: Ze-Feng Gao
-authors: "Peiyu Liu, <strong>Ze-Feng Gao</strong>, Wayne Xin Zhao, Yipeng Ma, Tao Wang, Ji-Rong Wen"
+authors: "Peiyu Liu, <strong>Ze-Feng Gao</strong>, Wayne Xin Zhao<sup>#</sup>, Yipeng Ma, Tao Wang, Ji-Rong Wen"
 venue: "Annual Meeting of the Association for Computational Linguistics (ACL2024)"
 paper: /pdfs/2024/quantization.pdf
 arxiv: https://arxiv.org/abs/2405.12591

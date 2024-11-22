@@ -5,7 +5,7 @@ date:   2024-09-12 18:04:44 +00:00
 image: images/2024/superconductor.png
 categories: 2024_research
 author: Ze-Feng Gao
-authors: "Xiao-Qi Han, Zhenfeng Ouyang, Peng-Jie Guo, Hao Sun, <strong>Ze-Feng Gao#</strong>, Zhong-Yi Lu"
+authors: "Xiao-Qi Han, Zhenfeng Ouyang, Peng-Jie Guo, Hao Sun, <strong>Ze-Feng Gao<sup>#</sup></strong>, Zhong-Yi Lu<sup>#</sup>"
 venue: "Arxiv"
 paper: /pdfs/2024/superconductor.pdf
 arxiv: https://arxiv.org/abs/2409.08065

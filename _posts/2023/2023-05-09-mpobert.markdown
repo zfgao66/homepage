@@ -5,7 +5,7 @@ date:   2023-05-07 18:04:44 +00:00
 image: images/2023/mpobert.png
 categories: 2023_research
 author: Ze-Feng Gao
-authors: "Peiyu Liu*, <strong>Ze-Feng Gao*</strong>, Yushuo Chen, Wayne Xin Zhao, Ji-Rong Wen"
+authors: "Peiyu Liu*, <strong>Ze-Feng Gao*</strong>, Yushuo Chen, Wayne Xin Zhao<sup>#</sup>, Ji-Rong Wen"
 venue: "Association for Computational Linguistics: EMNLP 2023"
 paper: /pdfs/2023/mpobert.pdf
 arxiv: https://arxiv.org/abs/2303.16753

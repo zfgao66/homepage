@@ -5,7 +5,7 @@ date:   2024-06-24 18:04:44 +00:00
 image: images/2024/bipolarized.png
 categories: 2024_research
 author: Ze-Feng Gao
-authors: "Chao-Yang Tan, <strong>Ze-Feng Gao</strong>, Huan-Cheng Yang, Kai Liu, Peng-Jie Guo, Zhong-Yi Lu"
+authors: "Chao-Yang Tan, <strong>Ze-Feng Gao</strong>, Huan-Cheng Yang, Kai Liu, Peng-Jie Guo<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
 venue: "Arxiv"
 paper: /pdfs/2024/bipolarized.pdf
 arxiv: https://arxiv.org/abs/2406.16603

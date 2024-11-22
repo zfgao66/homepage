@@ -5,7 +5,7 @@ date:   2022-12-21 18:04:44 +00:00
 image: images/2022/mpoe.png
 categories: 2022_research
 author: Ze-Feng Gao
-authors: "<strong>Ze-Feng Gao*</strong>, Peiyu Liu*, Wayne Xin Zhao<sup>#</sup>, Zhong-Yi Lu, Ji-Rong Wen"
+authors: "<strong>Ze-Feng Gao*</strong>, Peiyu Liu*, Wayne Xin Zhao#, Zhong-Yi Lu, Ji-Rong Wen"
 venue: "International Conference on Computational Linguistic (COLING2022), Oral Presentation"
 paper: /pdfs/2022/coling2022.pdf
 arxiv: https://arxiv.org/abs/2203.01104

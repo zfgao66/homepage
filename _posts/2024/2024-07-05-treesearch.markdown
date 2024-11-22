@@ -5,7 +5,7 @@ date:   2024-07-05 18:04:44 +00:00
 image: images/2024/treesearch.png
 categories: 2024_research
 author: Ze-Feng Gao
-authors: "Kai Ruan, <strong>Ze-Feng Gao</strong>, Yike Guo, Hao Sun, Ji-Rong Wen, Yang Liu"
+authors: "Kai Ruan, <strong>Ze-Feng Gao</strong>, Yike Guo, Hao Sun<sup>#</sup>, Ji-Rong Wen, Yang Liu"
 venue: "Arxiv"
 paper: /pdfs/2024/treesearch.pdf
 arxiv: https://arxiv.org/abs/2407.04405

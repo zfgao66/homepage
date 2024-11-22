@@ -5,7 +5,7 @@ date:   2023-11-08 18:04:44 +00:00
 image: images/2023/altermagnetic.png
 categories: 2023_research
 author: Ze-Feng Gao
-authors: "<strong>Ze-Feng Gao*</strong>, Shuai Qu, Bocheng Zeng, Yang Liu, Ji-Rong Wen, Hao Sun, Peng-Jie Guo, Zhong-Yi Lu"
+authors: "<strong>Ze-Feng Gao*</strong>, Shuai Qu*, Bocheng Zeng*, Yang Liu, Ji-Rong Wen, Hao Sun<sup>#</sup>, Peng-Jie Guo<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
 venue: "Arxiv"
 paper: /pdfs/2023/altermagnetic.pdf
 arxiv: https://arxiv.org/abs/2311.04418

@@ -5,7 +5,7 @@ date:   2023-08-01 18:04:44 +00:00
 image: images/2023/mmps-data.png
 categories: 2023_research
 author: Ze-Feng Gao
-authors: "<strong>Ze-Feng Gao</strong>, Peiyu Liu, Wayne Xin Zhao, Zhi-Yuan Xie, Ji-Rong Wen and Zhong-Yi Lu"
+authors: "<strong>Ze-Feng Gao*</strong>, Peiyu Liu*, Wayne Xin Zhao<sup>#</sup>, Zhi-Yuan Xie, Ji-Rong Wen and Zhong-Yi Lu"
 venue: "Future of Information and Communication Conference (FICC2024)"
 paper: /pdfs/2023/mmps-data.pdf
 link: https://link.springer.com/chapter/10.1007/978-3-031-53963-3_43

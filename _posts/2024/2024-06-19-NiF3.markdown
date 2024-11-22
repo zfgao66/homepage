@@ -5,7 +5,7 @@ date:   2024-06-19 18:04:44 +00:00
 image: images/2024/NiF3.png
 categories: 2024_research
 author: Ze-Feng Gao
-authors: "Shuai Qu, <strong>Ze-Feng Gao</strong>, Hao Sun, Kai Liu, Peng-Jie Guo, Zhong-Yi Lu"
+authors: "Shuai Qu, <strong>Ze-Feng Gao</strong>, Hao Sun, Kai Liu, Peng-Jie Guo<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
 venue: "Arxiv"
 paper: /pdfs/2024/NiF3.pdf
 arxiv: https://arxiv.org/abs/2401.11065

@@ -5,7 +5,7 @@ date:   2024-06-30 18:04:44 +00:00
 image: images/2024/recommand.png
 categories: 2024_research
 author: Ze-Feng Gao
-authors: "刘沛羽，姚博文, <strong>高泽峰</strong>, 赵鑫"
+authors: "刘沛羽，姚博文, <strong>高泽峰<sup>#</sup></strong>, 赵鑫<sup>#</sup>"
 venue: "山东大学学报(理学版)"
 paper: /pdfs/2024/recommand.pdf
 link: https://kns.cnki.net/kcms2/article/abstract?v=Dm4VI7mKrXNyjGjCsqaY-3Ds66BzrjaBpoObKbvUi_Bj7Mvqanj10tm8Nj9Igm09ZRpaRiiGya5ov6Rl10UtsBBgSppwsoD7Ak0U_K1zPpi3xCkIeRs39l8aM8y8VykkeEB-qgcX9Nm_fRYDxSXKbEhqsU4q27Q1YWH2pW9N13wDCSt1lh4f6pUh7mvX3f9C3Uzd_D1mZid_tvJayfKfBg==&uniplatform=NZKPT
