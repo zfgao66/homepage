@@ -1,0 +1,15 @@
+---
+layout: post
+title:  "AI-driven inverse design of materials: Past, present and future"
+date:   2024-11-13 18:04:44 +00:00
+image: images/2024/survey.png
+categories: 2024_research
+author: Ze-Feng Gao
+authors: "Xiao-Qi Han, Xin-De Wang, Meng-Yuan Xu, Zhen Feng, Bo-Wen Yao, Peng-Jie Guo, <strong>Ze-Feng Gao#</strong>, Zhong-Yi Lu#"
+venue: "Arxiv"
+paper: /pdfs/2024/survey.pdf
+arxiv: https://arxiv.org/abs/2411.09429
+
+
+---
+In this survey, we look back on the latest advancements in AI-driven inverse design of materials by introducing the background, key findings, and mainstream technological development routes. In addition, we summarize the remaining issues for future directions. This survey provides the latest overview of AI-driven inverse design of materials, which can serve as a useful resource for researchers.
