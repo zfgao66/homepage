@@ -1,0 +1,15 @@
+---
+layout: post
+title:  "Type-II Dirac nodal chain semimetal CrB4"
+date:   2024-12-13 18:04:44 +00:00
+image: images/2024/CrB4.png
+categories: 2024_research
+author: Ze-Feng Gao
+authors: "Xiao-Yao Hou, <strong>Ze-Feng Gao</strong>, Peng-Jie Guo<sup>#</sup>, Jian-Feng Zhang, Zhong-Yi Lu<sup>#</sup>"
+venue: "Arxiv"
+paper: /pdfs/2024/CrB4.pdf
+arxiv: https://arxiv.org/pdf/2412.03972
+
+
+---
+In this study, based on symmetry analysis and the first-principles electronic structure calculations, we predict that CrB4 is an ideal type-II Dirac nodal chain semimetal protected by the mirror symmetry. Moreover, there are two nodal rings protected by both space-inversion and time-reversal symmetries in CrB4. More importantly,in CrB4 the topologically protected drumhead surface states span the entire Brillouin zone at the Fermi level.
