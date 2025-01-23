@@ -3,7 +3,7 @@ layout: post
 title:  "Strong phonon-mediated high temperature superconductivity in Li2AuH6 under ambient pressure"
 date:   2025-01-22 18:04:44 +00:00
 image: images/2025/Li2AuH6.png
-categories: 2024_research
+categories: 2025_research
 author: Ze-Feng Gao
 authors: "Zhenfeng Ouyang, Bo-Wen Yao, Xiao-Qi Han, Peng-Jie Guo, <strong>Ze-Feng Gao<sup>#</sup></strong>, Zhong-Yi Lu<sup>#</sup>"
 venue: "Arxiv"
