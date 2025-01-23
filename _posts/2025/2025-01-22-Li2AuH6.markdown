@@ -1,0 +1,14 @@
+---
+layout: post
+title:  "Strong phonon-mediated high temperature superconductivity in Li2AuH6 under ambient pressure"
+date:   2025-01-22 18:04:44 +00:00
+image: images/2025/Li2AuH6.png
+categories: 2024_research
+author: Ze-Feng Gao
+authors: "Zhenfeng Ouyang, Bo-Wen Yao, Xiao-Qi Han, Peng-Jie Guo, <strong>Ze-Feng Gao<sup>#</sup></strong>, Zhong-Yi Lu<sup>#</sup>"
+venue: "Arxiv"
+paper: /pdfs/2025/Li2AuH6.pdf
+arxiv: https://arxiv.org/abs/2501.12222
+code: https://github.com/xqh19970407/InvDesFlow
+---
+We used our developed AI search engine~(InvDesFlow) to perform extensive investigations regarding ambient stable superconducting hydrides. A cubic structure Li2AuH6 with Au-H octahedral motifs is identified to be a candidate. After performing thermodynamical analysis, we provide a feasible route to experimentally synthesize this material via the known LiAu and LiH compounds under ambient pressure. The further first-principles calculations suggest that Li2AuH6 shows a high superconducting transition temperature (Tc) ∼ 140 K under ambient pressure.
