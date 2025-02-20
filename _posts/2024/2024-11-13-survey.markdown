@@ -6,9 +6,10 @@ image: images/2024/survey.png
 categories: 2024_research
 author: Ze-Feng Gao
 authors: "Xiao-Qi Han, Xin-De Wang, Meng-Yuan Xu, Zhen Feng, Bo-Wen Yao, Peng-Jie Guo, <strong>Ze-Feng Gao<sup>#</sup></strong>, Zhong-Yi Lu<sup>#</sup>"
-venue: "Arxiv"
+venue: "Chinese Physics Letter"
 paper: /pdfs/2024/survey.pdf
 arxiv: https://arxiv.org/abs/2411.09429
+link: https://cpl.iphy.ac.cn/en/article/doi/10.1088/0256-307X/42/2/027403?viewType=HTML
 
 
 ---
