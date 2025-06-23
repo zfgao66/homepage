@@ -10,7 +10,7 @@ venue: "National Science Review"
 paper: /pdfs/2025/altermagnetic.pdf
 arxiv: https://arxiv.org/abs/2311.04418
 code: https://github.com/zfgao66/MatAltMag
-
+link: https://academic.oup.com/nsr/article/12/4/nwaf066/8030545?login=false
 
 ---
 In this paper, we successfully discovered 50 new altermagnetic materials that cover metals, semiconductors, and insulators confirmed by the first-principles electronic structure calculations. The wide range of electronic structural characteristics reveals that various novel physical properties manifest in these newly discovered altermagnetic materials, e.g., anomalous Hall effect, anomalous Kerr effect, and topological property. 

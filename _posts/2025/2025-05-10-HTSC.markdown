@@ -1,0 +1,14 @@
+---
+layout: post
+title:  "HTSC-2025: A Benchmark Dataset of Ambient-Pressure High-Temperature Superconductors for AI-Driven Critical Temperature Prediction"
+date:   2025-05-10 18:04:44 +00:00
+image: images/2025/HTSC-2025.png
+categories: 2025_research
+author: Ze-Feng Gao
+authors: "Xiao-Qi Han, <strong>Ze-Feng Gao<sup>#</sup></strong>, Xin-De Wang, Zhenfeng Ouyang, Peng-Jie Guo, Zhong-Yi Lu"
+venue: "Arxiv"
+paper: /pdfs/2025/HTSC-2025.pdf
+arxiv: https://arxiv.org/pdf/2506.03837
+code: https://github.com/xqh19970407/HTSC-2025
+---
+In this work, we present the HTSC-2025, an ambient-pressure high-temperature superconducting benchmark dataset. This comprehensive compilation encompasses theoretically predicted superconducting materials discovered by theoretical physicists from 2023 to 2025 based on BCS superconductivity theory, including the renowned XYH6 system, perovskite MXH3 system, M3XH8 system, cage-like BCN-doped metal atomic systems derived from LaH structural evolution, and two-dimensional honeycomb-structured systems evolving from MgB2. 
