@@ -6,7 +6,7 @@ image: images/2025/Li2AuH6.png
 categories: 2025_research
 author: Ze-Feng Gao
 authors: "Zhenfeng Ouyang, Bo-Wen Yao, Xiao-Qi Han, Peng-Jie Guo, <strong>Ze-Feng Gao<sup>#</sup></strong>, Zhong-Yi Lu<sup>#</sup>"
-venue: "Arxiv"
+venue: "Physics Review B (Letter)"
 paper: /pdfs/2025/Li2AuH6.pdf
 arxiv: https://arxiv.org/abs/2501.12222
 code: https://github.com/xqh19970407/InvDesFlow
