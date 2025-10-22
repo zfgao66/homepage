@@ -9,5 +9,6 @@ authors: "Xin-De Wang, Zhi-Rui Chen, Peng-Jie Guo, <strong>Ze-Feng Gao<sup>#</su
 venue: "Arxiv"
 paper: /pdfs/2025/Perovskite-R1.pdf
 arxiv: https://arxiv.org/abs/2507.16307
+code: https://huggingface.co/datasets/JH976/Perovskite-R1
 ---
 In this work, we introduce Perovskite-R1, a specialized large language model (LLM) with advanced reasoning capabilities tailored for the discovery and design of PSC precursor additives. By systematically mining and curating 1,232 high-quality scientific publications and integrating a comprehensive library of 33,269 candidate materials, we constructed a domain-specific instruction-tuning dataset using automated question-answer generation and chain-of-thought reasoning. 
