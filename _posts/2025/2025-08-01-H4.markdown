@@ -1,0 +1,13 @@
+---
+layout: post
+title:  "Superconductivity in atom-intercalated quaternary hydrides under ambient pressure"
+date:   2025-08-01 18:04:44 +00:00
+image: images/2025/H4.png
+categories: 2025_research
+author: Ze-Feng Gao
+authors: "Bo-Wen Yao, Zhenfeng Ouyang, Xiao-Qi Han, Chang-Jiang Wu, Peng-Jie Guo, <strong>Ze-Feng Gao<sup>#</sup></strong>, Zhong-Yi Lu<sup>#</sup>"
+venue: "Arxiv"
+paper: /pdfs/2025/H4.pdf
+arxiv: https://arxiv.org/abs/2508.10912
+---
+In this work, we used our developed AI search engine (InvDesFlow) to perform extensive investigations regarding ambient stable superconducting hydrides. Several quaternary hydrides with high superconducting temperature are predicted.

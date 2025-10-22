@@ -1,0 +1,13 @@
+---
+layout: post
+title:  "Stacking-induced type-II quantum spin Hall insulators with high spin Chern number in unconventional magnetism"
+date:   2025-08-07 18:04:44 +00:00
+image: images/2025/Type2.png
+categories: 2025_research
+author: Ze-Feng Gao
+authors: "Chao-Yang Tan, Panjun Feng, <strong>Ze-Feng Gao</strong>, Fengjie Ma, Peng-Jie Guo<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
+venue: "Arxiv"
+paper: /pdfs/2025/Type2.pdf
+arxiv: https://arxiv.org/abs/2508.05365
+---
+In this letter, based on the calculations of lattice model, we demonstrate that stacking two type-II quantum spin Hall insulators does not yield a trivial insulator, but instead forms a quantum spin Hall insulator with high spin Chern number. In this phase, there are two pairs of topological edge states with opposite chirality and polarization coexisting in the boundary. 

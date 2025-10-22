@@ -1,0 +1,13 @@
+---
+layout: post
+title:  "Anomalous charge density wave in altermagnetism"
+date:   2025-07-21 18:04:44 +00:00
+image: images/2025/Charge.png
+categories: 2025_research
+author: Ze-Feng Gao
+authors: "Zi-Hao Ding, Lei Wang, Zhen-Feng Ouyang, Jingsi Qiao, <strong>Ze-Feng Gao</strong>, Wei Ji, Kai Liu, Peng-Jie Guo<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
+venue: "Arxiv"
+paper: /pdfs/2025/Charge.pdf
+arxiv: https://arxiv.org/abs/2507.15429
+---
+In this letter, based on symmetry analysis and first-principles calculations, we propose for the first time that anomalous charge density wave can be realized in two-dimensional altermagnetic WO. The anomalous charge density wave is characterized by three key features: (i) Unlike conventional charge density wave, whose stabilization is driven by the opening of a gap near the Fermi level, the anomalous charge density wave is stabilized by the occupied states with energies shifting lower far away from the Fermi level; (ii) the anomalous charge density wave increases the density of states near the Fermi level and then enhances-rather than diminishes-the metallicity of materials
