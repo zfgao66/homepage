@@ -6,7 +6,7 @@ image: images/2025/InvDesFlow.png
 categories: 2025_research
 author: Ze-Feng Gao
 authors: "Xiao-Qi Han, Zhenfeng Ouyang, Peng-Jie Guo, Hao Sun, <strong>Ze-Feng Gao<sup>#</sup></strong>, Zhong-Yi Lu<sup>#</sup>"
-venue: "Chinese Physics Letters, 2025, 42(4): 047301."
+venue: "Chinese Physics Letters, 42(4): 047301"
 paper: /pdfs/2025/InvDesFlow.pdf
 link: https://cpl.iphy.ac.cn/en/article/pdf/preview/10.1088/0256-307X/42/4/047301.pdf
 code: https://github.com/xqh19970407/InvDesFlow

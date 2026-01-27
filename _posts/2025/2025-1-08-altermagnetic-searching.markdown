@@ -6,7 +6,7 @@ image: images/2025/altermagnetic.png
 categories: 2025_research
 author: Ze-Feng Gao
 authors: "<strong>Ze-Feng Gao*</strong>, Shuai Qu*, Bocheng Zeng*, Yang Liu, Ji-Rong Wen, Hao Sun<sup>#</sup>, Peng-Jie Guo<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
-venue: "National Science Review, 2025, 12(4): nwaf066."
+venue: "National Science Review, 12(4): nwaf066"
 paper: /pdfs/2025/altermagnetic.pdf
 arxiv: https://arxiv.org/abs/2311.04418
 code: https://github.com/zfgao66/MatAltMag

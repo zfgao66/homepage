@@ -1,14 +1,15 @@
 ---
 layout: post
 title:  "Extremely strong spin-orbit coupling effect in light element altermagnetic materials"
-date:   2024-06-19 18:04:44 +00:00
-image: images/2024/NiF3.png
-categories: 2024_research
+date:   2026-01-19 18:04:44 +00:00
+image: images/2026/NiF3.png
+categories: 2026_research
 author: Ze-Feng Gao
-authors: "Shuai Qu, <strong>Ze-Feng Gao</strong>, Hao Sun, Kai Liu, Peng-Jie Guo<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
-venue: "Arxiv"
-paper: /pdfs/2024/NiF3.pdf
+authors: "Shuai Qu, Zhen-Feng Ouyang, <strong>Ze-Feng Gao</strong>, Hao Sun, Kai Liu, Peng-Jie Guo<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
+venue: "Frontiers of Physics, 21(4): 045203"
+paper: /pdfs/2026/NiF3.pdf
 arxiv: https://arxiv.org/abs/2401.11065
+link: https://journal.hep.com.cn/fop/EN/10.15302/frontphys.2026.045203
 
 
 ---

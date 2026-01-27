@@ -6,7 +6,7 @@ image: images/2025/treesearch.png
 categories: 2025_research
 author: Ze-Feng Gao
 authors: "Kai Ruan, Yilong Xu, <strong>Ze-Feng Gao</strong>, Yang Liu, Yike Guo, Ji-Rong Wen, Hao Sun<sup>#</sup>, "
-venue: "Nature Computational Science, 2025: 1-14."
+venue: "Nature Computational Science"
 paper: /pdfs/2025/treesearch.pdf
 arxiv: https://arxiv.org/abs/2407.04405
 link: https://www.nature.com/articles/s43588-025-00904-8

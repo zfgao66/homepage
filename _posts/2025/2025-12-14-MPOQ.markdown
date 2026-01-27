@@ -6,7 +6,7 @@ image: images/2025/MPOQ.png
 categories: 2025_research
 author: Ze-Feng Gao
 authors: "Jia-Qi Wang, Xiao-Qi Han, Peng-Jie Guo, Rong-Qiang He, <strong>Ze-Feng Gao<sup>#</sup></strong>, Zhong-Yi Lu<sup>#</sup>"
-venue: "Neural Networks, 2025: 108467."
+venue: "Neural Networks, 108467."
 paper: /pdfs/2025/MPOQ.pdf
 code: https://github.com/Chihiro1099/MPOQ
 link: https://www.sciencedirect.com/science/article/abs/pii/S0893608025013486

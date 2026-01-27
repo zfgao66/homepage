@@ -6,7 +6,7 @@ image: images/2025/LaMn2SbO6.png
 categories: 2025_research
 author: Ze-Feng Gao
 authors: "Xiao-Yao Hou, <strong>Ze-Feng Gao</strong>, Huan-Cheng Yang, Peng-Jie Guo, Zhong-Yi Lu"
-venue: "Chinese Physics Letter, 2025"
+venue: "Chinese Physics Letter"
 paper: /pdfs/2025/LaMn2SbO6.pdf
 arxiv: https://arxiv.org/pdf/2504.09447
 link: https://cpl.iphy.ac.cn/article/doi/10.1088/0256-307X/42/7/070712

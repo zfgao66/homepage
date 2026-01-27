@@ -6,7 +6,7 @@ image: images/2025/HTSC-2025.png
 categories: 2025_research
 author: Ze-Feng Gao
 authors: "Xiao-Qi Han, <strong>Ze-Feng Gao<sup>#</sup></strong>, Xin-De Wang, Zhenfeng Ouyang, Peng-Jie Guo, Zhong-Yi Lu"
-venue: "Chinese Physics B, 2025, 34(10): 100301"
+venue: "Chinese Physics B, 34(10): 100301"
 paper: /pdfs/2025/HTSC-2025.pdf
 arxiv: https://arxiv.org/pdf/2506.03837
 link: https://iopscience.iop.org/article/10.1088/1674-1056/adf042

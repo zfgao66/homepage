@@ -10,7 +10,7 @@ venue: "Arxiv"
 paper: /pdfs/2025/PhononBench.pdf
 arxiv: https://arxiv.org/abs/2512.21227
 code: https://github.com/xqh19970407/PhononBench
-link: https://phononbench.cn
+link: http://phononbench.cn/
 
 
 ---
