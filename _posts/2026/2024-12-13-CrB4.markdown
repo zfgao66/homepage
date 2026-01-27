@@ -1,14 +1,15 @@
 ---
 layout: post
 title:  "Type-II Dirac nodal chain semimetal CrB4"
-date:   2024-12-13 18:04:44 +00:00
-image: images/2024/CrB4.png
-categories: 2024_research
+date:   2026-1-13 18:04:44 +00:00
+image: images/2026/CrB4.png
+categories: 2026_research
 author: Ze-Feng Gao
 authors: "Xiao-Yao Hou, <strong>Ze-Feng Gao</strong>, Peng-Jie Guo<sup>#</sup>, Jian-Feng Zhang, Zhong-Yi Lu<sup>#</sup>"
-venue: "Arxiv"
-paper: /pdfs/2024/CrB4.pdf
+venue: "Chinese Physics B, 2026, 35(1):017301."
+paper: /pdfs/2026/CrB4.pdf
 arxiv: https://arxiv.org/pdf/2412.03972
+link: https://iopscience.iop.org/article/10.1088/1674-1056/ae172b
 
 
 ---

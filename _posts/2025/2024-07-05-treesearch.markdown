@@ -1,14 +1,15 @@
 ---
 layout: post
 title:  "Discovering symbolic expressions with parallelized tree search"
-date:   2024-07-05 18:04:44 +00:00
-image: images/2024/treesearch.png
-categories: 2024_research
+date:   2025-07-05 18:04:44 +00:00
+image: images/2025/treesearch.png
+categories: 2025_research
 author: Ze-Feng Gao
-authors: "Kai Ruan, <strong>Ze-Feng Gao</strong>, Yike Guo, Hao Sun<sup>#</sup>, Ji-Rong Wen, Yang Liu"
-venue: "Arxiv"
-paper: /pdfs/2024/treesearch.pdf
+authors: "Kai Ruan, Yilong Xu, <strong>Ze-Feng Gao</strong>, Yang Liu, Yike Guo, Ji-Rong Wen, Hao Sun<sup>#</sup>, "
+venue: "Nature Computational Science, 2025: 1-14."
+paper: /pdfs/2025/treesearch.pdf
 arxiv: https://arxiv.org/abs/2407.04405
+link: https://www.nature.com/articles/s43588-025-00904-8
 
 
 ---

@@ -6,7 +6,7 @@ image: images/2025/InvDesFlow-AL.png
 categories: 2025_research
 author: Ze-Feng Gao
 authors: "Xiao-Qi Han, Peng-Jie Guo,  <strong>Ze-Feng Gao<sup>#</sup></strong>, Hao Sun<sup>#</sup>,Zhong-Yi Lu<sup>#</sup>"
-venue: "npj Computational Materials"
+venue: "npj Computational Materials, 2025."
 paper: /pdfs/2025/InvDesFlow-AL.pdf
 arxiv: https://arxiv.org/pdf/2505.09203
 code: https://github.com/xqh19970407/InvDesFlow-AL
