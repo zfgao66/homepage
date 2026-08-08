@@ -1,0 +1,13 @@
+---
+layout: post
+title:  "NQS-Agent: Health-Aware Agentic Hyperparameter Optimization for Neural-Network Quantum States"
+date:   2026-06-29 18:04:44 +00:00
+image: images/2026/NQSAgent.png
+categories: 2026_research
+author: Ze-Feng Gao
+authors: "Jia-Qi Wang, Xiao-Qi Han, <strong>Ze-Feng Gao</strong>, Rong-Qiang He<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
+venue: "Arxiv"
+paper: /pdfs/2026/NQSAgent.pdf
+arxiv: https://arxiv.org/abs/2606.30464
+---
+In this work, we develop NQS-Agent, an open-source software framework for health-aware hyperparameter optimization in neural-network quantum state (NQS) calculations. Its workflow monitors energy trajectories, detects destructive optimization events, stops unstable calculations, modifies the learning-rate schedule, and resumes optimization from safe checkpoints.

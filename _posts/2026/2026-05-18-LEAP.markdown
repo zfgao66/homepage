@@ -1,0 +1,13 @@
+---
+layout: post
+title:  "LEAP: A closed-loop framework for perovskite precursor additive discovery"
+date:   2026-05-18 18:04:44 +00:00
+image: images/2026/LEAP.png
+categories: 2026_research
+author: Ze-Feng Gao
+authors: "Xin-De Wang, Zhi-Rui Chen, <strong>Ze-Feng Gao<sup>#</sup></strong>, Peng-Jie Guo, Cheng Mu<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
+venue: "Arxiv"
+paper: /pdfs/2026/LEAP.pdf
+arxiv: https://arxiv.org/abs/2605.20242
+---
+In this work, we develop LEAP (LLM-driven Exploration via Active Learning for Perovskites), an expert-in-the-loop closed-loop framework that couples a domain-specialized large language model with active learning for iterative additive prioritization, achieving improved device performance in proof-of-concept perovskite solar cell experiments.

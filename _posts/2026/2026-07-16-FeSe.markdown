@@ -1,0 +1,13 @@
+---
+layout: post
+title:  "Emergent d-wave altermagnetism in chlorine-adsorbed FeSe monolayer"
+date:   2026-07-16 18:04:44 +00:00
+image: images/2026/FeSe.png
+categories: 2026_research
+author: Ze-Feng Gao
+authors: "Zi-Hao Ding, <strong>Ze-Feng Gao</strong>, Kai Liu, Peng-Jie Guo<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
+venue: "Arxiv"
+paper: /pdfs/2026/FeSe.pdf
+arxiv: https://arxiv.org/abs/2607.15197
+---
+In this work, based on symmetry analysis and first-principles calculations, we propose a realistic route to engineer robust altermagnetism in monolayer FeSe, a prototypical iron-based superconductor, by designing a stoichiometric Fe2Se2Cl structure with gate-tunable hole doping. The resulting altermagnetic state exhibits a giant spin splitting of up to 620 meV and persists even in a 10-layer slab model.

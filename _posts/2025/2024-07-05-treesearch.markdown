@@ -1,12 +1,12 @@
 ---
 layout: post
-title:  "Discovering symbolic expressions with parallelized tree search"
+title:  "Discovering physical laws with parallel symbolic enumeration"
 date:   2025-07-05 18:04:44 +00:00
 image: images/2025/treesearch.png
 categories: 2025_research
 author: Ze-Feng Gao
 authors: "Kai Ruan, Yilong Xu, <strong>Ze-Feng Gao</strong>, Yang Liu, Yike Guo, Ji-Rong Wen, Hao Sun<sup>#</sup>, "
-venue: "Nature Computational Science"
+venue: "Nature Computational Science, 6(1): 53-66"
 paper: /pdfs/2025/treesearch.pdf
 arxiv: https://arxiv.org/abs/2407.04405
 link: https://www.nature.com/articles/s43588-025-00904-8

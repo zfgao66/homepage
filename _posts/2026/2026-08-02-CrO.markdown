@@ -1,0 +1,13 @@
+---
+layout: post
+title:  "Twist-induced magnetic topological phase transition in stacked altermagnetic CrO"
+date:   2026-08-02 18:04:44 +00:00
+image: images/2026/CrO.png
+categories: 2026_research
+author: Ze-Feng Gao
+authors: "Zi-Hao Ding, <strong>Ze-Feng Gao</strong>, Xiang-Hua Kong, Peng-Jie Guo<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
+venue: "Arxiv"
+paper: /pdfs/2026/CrO.pdf
+arxiv: https://arxiv.org/abs/2608.01235
+---
+In this work, based on symmetry analysis and first-principles calculations, we show that commensurate twisting drives magnetic topological phase transitions in stacked bilayer CrO, transforming an antiferromagnetic Dirac semimetal into a d-wave altermagnetic bipolarized Weyl semimetal or an unconventional compensated magnetic Weyl semimetal, with Weyl points protected by the spin symmetry at generic k points.

@@ -1,14 +1,15 @@
 ---
 layout: post
 title:  "Bipolarized Weyl semimetals and quantum crystal valley Hall effect in two-dimensional altermagnetic materials"
-date:   2024-06-24 18:04:44 +00:00
-image: images/2024/bipolarized.png
-categories: 2024_research
+date:   2026-06-24 18:04:44 +00:00
+image: images/2026/bipolarized.png
+categories: 2026_research
 author: Ze-Feng Gao
 authors: "Chao-Yang Tan, <strong>Ze-Feng Gao</strong>, Huan-Cheng Yang, Kai Liu, Peng-Jie Guo<sup>#</sup>, Zhong-Yi Lu<sup>#</sup>"
-venue: "Arxiv"
-paper: /pdfs/2024/bipolarized.pdf
+venue: "Physical Review B, 114(5): 055125"
+paper: /pdfs/2026/bipolarized.pdf
 arxiv: https://arxiv.org/abs/2406.16603
+link: https://journals.aps.org/prb/abstract/10.1103/b7cy-vpmr
 
 
 ---
