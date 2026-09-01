@@ -23,13 +23,13 @@
       </button>
       <ul id="primary-navigation" class="nav-list" data-nav-list>
         <li><a {% if page.section == 'home' %}class="is-active" aria-current="page"{% endif %} href="{{ '/' | relative_url }}">首页</a></li>
-        <li><a {% if page.section == 'team' %}class="is-active" aria-current="page"{% endif %} href="{{ '/team.html' | relative_url }}">团队介绍</a></li>
-        <li><a {% if page.section == 'research' %}class="is-active" aria-current="page"{% endif %} href="{{ '/research.html' | relative_url }}">研究方向</a></li>
-        <li><a {% if page.section == 'publications' or page.layout == 'post' %}class="is-active" aria-current="page"{% endif %} href="{{ '/publications.html' | relative_url }}">学术发表</a></li>
-        <li><a {% if page.section == 'projects' %}class="is-active" aria-current="page"{% endif %} href="{{ '/projects.html' | relative_url }}">科研项目</a></li>
-        <li><a {% if page.section == 'teaching' %}class="is-active" aria-current="page"{% endif %} href="{{ '/teaching.html' | relative_url }}">教学报告</a></li>
-        <li><a {% if page.section == 'service' %}class="is-active" aria-current="page"{% endif %} href="{{ '/service.html' | relative_url }}">服务荣誉</a></li>
-        <li><a {% if page.section == 'contact' %}class="is-active" aria-current="page"{% endif %} href="{{ '/contact.html' | relative_url }}">联系方式</a></li>
+        <li><a {% if page.section == 'team' %}class="is-active" aria-current="page"{% endif %} href="{{ '/team/' | relative_url }}">团队介绍</a></li>
+        <li><a {% if page.section == 'research' %}class="is-active" aria-current="page"{% endif %} href="{{ '/research/' | relative_url }}">研究方向</a></li>
+        <li><a {% if page.section == 'publications' or page.layout == 'post' %}class="is-active" aria-current="page"{% endif %} href="{{ '/publications/' | relative_url }}">学术发表</a></li>
+        <li><a {% if page.section == 'projects' %}class="is-active" aria-current="page"{% endif %} href="{{ '/projects/' | relative_url }}">科研项目</a></li>
+        <li><a {% if page.section == 'teaching' %}class="is-active" aria-current="page"{% endif %} href="{{ '/teaching/' | relative_url }}">教学报告</a></li>
+        <li><a {% if page.section == 'service' %}class="is-active" aria-current="page"{% endif %} href="{{ '/service/' | relative_url }}">服务荣誉</a></li>
+        <li><a {% if page.section == 'contact' %}class="is-active" aria-current="page"{% endif %} href="{{ '/contact/' | relative_url }}">联系方式</a></li>
       </ul>
     </div>
   </nav>
