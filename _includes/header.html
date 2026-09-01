@@ -1,0 +1,36 @@
+<header class="site-header">
+  <div class="page-shell brand-row">
+    <a class="brand" href="{{ '/' | relative_url }}" aria-label="DQM-Lab 高泽峰课题组主页">
+      <span class="brand-mark" aria-hidden="true">
+        <img src="{{ '/images/dqm-lab-logo.jpg' | relative_url }}" alt="">
+      </span>
+      <span class="brand-copy">
+        <span class="brand-title">DQM-Lab <small>高泽峰课题组</small></span>
+        <span class="brand-subtitle">AI驱动的材料设计与物理智能 · 中国人民大学物理学院</span>
+      </span>
+    </a>
+    <div class="brand-contact">
+      <span>中国人民大学物理学院</span>
+      <a href="mailto:zfgao@ruc.edu.cn">zfgao@ruc.edu.cn</a>
+    </div>
+  </div>
+
+  <nav class="site-nav" aria-label="主导航">
+    <div class="page-shell site-nav__inner">
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-navigation" data-menu-toggle>
+        <span class="nav-toggle__icon" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span>栏目导航</span>
+      </button>
+      <ul id="primary-navigation" class="nav-list" data-nav-list>
+        <li><a {% if page.section == 'home' %}class="is-active" aria-current="page"{% endif %} href="{{ '/' | relative_url }}">首页</a></li>
+        <li><a {% if page.section == 'team' %}class="is-active" aria-current="page"{% endif %} href="{{ '/team.html' | relative_url }}">团队介绍</a></li>
+        <li><a {% if page.section == 'research' %}class="is-active" aria-current="page"{% endif %} href="{{ '/research.html' | relative_url }}">研究方向</a></li>
+        <li><a {% if page.section == 'publications' or page.layout == 'post' %}class="is-active" aria-current="page"{% endif %} href="{{ '/publications.html' | relative_url }}">学术发表</a></li>
+        <li><a {% if page.section == 'projects' %}class="is-active" aria-current="page"{% endif %} href="{{ '/projects.html' | relative_url }}">科研项目</a></li>
+        <li><a {% if page.section == 'teaching' %}class="is-active" aria-current="page"{% endif %} href="{{ '/teaching.html' | relative_url }}">教学报告</a></li>
+        <li><a {% if page.section == 'service' %}class="is-active" aria-current="page"{% endif %} href="{{ '/service.html' | relative_url }}">服务荣誉</a></li>
+        <li><a {% if page.section == 'contact' %}class="is-active" aria-current="page"{% endif %} href="{{ '/contact.html' | relative_url }}">联系方式</a></li>
+      </ul>
+    </div>
+  </nav>
+</header>

@@ -1,3 +1,37 @@
 ---
 layout: default
 ---
+<section class="page-heading">
+  <div class="page-shell page-heading__inner">
+    <p class="eyebrow">Publication</p>
+    <h1>{{ page.title }}</h1>
+  </div>
+</section>
+
+<article class="page-shell publication-detail">
+  <a class="back-link" href="{{ '/publications.html' | relative_url }}">返回学术发表</a>
+  <div class="publication-detail__lead">
+    {% if page.image %}
+    <figure class="publication-detail__figure">
+      <img src="{{ page.image | relative_url }}" alt="{{ page.title }} 论文配图">
+    </figure>
+    {% endif %}
+    <div class="publication-detail__meta">
+      <p class="publication-authors">{{ page.authors }}</p>
+      <p class="publication-citation"><em>{{ page.venue }}</em>, {{ page.date | date: "%Y" }}</p>
+      <div class="publication-links" aria-label="论文资源">
+        {% if page.paper %}<a href="{{ page.paper | relative_url }}">PDF</a>{% endif %}
+        {% if page.arxiv %}<a href="{{ page.arxiv }}">arXiv</a>{% endif %}
+        {% if page.code %}<a href="{{ page.code }}">Code</a>{% endif %}
+        {% if page.poster %}<a href="{{ page.poster | relative_url }}">Poster</a>{% endif %}
+        {% if page.slides %}<a href="{{ page.slides | relative_url }}">Slides</a>{% endif %}
+        {% if page.video %}<a href="{{ page.video }}">Video</a>{% endif %}
+        {% if page.link %}<a href="{{ page.link }}">Publisher</a>{% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="rich-text publication-detail__abstract">
+    <h2>摘要</h2>
+    {{ content }}
+  </div>
+</article>

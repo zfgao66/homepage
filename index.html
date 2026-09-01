@@ -1,0 +1,136 @@
+---
+layout: default
+title: 首页
+section: home
+body_class: home-page
+description: 高泽峰，中国人民大学物理学院副教授，研究AI驱动的材料设计、物理智能与大模型压缩。
+---
+<section class="home-intro">
+  <div class="page-shell home-intro__grid">
+    <article class="profile-panel">
+      <img class="profile-photo" src="{{ '/images/gaozefeng_cir.jpg' | relative_url }}" alt="高泽峰个人照片">
+      <div class="profile-copy">
+        <p class="eyebrow">Associate Professor · Renmin University of China</p>
+        <h1>高泽峰 <span>Ze-Feng Gao</span></h1>
+        <p class="profile-role">中国人民大学物理学院副教授 · 中国人民大学青年英才</p>
+        <p class="profile-summary">研究聚焦AI驱动的功能材料发现与生成、面向科学发现的智能体与垂域大模型，以及基于矩阵乘积算符的预训练模型压缩、轻量化微调与模型扩容。</p>
+        <div class="action-row">
+          <a class="action-link" href="{{ '/research.html' | relative_url }}">研究方向</a>
+          <a class="action-link action-link--secondary" href="{{ '/publications.html' | relative_url }}">学术发表</a>
+          <a class="action-link action-link--secondary" href="{{ '/team.html' | relative_url }}">团队介绍</a>
+        </div>
+      </div>
+    </article>
+
+    <aside class="quick-panel" aria-labelledby="quick-info-title">
+      <h2 id="quick-info-title" class="panel-title">个人信息</h2>
+      <dl class="quick-list">
+        <div><dt>单位</dt><dd>中国人民大学物理学院</dd></div>
+        <div><dt>职称</dt><dd>副教授</dd></div>
+        <div><dt>课题组</dt><dd>DQM-Lab</dd></div>
+        <div><dt>办公室</dt><dd>物理楼 307B</dd></div>
+        <div><dt>邮箱</dt><dd><a href="mailto:zfgao@ruc.edu.cn">zfgao@ruc.edu.cn</a></dd></div>
+        <div><dt>方向</dt><dd>AI for Science · 物理智能 · 模型压缩</dd></div>
+      </dl>
+      <div class="quick-links">
+        <a href="https://scholar.google.com/citations?user=vB64k4IAAAAJ&hl=zh-CN&oi=ao">Google Scholar</a>
+        <a href="https://github.com/zfgao66">GitHub</a>
+        <a href="https://dblp.org/pid/239/5268.html">DBLP</a>
+        <a href="https://orcid.org/0000-0002-6695-8209">ORCID</a>
+        <a href="{{ site.wechat_url }}">微信公众号：{{ site.wechat_name }}</a>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section class="section-band">
+  <div class="page-shell">
+    <div class="section-heading">
+      <h2>近期动态</h2>
+      <a class="section-more" href="{{ '/teaching.html' | relative_url }}">查看教学与报告</a>
+    </div>
+    <div class="updates-layout">
+      <ol class="updates-list">
+        <li><time class="update-date" datetime="2026-07">2026.07</time><span class="update-title">任中国人民大学物理学院副教授</span></li>
+        <li><time class="update-date" datetime="2026-06">2026.06</time><a class="update-title" href="{{ '/publications.html#year-2026' | relative_url }}">发布闭环材料发现框架 InvDesMobility</a></li>
+        <li><time class="update-date" datetime="2026-05">2026.05</time><a class="update-title" href="{{ '/publications.html#year-2026' | relative_url }}">发布钙钛矿添加剂闭环发现框架 LEAP</a></li>
+        <li><time class="update-date" datetime="2025-12">2025.12</time><span class="update-title">MPOQ 工作发表于 Neural Networks</span></li>
+        <li><time class="update-date" datetime="2025-11">2025.11</time><span class="update-title">在南方科技大学作“AI驱动的新材料设计”邀请报告</span></li>
+      </ol>
+      <aside class="highlight-note">
+        <h3>研究亮点</h3>
+        <p>基于矩阵乘积算符实现预训练模型过参数化的工作获 ACL 2023 最佳论文提名；AI加速交错磁性材料发现工作入选 WOS 高被引论文与热点论文。</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="section-band section-band--muted">
+  <div class="page-shell">
+    <div class="section-heading">
+      <div>
+        <h2>主要研究方向</h2>
+        <p>将人工智能、量子物理数值方法与材料计算结合，面向真实科学问题构建可验证、可复用的智能发现方法。</p>
+      </div>
+      <a class="section-more" href="{{ '/research.html' | relative_url }}">了解全部研究方向</a>
+    </div>
+    <div class="research-grid">
+      <article class="research-card">
+        <img src="{{ '/images/2025/InvDesFlow.png' | relative_url }}" alt="材料逆向设计流程示意图">
+        <div class="research-card__body">
+          <h3>AI驱动的材料逆向设计</h3>
+          <p>从目标物性出发生成、筛选并验证晶体结构，形成计算反馈驱动的闭环材料发现流程。</p>
+          <a href="{{ '/research.html#inverse-design' | relative_url }}">查看方向</a>
+        </div>
+      </article>
+      <article class="research-card">
+        <img src="{{ '/images/2025/PhysAgent.png' | relative_url }}" alt="科学智能体协同工作流程">
+        <div class="research-card__body">
+          <h3>物理智能与科学智能体</h3>
+          <p>构建面向物理计算、数据分析和规律发现的多智能体系统与自动化科研工作流。</p>
+          <a href="{{ '/research.html#physics-agent' | relative_url }}">查看方向</a>
+        </div>
+      </article>
+      <article class="research-card">
+        <img src="{{ '/images/2023/overparameter.png' | relative_url }}" alt="预训练模型扩容方法示意图">
+        <div class="research-card__body">
+          <h3>大模型压缩与高效适配</h3>
+          <p>研究基于张量分解的模型压缩、低比特量化、参数高效微调与结构扩容方法。</p>
+          <a href="{{ '/research.html#model-efficiency' | relative_url }}">查看方向</a>
+        </div>
+      </article>
+      <article class="research-card">
+        <img src="{{ '/images/2025/altermagnetic.png' | relative_url }}" alt="AI发现交错磁性材料研究图">
+        <div class="research-card__body">
+          <h3>功能量子材料发现</h3>
+          <p>探索交错磁性、拓扑物态和常压高温超导候选材料，连接智能筛选与第一性原理验证。</p>
+          <a href="{{ '/research.html#quantum-materials' | relative_url }}">查看方向</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="section-band">
+  <div class="page-shell">
+    <div class="section-heading">
+      <div>
+        <h2>近期发表</h2>
+        <p>涵盖AI for Science、量子材料、自然语言处理与模型压缩。</p>
+      </div>
+      <a class="section-more" href="{{ '/publications.html' | relative_url }}">查看完整发表列表</a>
+    </div>
+    <div class="featured-publications">
+      {% for post in site.posts limit:3 %}
+      <article class="featured-publication">
+        <img src="{{ post.image | relative_url }}" alt="{{ post.title }} 论文配图">
+        <div class="featured-publication__body">
+          <p class="publication-venue">{{ post.venue }}</p>
+          <h3><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
+          <p>{{ post.authors }}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>

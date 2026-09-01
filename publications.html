@@ -1,0 +1,66 @@
+---
+layout: default
+title: 学术发表
+section: publications
+description: 高泽峰的学术论文与研究成果列表。
+---
+<section class="page-heading">
+  <div class="page-shell page-heading__inner">
+    <p class="eyebrow">Publications</p>
+    <h1>学术发表</h1>
+    <p>研究成果涵盖AI for Science、自然语言处理、模型压缩、量子材料与计算物理。</p>
+  </div>
+</section>
+
+<section class="content-section content-section--muted">
+  <div class="page-shell">
+    {% assign publication_count = site.posts | size %}
+    {% assign publication_groups = site.posts | group_by_exp: "post", "post.date | date: '%Y'" %}
+    <div class="stats-row" aria-label="发表概览">
+      <div class="stat-card"><strong>{{ publication_count }}</strong><span>主页收录论文</span></div>
+      <div class="stat-card"><strong>{{ publication_groups | size }}</strong><span>研究成果年份</span></div>
+      <div class="stat-card"><strong>4</strong><span>主要研究领域</span></div>
+    </div>
+
+    <nav class="year-nav" aria-label="按年份浏览">
+      <span>按年份浏览</span>
+      {% for group in publication_groups %}
+      <a href="#year-{{ group.name }}">{{ group.name }}</a>
+      {% endfor %}
+    </nav>
+
+    {% for group in publication_groups %}
+    <section id="year-{{ group.name }}" class="publication-year">
+      <div class="publication-year__heading">
+        <h2>{{ group.name }}</h2>
+        <span aria-hidden="true"></span>
+      </div>
+      {% for post in group.items %}
+      <article class="publication-item">
+        <a class="publication-figure" href="{{ post.url | relative_url }}" tabindex="-1" aria-hidden="true">
+          <img src="{{ post.image | relative_url }}" alt="">
+        </a>
+        <div class="publication-body">
+          <span class="publication-venue">{{ post.venue }}</span>
+          <h3><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
+          <p class="publication-authors">{{ post.authors }}</p>
+          <p class="publication-citation"><em>{{ post.venue }}</em>, {{ post.date | date: "%Y" }}</p>
+          <div class="publication-links" aria-label="{{ post.title }} 资源">
+            {% if post.paper %}<a href="{{ post.paper | relative_url }}">PDF</a>{% endif %}
+            {% if post.arxiv %}<a href="{{ post.arxiv }}">arXiv</a>{% endif %}
+            {% if post.code %}<a href="{{ post.code }}">Code</a>{% endif %}
+            {% if post.poster %}<a href="{{ post.poster | relative_url }}">Poster</a>{% endif %}
+            {% if post.slides %}<a href="{{ post.slides | relative_url }}">Slides</a>{% endif %}
+            {% if post.video %}<a href="{{ post.video }}">Video</a>{% endif %}
+            {% if post.link %}<a href="{{ post.link }}">Publisher</a>{% endif %}
+          </div>
+          <p class="publication-abstract">{{ post.excerpt | strip_html | strip_newlines }}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </section>
+    {% endfor %}
+
+    <p class="publication-note">* 共同第一作者　<sup>#</sup> 通讯作者</p>
+  </div>
+</section>
