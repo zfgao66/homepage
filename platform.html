@@ -1,0 +1,180 @@
+---
+layout: default
+title: 服务平台
+section: platform
+permalink: /platform/
+body_class: platform-page
+description: 面向AI for Science的材料设计模型、开放数据集与在线科研工具。
+---
+<section class="page-heading">
+  <div class="page-shell page-heading__inner">
+    <p class="eyebrow">AI for Science</p>
+    <h1>服务平台</h1>
+    <p>汇集面向材料逆向设计、声子谱计算、钙钛矿实验设计与交错磁性筛选的开放模型、数据集和在线工具。</p>
+  </div>
+</section>
+
+<section class="content-section">
+  <div class="page-shell">
+    <div class="stats-row platform-stats" aria-label="平台概览">
+      <div class="stat-card"><strong>4</strong><span>核心模型与平台</span></div>
+      <div class="stat-card"><strong>3</strong><span>开放科学数据集</span></div>
+      <div class="stat-card"><strong>3</strong><span>代表性应用场景</span></div>
+    </div>
+    <div class="section-heading platform-section-heading">
+      <div>
+        <h2>核心平台</h2>
+        <p>覆盖从材料生成、性质筛选到动力学稳定性验证和实验方案设计的关键环节。</p>
+      </div>
+    </div>
+    <div class="platform-grid">
+      <article id="phononbench" class="platform-card">
+        <img class="platform-card__image" src="{{ '/images/2025/PhononBench.png' | relative_url }}" alt="PhononBench声子谱计算与动力学稳定性评估流程">
+        <div class="platform-card__body">
+          <p class="platform-category">声子谱预测</p>
+          <h3>PhononBench</h3>
+          <p class="platform-subtitle">晶体声子谱分钟级快速计算平台</p>
+          <p>通过接近DFT精度的声子计算，对AI生成晶体开展高通量动力学稳定性评估，为晶体生成模型提供物理可实现性基准。</p>
+          <ul class="platform-features"><li>大规模动力学稳定性基准</li><li>分钟级在线声子谱预测</li><li>开放数据与高通量工作流</li></ul>
+          <div class="platform-links">
+            <a class="platform-link" href="http://phononbench.cn/">在线使用</a>
+            <a class="platform-link platform-link--secondary" href="https://github.com/xqh19970407/PhononBench">GitHub</a>
+            <a class="platform-link platform-link--secondary" href="https://arxiv.org/abs/2512.21227">论文</a>
+          </div>
+        </div>
+      </article>
+
+      <article id="invdesflow" class="platform-card">
+        <img class="platform-card__image" src="{{ '/images/2025/InvDesFlow-AL.png' | relative_url }}" alt="InvDesFlow-AL主动学习材料逆向设计流程">
+        <div class="platform-card__body">
+          <p class="platform-category">材料逆向设计</p>
+          <h3>InvDesFlow</h3>
+          <p class="platform-subtitle">功能材料发现与逆向设计平台</p>
+          <p>将晶体生成、性质预测、第一性原理计算和主动学习连接为可迭代闭环，用于面向目标性能发现和优化功能材料。</p>
+          <ul class="platform-features"><li>20万级材料数据基础</li><li>生成与筛选闭环迭代</li><li>支持高温超导等目标性质</li></ul>
+          <div class="platform-links">
+            <a class="platform-link" href="https://github.com/xqh19970407/InvDesFlow-AL">GitHub</a>
+            <a class="platform-link platform-link--secondary" href="https://www.nature.com/articles/s41524-025-01830-z">论文</a>
+          </div>
+        </div>
+      </article>
+
+      <article id="perovskite-r1" class="platform-card">
+        <img class="platform-card__image" src="{{ '/images/2025/Perovskite-R1.png' | relative_url }}" alt="Perovskite-R1钙钛矿材料垂域大模型框架">
+        <div class="platform-card__body">
+          <p class="platform-category">材料垂域大模型</p>
+          <h3>Perovskite-R1</h3>
+          <p class="platform-subtitle">钙钛矿太阳能电池实验方案设计模型</p>
+          <p>利用高级推理和文献知识挖掘辅助发现钙钛矿前驱体添加剂，形成面向稳定性提升和器件性能优化的实验设计建议。</p>
+          <ul class="platform-features"><li>领域知识检索与推理</li><li>前驱体添加剂智能设计</li><li>面向实验验证的方案生成</li></ul>
+          <div class="platform-links">
+            <a class="platform-link" href="https://github.com/WD928/Perovskite-R1">GitHub</a>
+            <a class="platform-link platform-link--secondary" href="https://arxiv.org/abs/2507.16307">论文</a>
+          </div>
+        </div>
+      </article>
+
+      <article id="mataltmag" class="platform-card">
+        <img class="platform-card__image" src="{{ '/images/2025/altermagnetic.png' | relative_url }}" alt="MatAltMag交错磁性材料筛选结果">
+        <div class="platform-card__body">
+          <p class="platform-category">磁性材料预训练模型</p>
+          <h3>MatAltMag</h3>
+          <p class="platform-subtitle">交错磁性材料快速筛选模型</p>
+          <p>基于晶体结构图神经网络与少样本学习，自动预测并发现具有不同电子和拓扑性质的新型交错磁性材料。</p>
+          <ul class="platform-features"><li>晶体结构智能表征</li><li>少样本高效预测</li><li>电子与拓扑性质联合筛选</li></ul>
+          <div class="platform-links">
+            <a class="platform-link" href="https://github.com/zfgao66/MatAltMag">GitHub</a>
+            <a class="platform-link platform-link--secondary" href="https://academic.oup.com/nsr/article/12/4/nwaf066/8030545">论文</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="content-section content-section--muted">
+  <div class="page-shell">
+    <div class="section-heading platform-section-heading">
+      <div>
+        <h2>开放数据集</h2>
+        <p>为材料性质预测、生成模型评估与物理规律学习提供可复用的数据基础。</p>
+      </div>
+    </div>
+    <div class="dataset-grid">
+      <article class="dataset-card">
+        <img src="{{ '/images/2025/HTSC-2025.png' | relative_url }}" alt="HTSC-2025常压高温超导材料数据集">
+        <div class="dataset-card__body">
+          <p class="platform-category">超导材料数据</p>
+          <h3>HTSC-2025</h3>
+          <p>收录140种常压高温超导材料，为临界温度预测和物理规律学习提供统一开放基准。</p>
+          <dl class="dataset-metrics"><div><dt>140</dt><dd>材料</dd></div><div><dt>7</dt><dd>数据类别</dd></div><div><dt>8</dt><dd>性质标签</dd></div></dl>
+          <div class="platform-links">
+            <a class="platform-link" href="https://huggingface.co/datasets/xiao-qi/HTSC-2025">访问数据集</a>
+            <a class="platform-link platform-link--secondary" href="https://iopscience.iop.org/article/10.1088/1674-1056/adf042">论文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="dataset-card">
+        <img src="{{ '/images/2025/PhononBench.png' | relative_url }}" alt="PhononBench开放晶体与声子数据集">
+        <div class="dataset-card__body">
+          <p class="platform-category">晶体动力学数据</p>
+          <h3>PhononBench</h3>
+          <p>包含十万余个AI生成晶体及DFT级声子稳定性标注，用于系统评估材料生成模型的动力学稳定性与物理可行性。</p>
+          <dl class="dataset-metrics"><div><dt>108,843</dt><dd>生成结构</dd></div><div><dt>28,119</dt><dd>稳定结构</dd></div><div><dt>10+</dt><dd>性质标签</dd></div></dl>
+          <div class="platform-links">
+            <a class="platform-link" href="https://github.com/xqh19970407/PhononBench">访问数据集</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="dataset-card">
+        <img src="{{ '/images/2026/PhononBenchMP40.png' | relative_url }}" alt="PhononBench-MP40声子稳定性数据生成与审计流程">
+        <div class="dataset-card__body">
+          <p class="platform-category">谱分辨声子数据</p>
+          <h3>PhononBench-MP40</h3>
+          <p>面向Materials Project来源晶体的谱分辨声子稳定性基准，提供稳定性标签、最低采样频率和本地phonopy YAML声子谱。</p>
+          <dl class="dataset-metrics"><div><dt>46,899</dt><dd>完整记录</dd></div><div><dt>16,683</dt><dd>稳定记录</dd></div><div><dt>30,216</dt><dd>不稳定记录</dd></div></dl>
+          <div class="platform-links">
+            <a class="platform-link" href="https://doi.org/10.57760/sciencedb.38735">访问数据集</a>
+            <a class="platform-link platform-link--secondary" href="https://github.com/DreamLufei/phononbench_mp40">计算代码</a>
+            <a class="platform-link platform-link--secondary" href="https://arxiv.org/abs/2607.22573">论文</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="content-section">
+  <div class="page-shell">
+    <div class="section-heading platform-section-heading">
+      <div>
+        <h2>应用案例</h2>
+        <p>平台已用于超导材料筛选、交错磁性发现和钙钛矿实验策略设计。</p>
+      </div>
+    </div>
+    <div class="case-grid">
+      <article class="case-card"><span>01</span><h3>高温BCS超导材料筛选</h3><p>利用InvDesFlow筛选潜在高温超导材料，其中Li<sub>2</sub>AuH<sub>6</sub>的常压超导转变温度预测约为140 K。</p><ul class="tag-list"><li>材料发现</li><li>超导材料</li><li>AI预测</li></ul></article>
+      <article class="case-card"><span>02</span><h3>交错磁性材料发现</h3><p>MatAltMag发现50种新的交错磁性材料，其中包括4种此前未报道的i波交错磁性材料。</p><ul class="tag-list"><li>交错磁性</li><li>预训练微调</li><li>高效筛选</li></ul></article>
+      <article class="case-card"><span>03</span><h3>钙钛矿实验设计</h3><p>从1,232篇文献构建包含33,269种候选添加剂的知识库，并形成多项经实验验证的材料设计策略。</p><ul class="tag-list"><li>垂域大模型</li><li>知识挖掘</li><li>实验验证</li></ul></article>
+    </div>
+  </div>
+</section>
+
+<section class="content-section content-section--muted">
+  <div class="page-shell platform-cooperation">
+    <div>
+      <p class="eyebrow">Collaboration</p>
+      <h2>合作与使用</h2>
+      <p>平台面向学术研究、产业应用和教育推广开放。模型与工具以开源使用为主，联合研究、技术转化或商业授权可通过邮件联系。</p>
+    </div>
+    <div class="cooperation-list">
+      <div><strong>学术合作</strong><span>联合研究 · 学生交流 · 项目合作</span></div>
+      <div><strong>产业合作</strong><span>技术转化 · 联合开发 · 咨询服务</span></div>
+      <div><strong>教育推广</strong><span>培训课程 · 研讨会 · 暑期学校</span></div>
+      <div><strong>平台使用</strong><span>开源代码 · 在线演示 · 商业授权</span></div>
+    </div>
+    <a class="action-link" href="{{ '/contact/' | relative_url }}">联系合作</a>
+  </div>
+</section>
