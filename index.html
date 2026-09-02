@@ -51,11 +51,11 @@ description: 高泽峰，中国人民大学物理学院副教授，研究AI驱�
     </div>
     <div class="updates-layout">
       <ol class="updates-list">
+        <li><time class="update-date" datetime="2026-08">2026.08</time><a class="update-title" href="{{ '/publications/#year-2026' | relative_url }}">PhononBench 被 AI for Science 录用并上线</a></li>
         <li><time class="update-date" datetime="2026-07">2026.07</time><span class="update-title">任中国人民大学物理学院副教授</span></li>
-        <li><time class="update-date" datetime="2026-06">2026.06</time><a class="update-title" href="{{ '/publications/#year-2026' | relative_url }}">发布闭环材料发现框架 InvDesMobility</a></li>
-        <li><time class="update-date" datetime="2026-05">2026.05</time><a class="update-title" href="{{ '/publications/#year-2026' | relative_url }}">发布钙钛矿添加剂闭环发现框架 LEAP</a></li>
+        <li><time class="update-date" datetime="2026-03">2026.03</time><a class="update-title" href="{{ '/publications/#year-2026' | relative_url }}">多智能体计算材料学综述发表于《物理学报》</a></li>
+        <li><time class="update-date" datetime="2026-02">2026.02</time><a class="update-title" href="{{ '/publications/#year-2026' | relative_url }}">大模型辅助钙钛矿添加剂筛选工作发表于 ChemSusChem</a></li>
         <li><time class="update-date" datetime="2025-12">2025.12</time><span class="update-title">MPOQ 工作发表于 Neural Networks</span></li>
-        <li><time class="update-date" datetime="2025-11">2025.11</time><span class="update-title">在南方科技大学作“AI驱动的新材料设计”邀请报告</span></li>
       </ol>
       <aside class="highlight-note">
         <h3>研究亮点</h3>
@@ -121,7 +121,9 @@ description: 高泽峰，中国人民大学物理学院副教授，研究AI驱�
       <a class="section-more" href="{{ '/publications/' | relative_url }}">查看完整发表列表</a>
     </div>
     <div class="featured-publications">
-      {% for post in site.posts limit:3 %}
+      {% assign featured_count = 0 %}
+      {% for post in site.posts %}
+      {% unless post.venue == "Arxiv" %}
       <article class="featured-publication">
         <img src="{{ post.image | relative_url }}" alt="{{ post.title }} 论文配图">
         <div class="featured-publication__body">
@@ -130,6 +132,9 @@ description: 高泽峰，中国人民大学物理学院副教授，研究AI驱�
           <p>{{ post.authors }}</p>
         </div>
       </article>
+      {% assign featured_count = featured_count | plus: 1 %}
+      {% if featured_count == 3 %}{% break %}{% endif %}
+      {% endunless %}
       {% endfor %}
     </div>
   </div>

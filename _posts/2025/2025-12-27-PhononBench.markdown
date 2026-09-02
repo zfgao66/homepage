@@ -1,16 +1,16 @@
 ---
 layout: post
-title:  "PhononBench:A Large-Scale Phonon-Based Benchmark for Dynamical Stability in Crystal Generation"
-date:   2025-12-27 18:04:44 +00:00
+title:  "PhononBench: A Large-Scale Phonon-Based Benchmark for Dynamical Stability in Crystal Generation"
+date:   2026-08-26 00:00:00 +00:00
 image: images/2025/PhononBench.png
-categories: 2025_research
+categories: 2026_research
 author: Ze-Feng Gao
-authors: "Xiao-Qi Han, Peng-Jie Guo, <strong>Ze-Feng Gao<sup>#</sup></strong>, Zhong-Yi Lu<sup>#</sup>"
-venue: "Arxiv"
+authors: "Xiao-Qi Han, <strong>Ze-Feng Gao<sup>#</sup></strong>, Wen-Kao Li, Peng-Jie Guo, Zhong-Yi Lu<sup>#</sup>"
+venue: "AI for Science, 2026 (Accepted Manuscript)"
 paper: /pdfs/2025/PhononBench.pdf
 arxiv: https://arxiv.org/abs/2512.21227
 code: https://github.com/xqh19970407/PhononBench
-link: http://phononbench.cn/
+link: https://iopscience.iop.org/article/10.1088/3050-287X/ae9ee4/meta
 
 
 ---

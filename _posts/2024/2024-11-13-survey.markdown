@@ -1,9 +1,9 @@
 ---
 layout: post
-title:  "AI-driven inverse design of materials: Past, present and future"
-date:   2024-11-13 18:04:44 +00:00
+title:  "AI-driven inverse design of materials: Past, present, and future"
+date:   2025-03-01 00:00:00 +00:00
 image: images/2024/survey.png
-categories: 2024_research
+categories: 2025_research
 author: Ze-Feng Gao
 authors: "Xiao-Qi Han, Xin-De Wang, Meng-Yuan Xu, Zhen Feng, Bo-Wen Yao, Peng-Jie Guo, <strong>Ze-Feng Gao<sup>#</sup></strong>, Zhong-Yi Lu<sup>#</sup>"
 venue: "Chinese Physics Letters, 42(2): 027403"
