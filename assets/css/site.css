@@ -445,6 +445,25 @@ strong {
   border-block: 1px solid var(--line);
 }
 
+.home-bio-section {
+  padding-block: 54px;
+}
+
+.home-bio {
+  max-width: 1080px;
+}
+
+.home-bio p {
+  margin: 0;
+  color: #3d4852;
+  font-size: 16px;
+  line-height: 1.95;
+}
+
+.home-bio p + p {
+  margin-top: 14px;
+}
+
 .section-heading {
   display: flex;
   align-items: end;
