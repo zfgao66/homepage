@@ -1,0 +1,11 @@
+[
+  {"id":"10.20.6.38","name":"Pauli","location":"609","position":"左"},
+  {"id":"10.20.6.11","name":"609 中间","location":"609","position":"中"},
+  {"id":"10.20.6.12","name":"609 右侧","location":"609","position":"右"},
+  {"id":"10.20.5.8","name":"Anderson","location":"503","position":"桌上"},
+  {"id":"10.20.5.73","name":"Euler","location":"503","position":"桌上"},
+  {"id":"10.20.5.100","name":"Nature","location":"503","position":"桌下靠外"},
+  {"id":"10.20.5.51","name":"zfgao","location":"503","position":"桌下靠墙"},
+  {"id":"10.20.6.135","name":"光电实验","location":"光电实验","position":""},
+  {"id":"10.20.1.21","name":"H100","location":"理工楼","position":""}
+]

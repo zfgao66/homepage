@@ -1,0 +1,28 @@
+[Unit]
+Description=RUC-Nova read-only machine telemetry
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=machines-monitor
+Group=machines-monitor
+EnvironmentFile=/etc/machines-monitor.env
+ExecStart=/usr/bin/python3 /opt/machines-monitor/agent.py
+Restart=always
+RestartSec=10
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+Nice=10
+MemoryMax=128M
+CPUQuota=10%
+
+[Install]
+WantedBy=multi-user.target
