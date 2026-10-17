@@ -9,8 +9,9 @@
     timeZone: "Asia/Shanghai", month: "2-digit", day: "2-digit", hour12: false,
     hour: "2-digit", minute: "2-digit", second: "2-digit"
   });
-  let inventory = [], snapshots = new Map(), fetchedAt = 0, haveResponse = false, failed = false, busy = false;
-  let preferredStatusUrl = config.statusUrl;
+  const cacheKey = "machines.latest.v1", requestTimeout = 8000;
+  const staleAfter = config.staleAfterSeconds || 300;
+  let inventory = [], snapshots = new Map(), fetchedAt = 0, haveResponse = false, failed = false, busy = false, fromCache = false;
 
   function element(tag, className, text) {
     const node = document.createElement(tag);
@@ -19,8 +20,9 @@
     return node;
   }
   function state(machine) {
-    if (machine?.status === "online" && number(machine.age_seconds)) {
-      return machine.age_seconds + (performance.now() - fetchedAt) / 1000 <= (config.staleAfterSeconds || 120) ? "online" : "stale";
+    if (machine?.telemetry && ["online", "stale"].includes(machine.status)) {
+      return number(machine.age_seconds) && machine.age_seconds >= 0
+        && machine.age_seconds + (performance.now() - fetchedAt) / 1000 <= staleAfter ? "online" : "stale";
     }
     return machine?.status || "waiting";
   }
@@ -146,8 +148,8 @@
     const machine = snapshots.get(item.id), current = state(machine);
     const row = element("tr"), ip = element("th"); ip.scope = "row";
     ip.append(element("span", "machine-ip", item.id));
-    const badge = element("span", "machine-badge", current === "online" ? "占用已更新" : "占用未更新");
-    badge.dataset.state = current; ip.append(badge);
+    const badge = element("span", "machine-badge", current === "online" ? fromCache ? "上次数据" : "占用已更新" : "占用未更新");
+    badge.dataset.state = fromCache && current === "online" ? "cached" : current; ip.append(badge);
     const sampledAt = machine?.telemetry?.observed_at;
     if (sampledAt && Number.isFinite(Date.parse(sampledAt))) {
       ip.append(element("span", "machine-last", `最近采样 ${sampleFormat.format(new Date(sampledAt))}`));
@@ -171,48 +173,107 @@
     const online = inventory.filter(item => state(snapshots.get(item.id)) === "online").length;
     message.dataset.warning = String(Boolean(config.reportingPending || failed || (haveResponse && online < inventory.length)));
     message.textContent = config.reportingPending ? "实时自动更新尚未接通。显卡配置已核实；占用数据未更新时显示“—”，不代表空闲。"
-      : failed ? "暂时无法连接实时数据服务，正在重试。占用情况暂无法确认，不代表显卡故障或空闲。"
-      : !haveResponse ? "正在获取服务器资源数据…"
-      : online < inventory.length ? `${online} / ${inventory.length} 台服务器的占用已更新，其余暂不可用。每 30 秒刷新。`
-      : "每 30 秒刷新 GPU、CPU、内存和硬盘使用情况。";
+      : failed ? haveResponse && online > 0 ? "暂时无法更新，正显示上次数据；请查看采样时间。每 2 分钟自动重试。"
+        : "8 秒内未能获取实时数据，等待已结束。占用情况暂无法确认；可手动刷新，每 2 分钟也会自动重试。"
+      : fromCache ? "已显示上次成功获取的数据，正在后台更新。请查看下方采样时间。"
+      : !haveResponse ? "正在连接实时数据（最多等待 8 秒）…"
+      : online < inventory.length ? `${online} / ${inventory.length} 台服务器的占用已更新，其余暂不可用。每 2 分钟刷新。`
+      : "每 2 分钟更新 GPU、CPU、内存和硬盘使用情况；采样时间见各台服务器。";
   }
-  async function loadStatus(url) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000);
+  function validPayload(payload) {
+    return payload?.schema_version === 1 && Array.isArray(payload.machines) && payload.machines.length > 0
+      && payload.machines.every(machine => machine && typeof machine.id === "string"
+        && ["online", "stale", "waiting"].includes(machine.status)
+        && (!machine.telemetry || (Array.isArray(machine.telemetry.gpus)
+          && machine.telemetry.gpus.every(gpu => gpu && typeof gpu === "object")
+          && (machine.telemetry.cpu_model == null || typeof machine.telemetry.cpu_model === "string")
+          && (machine.telemetry.disks == null || (Array.isArray(machine.telemetry.disks)
+            && machine.telemetry.disks.every(disk => disk && typeof disk.mountpoint === "string"))))));
+  }
+  function restoreLatest() {
     try {
+      const raw = localStorage.getItem(cacheKey);
+      if (!raw || raw.length > 262144) return;
+      const cached = JSON.parse(raw), elapsed = (Date.now() - cached.savedAt) / 1000;
+      if (!number(cached.savedAt) || elapsed < 0 || !validPayload(cached.payload)) return;
+      snapshots = new Map(cached.payload.machines.map(machine => [machine.id, {
+        ...machine, age_seconds: number(machine.age_seconds) ? machine.age_seconds + elapsed : null
+      }]));
+      fetchedAt = performance.now(); haveResponse = true; fromCache = true;
+    } catch { /* Storage can be disabled by browser privacy settings. */ }
+  }
+  function saveLatest(payload) {
+    try { localStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), payload })); }
+    catch { /* A blocked cache must not prevent live updates. */ }
+  }
+  async function loadStatus(url, controller) {
+    let timeout;
+    const read = (async () => {
       const response = await fetch(url, { cache: "no-store", credentials: "omit", signal: controller.signal });
       if (!response.ok) throw new Error("Status unavailable");
       const payload = await response.json();
-      if (payload.schema_version !== 1 || !Array.isArray(payload.machines) || !payload.machines.length || payload.machines.some(machine => !machine.id || !["online", "stale", "waiting"].includes(machine.status) || (machine.telemetry && !Array.isArray(machine.telemetry.gpus)))) throw new Error("Invalid status");
+      if (!validPayload(payload)) throw new Error("Invalid status");
       return payload;
-    } finally { clearTimeout(timeout); }
+    })();
+    const deadline = new Promise((_, reject) => {
+      timeout = setTimeout(() => { reject(new Error("Status timeout")); controller.abort(); }, requestTimeout);
+    });
+    try {
+      // Bound both headers and body reads, even if a browser ignores abort().
+      return await Promise.race([read, deadline]);
+    } finally { clearTimeout(timeout); controller.abort(); }
+  }
+  function firstSnapshot(urls, controllers) {
+    return new Promise((resolve, reject) => {
+      let remaining = urls.length, settled = false;
+      const old = [];
+      if (!remaining) { reject(new Error("No status routes")); return; }
+      urls.forEach((url, index) => {
+        loadStatus(url, controllers[index]).then(payload => {
+          const fresh = payload.machines.some(machine => machine.status !== "waiting" && machine.telemetry && number(machine.age_seconds)
+            && machine.age_seconds >= 0 && machine.age_seconds <= staleAfter);
+          if (fresh && !settled) { settled = true; resolve(payload); }
+          else old.push(payload);
+        }).catch(() => {}).finally(() => {
+          remaining--;
+          if (remaining || settled) return;
+          if (old.length) {
+            const age = payload => Math.min(...payload.machines.map(machine => number(machine.age_seconds) ? machine.age_seconds : Infinity));
+            old.sort((a, b) => age(a) - age(b)); resolve(old[0]);
+          } else reject(new Error("No status route available"));
+        });
+      });
+    });
   }
   async function refresh() {
     if (busy) return;
     busy = true; $("refresh-machines").disabled = true;
+    const controllers = [];
     try {
-      const urls = [...new Set([preferredStatusUrl, ...(config.statusUrls || [config.statusUrl])].filter(Boolean))];
-      let payload = null;
-      for (const url of urls) {
-        try {
-          payload = await loadStatus(url);
-          preferredStatusUrl = url;
-          break;
-        } catch { /* Try the alternate route; failed requests never establish availability. */ }
-      }
-      if (!payload) throw new Error("No status route available");
+      const urls = [...new Set([config.statusUrl, ...(config.statusUrls || [])].filter(Boolean))];
+      controllers.push(...urls.map(() => new AbortController()));
+      const payload = await firstSnapshot(urls, controllers);
       snapshots = new Map(payload.machines.map(machine => [machine.id, machine]));
-      fetchedAt = performance.now(); haveResponse = true; failed = false;
+      fetchedAt = performance.now(); haveResponse = true; failed = false; fromCache = false;
+      saveLatest(payload);
     } catch { failed = true; }
-    finally { busy = false; $("refresh-machines").disabled = false; render(); }
+    finally { controllers.forEach(controller => controller.abort()); busy = false; $("refresh-machines").disabled = false; render(); }
   }
   $("refresh-machines").addEventListener("click", refresh);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
-  fetch("/assets/machines/inventory.json?v=ip2", { cache: "no-store", credentials: "omit" })
-    .then(response => { if (!response.ok) throw new Error("Inventory unavailable"); return response.json(); })
-    .then(data => { inventory = data; render(); })
-    .catch(() => { $("machines-list").replaceChildren(); $("machines-message").textContent = "服务器列表读取失败，请刷新页面。"; });
+  try {
+    const embedded = JSON.parse($("machines-inventory")?.textContent || "null");
+    if (Array.isArray(embedded) && embedded.length) inventory = embedded;
+  } catch { /* Older pages can still load the external inventory. */ }
+  restoreLatest();
+  render();
+  if (!inventory.length) {
+    fetch("/assets/machines/inventory.json?v=ip2", { cache: "no-store", credentials: "omit" })
+      .then(response => { if (!response.ok) throw new Error("Inventory unavailable"); return response.json(); })
+      .then(data => { inventory = data; render(); })
+      .catch(() => { $("machines-list").replaceChildren(); $("machines-message").textContent = "服务器列表读取失败，请刷新页面。"; });
+  }
   refresh();
-  setInterval(() => { if (!document.hidden) refresh(); }, config.refreshMs || 30000);
+  setInterval(() => { if (!document.hidden) refresh(); }, config.refreshMs || 120000);
   setInterval(() => { if (!document.hidden && haveResponse) render(); }, 5000);
 })();

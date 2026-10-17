@@ -49,6 +49,19 @@ class DirectStatusTests(unittest.TestCase):
                     self.assertEqual(response.headers['Cache-Control'], 'no-store')
                     self.assertEqual(response.headers.get('Access-Control-Allow-Origin'), origin if origin in status_api.ALLOWED_ORIGINS else None)
                     self.assertEqual(json.load(response)['schema_version'], 1)
+            preflight = urllib.request.Request(url, method='OPTIONS', headers={
+                'Origin': 'http://gaozefeng.tech', 'Access-Control-Request-Method': 'GET',
+                'Access-Control-Request-Headers': 'cache-control, pragma'})
+            with urllib.request.urlopen(preflight) as response:
+                self.assertEqual(response.status, 204)
+                self.assertEqual(response.read(), b'')
+                self.assertEqual(response.headers.get('Access-Control-Allow-Origin'), 'http://gaozefeng.tech')
+                self.assertIn('GET', response.headers['Access-Control-Allow-Methods'])
+                self.assertIn('Cache-Control', response.headers['Access-Control-Allow-Headers'])
+            with self.assertRaises(urllib.error.HTTPError) as error:
+                urllib.request.urlopen(urllib.request.Request(url, method='OPTIONS', headers={
+                    'Origin': 'https://unrelated.test', 'Access-Control-Request-Method': 'GET'}))
+            self.assertEqual(error.exception.code, 403)
             with self.assertRaises(urllib.error.HTTPError) as error:
                 urllib.request.urlopen(urllib.request.Request(url, data=b'{}', method='POST'))
             self.assertEqual(error.exception.code, 501)

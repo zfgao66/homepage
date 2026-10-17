@@ -54,7 +54,7 @@ def create_server(store, port):
             pass
 
         def reply(self, status, body):
-            payload = json.dumps(body, allow_nan=False).encode()
+            payload = b'' if status == 204 else json.dumps(body, allow_nan=False).encode()
             self.send_response(status)
             self.send_header('Content-Type', 'application/json; charset=utf-8')
             self.send_header('Content-Length', str(len(payload)))
@@ -64,9 +64,25 @@ def create_server(store, port):
             origin = self.headers.get('Origin')
             if origin in ALLOWED_ORIGINS:
                 self.send_header('Access-Control-Allow-Origin', origin)
+                if self.command == 'OPTIONS' and status == 204:
+                    self.send_header('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS')
+                    self.send_header('Access-Control-Allow-Headers', 'Accept, Cache-Control, Content-Type, Pragma')
+                    self.send_header('Access-Control-Max-Age', '600')
             self.end_headers()
             if self.command != 'HEAD':
                 self.wfile.write(payload)
+
+        def do_OPTIONS(self):
+            if urllib.parse.urlsplit(self.path).path != '/api/status':
+                self.reply(404, {'error': 'Not found'})
+                return
+            requested = {item.strip().lower() for item in self.headers.get('Access-Control-Request-Headers', '').split(',') if item.strip()}
+            if (self.headers.get('Origin') not in ALLOWED_ORIGINS
+                    or self.headers.get('Access-Control-Request-Method', 'GET').upper() not in ('GET', 'HEAD')
+                    or not requested.issubset({'accept', 'cache-control', 'content-type', 'pragma'})):
+                self.reply(403, {'error': 'Preflight not allowed'})
+                return
+            self.reply(204, None)
 
         def do_GET(self):
             if urllib.parse.urlsplit(self.path).path != '/api/status':
