@@ -25,19 +25,19 @@ expect {
     append transcript $expect_out(buffer)
     incr auth
     if {$auth > 1} {puts "Authentication rejected"; exit 71}
-    send -- "$env(MONITOR_PASSWORD)\r"
+    send -- "$env(MONITOR_PASSWORD)\n"
     exp_continue
   }
   -exact {__MONITOR_SUDO__} {
     append transcript $expect_out(buffer)
     incr sudoauth
     if {$sudoauth > 1} {puts "Sudo rejected"; exit 72}
-    send -- "$env(MONITOR_PASSWORD)\r"
+    send -- "$env(MONITOR_PASSWORD)\n"
     exp_continue
   }
   -exact {__MONITOR_DEPLOY_READY__} {
     append transcript $expect_out(buffer)
-    send -- "$env(MONITOR_DEPLOYMENT)\r"
+    send -- "$env(MONITOR_DEPLOYMENT)\n"
     exp_continue
   }
   timeout {
