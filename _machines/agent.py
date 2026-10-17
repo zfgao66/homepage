@@ -8,6 +8,7 @@ import json
 import os
 import pathlib
 import random
+import re
 import shutil
 import subprocess
 import sys
@@ -43,6 +44,75 @@ def parse_gpu_csv(text):
     return gpus
 
 
+def parse_cpu_info(text):
+    records = []
+    for block in re.split(r'\n\s*\n', text.strip()):
+        record = dict(line.split(':', 1) for line in block.splitlines() if ':' in line)
+        record = {key.strip(): value.strip() for key, value in record.items()}
+        if 'processor' in record:
+            records.append(record)
+    models = list(dict.fromkeys(record.get('model name') or record.get('Processor') for record in records))
+    models = [model for model in models if model]
+    have_core_ids = records and all(record.get('physical id') is not None and record.get('core id') is not None for record in records)
+    physical = len({(record['physical id'], record['core id']) for record in records}) if have_core_ids else None
+    sockets = len({record['physical id'] for record in records}) if records and all('physical id' in record for record in records) else None
+    return {'cpu_model': ' / '.join(models)[:200] or None,
+            'cpu_physical_cores': physical, 'cpu_logical_cpus': len(records) or os.cpu_count(),
+            'cpu_sockets': sockets}
+
+
+def local_mounts(text):
+    candidates = []
+    allowed = {'ext2', 'ext3', 'ext4', 'xfs', 'btrfs', 'f2fs', 'jfs', 'reiserfs', 'zfs'}
+    for line in text.splitlines():
+        parts = line.split()
+        try:
+            separator = parts.index('-')
+            filesystem, source = parts[separator + 1:separator + 3]
+            mount = re.sub(r'\\([0-7]{3})', lambda match: chr(int(match.group(1), 8)), parts[4])
+            if not mount.startswith('/') or len(mount) > 240 or mount == '/boot' or mount.startswith('/boot/'):
+                continue
+            if filesystem not in allowed and not (filesystem == 'overlay' and mount == '/'):
+                continue
+            if not source.startswith('/dev/') and filesystem not in ('zfs', 'overlay'):
+                continue
+            if 'ro' in parts[5].split(',') and mount != '/':
+                continue
+            candidates.append({'mountpoint': mount, 'filesystem': filesystem, 'identity': parts[2]})
+        except (ValueError, IndexError):
+            continue
+    seen, result = set(), []
+    for mount in sorted(candidates, key=lambda item: (item['mountpoint'] != '/', len(item['mountpoint']), item['mountpoint'])):
+        if mount['identity'] not in seen:
+            seen.add(mount['identity'])
+            result.append(mount)
+    return result[:32]
+
+
+def collect_disks(mountinfo=pathlib.Path('/proc/self/mountinfo'), statvfs=os.statvfs):
+    try:
+        mounts = local_mounts(mountinfo.read_text())
+    except OSError:
+        return [], 'query_failed'
+    disks, failures = [], 0
+    for mount in mounts:
+        disk = {key: mount[key] for key in ('mountpoint', 'filesystem')}
+        disk.update(total_mib=None, used_mib=None, available_mib=None)
+        try:
+            info = statvfs(mount['mountpoint'])
+            block_size = info.f_frsize or info.f_bsize
+            if block_size <= 0 or info.f_blocks <= 0:
+                raise ValueError('Invalid filesystem size')
+            disk.update(total_mib=round(info.f_blocks * block_size / 1048576, 1),
+                        used_mib=round(max(0, info.f_blocks - info.f_bfree) * block_size / 1048576, 1),
+                        available_mib=round(max(0, info.f_bavail) * block_size / 1048576, 1))
+        except (OSError, ValueError):
+            failures += 1
+        disks.append(disk)
+    error = 'query_failed' if not disks or failures == len(disks) else 'partial' if failures else None
+    return disks, error
+
+
 def snapshot(machine_id):
     total_before, idle_before = cpu_times()
     time.sleep(0.3)
@@ -63,6 +133,11 @@ def snapshot(machine_id):
         'memory_total_mib': round(memory['MemTotal'] / 1024, 1),
         'gpus': [], 'gpu_error': None,
     }
+    try:
+        result.update(parse_cpu_info(pathlib.Path('/proc/cpuinfo').read_text()))
+    except OSError:
+        result.update(cpu_model=None, cpu_physical_cores=None, cpu_logical_cpus=os.cpu_count(), cpu_sockets=None)
+    result['disks'], result['disk_error'] = collect_disks()
     binary = shutil.which('nvidia-smi')
     if not binary:
         result['gpu_error'] = 'not_installed'

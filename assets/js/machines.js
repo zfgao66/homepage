@@ -4,6 +4,7 @@
   const $ = id => document.getElementById(id);
   const number = value => typeof value === "number" && Number.isFinite(value);
   const gib = value => number(value) ? (value / 1024).toFixed(1) : "—";
+  const capacity = value => !number(value) ? "—" : value >= 1048576 ? `${(value / 1048576).toFixed(1)} TiB` : `${(value / 1024).toFixed(1)} GiB`;
   const sampleFormat = new Intl.DateTimeFormat("zh-CN", {
     timeZone: "Asia/Shanghai", month: "2-digit", day: "2-digit", hour12: false,
     hour: "2-digit", minute: "2-digit", second: "2-digit"
@@ -56,6 +57,58 @@
     });
     table.append(thead, tbody); return table;
   }
+  function resourceLine(label, value, ratio) {
+    const line = element("div", "machine-resource");
+    const values = element("div", "resource-values");
+    values.append(element("span", "resource-label", label), element("span", "", value));
+    line.append(values);
+    if (number(ratio)) {
+      const track = element("div", "resource-track"), fill = element("span");
+      track.setAttribute("aria-hidden", "true");
+      fill.style.width = `${Math.min(100, Math.max(0, ratio))}%`;
+      fill.dataset.high = String(ratio >= 90); track.append(fill); line.append(track);
+    }
+    return line;
+  }
+  function resources(data, current) {
+    const live = current === "online";
+    const section = element("div", "machine-resources");
+    const cpu = live && number(data?.cpu_percent) ? data.cpu_percent : null;
+    section.append(resourceLine("CPU", number(cpu) ? `${cpu.toFixed(1)}%` : "—", cpu));
+    const used = live ? data?.memory_used_mib : null, total = data?.memory_total_mib;
+    const ratio = number(used) && number(total) && total > 0 ? used / total * 100 : null;
+    section.append(resourceLine("内存", `${gib(used)} / ${gib(total)} GiB`, ratio));
+    const diskSection = element("div", "machine-disks");
+    diskSection.append(element("span", "resource-label", "硬盘 · 可用 / 总量"));
+    if (data?.disks?.length) {
+      data.disks.forEach(disk => {
+        const free = live ? disk.available_mib : null;
+        const line = element("div", "machine-disk");
+        const low = number(free) && number(disk.total_mib) && disk.total_mib > 0 && free / disk.total_mib < 0.1;
+        line.dataset.low = String(low);
+        const label = disk.mountpoint === "/" ? "系统盘 /" : disk.mountpoint;
+        line.append(element("span", "disk-mount", label), element("span", "disk-capacity", `${capacity(free)} / ${capacity(disk.total_mib)}`));
+        if (low) line.append(element("span", "disk-warning", "空间不足 10%"));
+        diskSection.append(line);
+      });
+      if (data.disk_error) diskSection.append(element("span", "resource-unknown", data.disk_error === "query_failed" ? "硬盘信息暂不可读" : "部分硬盘信息暂不可读"));
+    } else {
+      diskSection.append(element("span", "resource-unknown", "暂未获取"));
+    }
+    section.append(diskSection); return section;
+  }
+  function cpuConfiguration(data) {
+    const section = element("div", "machine-cpu-config");
+    section.append(element("span", "resource-label", "CPU 配置"));
+    const model = data?.cpu_model?.replace(/\(R\)|\(TM\)/g, "").replace(/\s+CPU\s+@\s+/, " · ");
+    section.append(element("span", "cpu-model", model || "暂未获取"));
+    const cores = number(data?.cpu_physical_cores) ? `${data.cpu_physical_cores} 核` : null;
+    const threads = number(data?.cpu_logical_cpus) ? `${data.cpu_logical_cpus} 线程` : null;
+    const sockets = number(data?.cpu_sockets) && data.cpu_sockets > 1 ? `${data.cpu_sockets} 颗 CPU` : null;
+    const counts = [sockets, cores, threads].filter(Boolean);
+    if (counts.length) section.append(element("span", "cpu-counts", counts.join(" · ")));
+    return section;
+  }
   function machineRow(item) {
     const machine = snapshots.get(item.id), current = state(machine);
     const row = element("tr"), ip = element("th"); ip.scope = "row";
@@ -66,8 +119,10 @@
     if (sampledAt && Number.isFinite(Date.parse(sampledAt))) {
       ip.append(element("span", "machine-last", `最近采样 ${sampleFormat.format(new Date(sampledAt))}`));
     }
+    ip.append(resources(machine?.telemetry, current));
     const hardware = element("td");
     hardware.append(element("span", "machine-model", item.gpu_model), element("span", "machine-count", `${item.gpu_count} 张`));
+    hardware.append(cpuConfiguration(machine?.telemetry));
     const usage = element("td");
     if (machine?.telemetry?.gpus?.length) {
       usage.append(gpuTable(machine.telemetry.gpus, current));
@@ -83,9 +138,9 @@
     message.dataset.warning = String(Boolean(config.reportingPending || failed || (haveResponse && online < inventory.length)));
     message.textContent = config.reportingPending ? "实时自动更新尚未接通。显卡配置已核实；占用数据未更新时显示“—”，不代表空闲。"
       : failed ? "暂时无法获取最新占用，正在重试。显卡配置仍可查看。"
-      : !haveResponse ? "正在获取 GPU 占用数据…"
+      : !haveResponse ? "正在获取服务器资源数据…"
       : online < inventory.length ? `${online} / ${inventory.length} 台服务器的占用已更新，其余暂不可用。每 30 秒刷新。`
-      : "每 30 秒刷新 GPU 占用数据。";
+      : "每 30 秒刷新 GPU、CPU、内存和硬盘使用情况。";
   }
   async function refresh() {
     if (busy) return;
