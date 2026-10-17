@@ -1,0 +1,29 @@
+[Unit]
+Description=RUC-Nova encrypted connection for read-only GPU collection
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=machines-relay
+Group=machines-relay
+ExecStart=/usr/bin/ssh -N -T -i /var/lib/machines-relay/id_ed25519 -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=/etc/machines-relay/known_hosts -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o ConnectTimeout=10 -R 127.0.0.1:22638:127.0.0.1:22 machines-tunnel@43.155.209.84
+Restart=always
+RestartSec=10
+StateDirectory=machines-relay
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+Nice=10
+MemoryMax=64M
+CPUQuota=10%
+
+[Install]
+WantedBy=multi-user.target

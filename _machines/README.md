@@ -1,61 +1,83 @@
-# 服务器状态看板
+# GPU 使用情况
 
-访问地址为 `http://gaozefeng.tech/machines/`。页面不加入主导航，并通过 `noindex` 和 `sitemap: false` 避免主动收录。知道地址的人可以访问；页面不提供账号密码或远程控制操作。
+访问地址：`http://gaozefeng.tech/machines/`。首页及导航不放入口；设置了 `noindex`、`sitemap: false`。知道地址的人可以查看，页面没有登录凭证或远程操作功能。
 
-页面只按 IP 显示已经核实的 7 台服务器，不显示机器别名或机房名称。显卡型号及数量保存在 `assets/machines/inventory.json`，来自真实机器采样；即使占用数据中断，也会保留已确认的硬件配置。展示顺序为 `10.20.6.38`、`10.20.5.8`、`10.20.5.73`、`10.20.5.100`、`10.20.5.51`、`10.20.6.135`、`10.20.1.21`，共 32 张卡。其余两台尚未接通的机器不显示在网页列表中。
+只按 IP 显示用户指定的 7 台服务器：
 
-## 数据流
+| IP | 显卡 | 数量 |
+| --- | --- | --- |
+| 10.20.6.38 | RTX 3090 | 4 |
+| 10.20.5.8 | RTX 3090 | 4 |
+| 10.20.5.73 | RTX 4090 | 4 |
+| 10.20.5.100 | RTX 4090 | 4 |
+| 10.20.5.51 | RTX 4090 | 4 |
+| 10.20.6.135 | RTX 3090 | 4 |
+| 10.20.1.21 | H100 | 8 |
 
-各台 Linux 服务器上的 `agent.py` 每约 30 秒读取 GPU、CPU 和内存指标，通过 HTTPS 主动上报。网页读取云端 `/api/status`，不连接 SSH，也不持有上报凭证。
+共 32 张卡。型号和数量已通过真实采样核实，保存在 `assets/machines/inventory.json`；占用中断时仍显示硬件配置。`10.20.5.8` 有一张卡无法返回指标，保留“编号未知 / 读取异常”，不推测编号、不按零占用处理。`10.20.6.11` 和 `10.20.6.12` 尚未连接，不在网页列表或本次采集中。
 
-上报服务为 `https://ruc-nova-machines-status.classyjay7.chatgpt.site`，源码位于本次项目的 `status-api` 目录。Sites 项目 ID 为 `appgprj_6ad30235451881918763f042d3967530`。云端只保存每台机器最近一次经过校验的指标。
+## 正在运行的数据链路
 
-每台机器使用独立的上报 token，服务器凭证在 `/etc/machines-monitor.env`，权限为 `0600`；云端主密钥使用 Sites secret `MACHINES_INGEST_SECRET`。这些值不进入代码仓库或网页。
+1. `10.20.6.38` 上的 `machines-relay.service` 主动建立到公网服务器 `43.155.209.84` 的 SSH 加密连接。
+2. 连接只在公网服务器本机的 `127.0.0.1:22638` 监听，指向内网中转机的 SSH。没有向公网开放内网 SSH 端口。
+3. 公网服务器的 `machines-collector.service` 每约 30 秒，通过该连接及受限 SSH 转发，读取上述 7 台机器的真实 GPU 指标。
+4. 公网服务器将每台机器的新采样通过 HTTPS 写入云端状态服务。
+5. GitHub Pages 上的网页每 30 秒读取 `/api/status` 并显示结果。正常情况下，网页上的采样会有约 30～60 秒的延迟。
+
+网页关闭、管理电脑退出后，采集仍由两台服务器上的系统服务运行；两个服务都设置了开机自启和异常重连。
+
+云端服务为 `https://ruc-nova-machines-status.classyjay7.chatgpt.site`，Sites 项目 ID 为 `appgprj_6ad30235451881918763f042d3967530`，源码在本次工作目录的 `status-api` 项目中。云端仅保留各机器最新一次经过校验的采样。
+
+该方案不需要修改 DNS。公网服务器直连原公共跳板机 `202.112.116.48:52622` 的尝试超时，最终使用上述内网主动回连。公共跳板机上的本次临时采集密钥已经移除。此前准备但未启用的 `machines-api.gaozefeng.tech` 自定义域名已撤销。
+
+## 账号、密钥与权限
+
+- 公网采集进程以无登录权限、无 sudo 权限的 `machines-collector` 用户运行。
+- 公网私钥位于 `/var/lib/machines-collector/id_ed25519`，只保存在该机器上。内网机器的对应公钥被强制限制为执行 `/opt/machines-monitor/agent.py --once --machine-id <IP>`。
+- 中转机的该公钥另外只允许连接清单中 7 个 IP 的 SSH 端口。其余目标不在允许列表中。
+- 内网连接进程以无登录权限、无 sudo 权限的 `machines-relay` 用户运行，私钥只在该内网机的 `/var/lib/machines-relay/id_ed25519`。
+- 公网的 `machines-tunnel` 系统账号无登录权限、无 sudo 权限，对应密钥只允许使用固定的本机回连端口，不能执行命令。
+- 每台机器的独立上报 token 位于公网 `/etc/machines-collector/config.json`，权限 `0600`；通过 systemd `LoadCredential` 提供给进程。云端主密钥由 Sites secret `MACHINES_INGEST_SECRET` 保管。
+- 登录密码、私钥、token 不进入仓库或网页。运行时 SSH 主机密钥严格核对，HTTPS 证书正常校验。
 
 ## 状态含义
 
-- 占用已更新：最近 120 秒内收到过指标。
-- 占用未更新：尚未收到指标，或超过 120 秒未收到新指标。过期的占用率及已用显存显示“—”，不是零占用；已识别的总显存继续显示。
-- 页面只保留 IP、显卡型号与数量、逐卡占用率及显存、最近实际采样时间，不显示 CPU、温度、功耗或机房筛选。
-- GPU 读取异常：查询失败时保留未知值，不能按零占用处理。整机查询失败后，会按 PCI 地址逐卡查询，以保留其他卡的正常数据。无法确认编号时显示“编号未知”，不推测编号。
+- 占用已更新：最近 120 秒内收到过新指标。
+- 占用未更新：尚无数据，或超过 120 秒没有新指标。过期占用率和已用显存显示“—”，不是空闲；已确认的总显存仍显示。
+- 最近采样：指标实际生成时间，北京时间，不使用网页刷新时间代替。
+- 读取异常：某卡无法查询。整机查询失败时逐卡查询，保留其他卡正常数据。
 
-## 服务器上的服务
+采集器拒绝机器 IP 不符、过期或未来时间异常的采样。单台失败不阻止其他机器更新；失败重试逐步延长，最长约 5 分钟。
 
-代码：`/opt/machines-monitor/agent.py`。服务：`machines-agent.service`。采集程序使用无登录权限、无 sudo 权限的 `machines-monitor` 系统账号。
+## 运维
 
-```sh
-sudo systemctl status machines-agent.service
-sudo journalctl -u machines-agent.service --no-pager -n 30
-```
-
-需要停止上报时：
+公网服务器上：
 
 ```sh
-sudo systemctl disable --now machines-agent.service
+sudo systemctl status machines-collector.service
+sudo journalctl -u machines-collector.service --no-pager -n 30
+sudo systemctl restart machines-collector.service
 ```
 
-## 本地验证与维护
+内网中转机 `10.20.6.38` 上：
+
+```sh
+sudo systemctl status machines-relay.service
+sudo journalctl -u machines-relay.service --no-pager -n 30
+sudo systemctl restart machines-relay.service
+```
+
+暂停本功能时，停用以上两个服务；云端已有数据超过两分钟后，网页自动显示占用未更新。
+
+旧的 `machines-agent.service` 已在 7 台机器上停止并禁用。保留 `/opt/machines-monitor/agent.py` 作为受限 SSH 采样命令，不再由内网机器直接访问云端。
+
+本仓库的 `collector_setup.py`、`relay_setup.py`、`authorize_collector.py` 为可重复执行的安装维护程序，通过 `ssh_admin.py` 从管道接收配置。保留已有其他用户授权，不修改全局 SSH 规则。新增机器需同步更新采集器及受限转发的 IP 清单、网页库存、云端 `lib/inventory.ts`，并配置对应采样公钥和独立上报凭证。
+
+## 本地验证
 
 ```sh
 python3 -m unittest discover -s _machines -p 'test_*.py'
 node --check assets/js/machines.js
-python3 _machines/manage.py sample --output /tmp/machines-samples.json
 ```
 
-维护程序在交互模式中隐藏密码输入；自动化模式仅从管道接收临时配置。运行时凭证不应通过命令行参数或仓库文件传递。
-
-新增机器时，同步更新 `assets/machines/inventory.json` 和云端 `lib/inventory.ts`，为新机器配置独立上报凭证，再安装采集服务。
-
-## 待完成的域名接入
-
-页面已发布，但实验室服务器向默认 `chatgpt.site` 主机自动上报时收到云端的 HTTP 403；经默认服务端认证方式测试仍未解决。现已申请 `machines-api.gaozefeng.tech`，等待域名管理员在 DNSPod 的 `gaozefeng.tech` 解析中添加以下三条记录。它们是公开的 DNS 验证记录，不是服务器或上报密码。
-
-| 类型 | 主机记录 | 记录值 |
-| --- | --- | --- |
-| CNAME | machines-api | custom-domains.chatgpt.site. |
-| TXT | _openai-site-verification.machines-api | openai-site-verification=bQFWpL_di42LZhijSArRnHpleCOdGXJgYldhMcsDm-M |
-| TXT | _cf-custom-hostname.machines-api | f8e650c4-ce6e-4ed8-a667-0d5e7269511a |
-
-自定义域名 ID：`appgdom_6ad306ea8af48191aed57ccf5636d2b2`。添加记录后，需要核对 Sites 域名和证书状态、验证实验室服务器对新地址的访问，再更新服务器的 `MACHINES_INGEST_URL` 及网页的 `statusUrl`。确认服务器持续自动上报成功后，将 `assets/js/machines-config.js` 的 `reportingPending` 改为 `false`，移除接入尚未完成的提示。旧的上报 token 可以沿用，不需要重置服务器登录密码。
-
-目前只完成过从管理电脑发起的真实采样写入验证，不能据此声称服务器持续上报已成功。若暂时没有后续上报，页面会在 120 秒后显示数据中断。`10.20.6.11` 与 `10.20.6.12` 仍未接入；`10.20.5.8` 的一张 3090 无法返回指标，其余三张能正常查询。
+测试覆盖未知 GPU 指标、单卡查询失败、跨机器误报、过期采样和单机连接失败。上线验证另检查了服务器日志、云端连续多轮采样时间及正式网页的实际展示。

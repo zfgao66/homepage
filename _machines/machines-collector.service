@@ -1,0 +1,33 @@
+[Unit]
+Description=RUC-Nova read-only GPU collection through SSH gateway
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=machines-collector
+Group=machines-collector
+LoadCredential=config.json:/etc/machines-collector/config.json
+ExecStart=/usr/bin/python3 -u /opt/machines-collector/collector.py --config %d/config.json
+Restart=on-failure
+RestartSec=10
+StateDirectory=machines-collector
+StateDirectoryMode=0700
+RuntimeDirectory=machines-collector
+RuntimeDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+Nice=10
+MemoryMax=256M
+CPUQuota=20%
+
+[Install]
+WantedBy=multi-user.target
