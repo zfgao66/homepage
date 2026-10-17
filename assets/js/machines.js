@@ -23,6 +23,38 @@
     }
     return machine?.status || "waiting";
   }
+  function renderSummary() {
+    if (!inventory.length) return;
+    const counts = { total: 0, free: 0, used: 0, unknown: 0 };
+    inventory.forEach(item => {
+      const total = item.gpu_count;
+      counts.total += total;
+      const machine = snapshots.get(item.id);
+      if (state(machine) !== "online") { counts.unknown += total; return; }
+      // Missing, duplicated, or unreadable card indices cannot establish availability.
+      const cards = new Map();
+      (machine.telemetry?.gpus || []).forEach(gpu => {
+        if (!Number.isInteger(gpu.index) || gpu.index < 0 || gpu.index >= total) return;
+        cards.set(gpu.index, cards.has(gpu.index) ? null : gpu);
+      });
+      let readable = 0;
+      cards.forEach(gpu => {
+        if (!gpu || !number(gpu.utilization_pct) || gpu.utilization_pct < 0 || gpu.utilization_pct > 100
+            || !number(gpu.memory_used_mib) || gpu.memory_used_mib < 0
+            || !number(gpu.memory_total_mib) || gpu.memory_total_mib <= 0 || gpu.memory_used_mib > gpu.memory_total_mib) return;
+        readable++;
+        if (gpu.utilization_pct < 10 && gpu.memory_used_mib < 1024) counts.free++;
+        else counts.used++;
+      });
+      counts.unknown += total - readable;
+    });
+    const ready = haveResponse || failed;
+    ["total", "free", "used", "unknown"].forEach(key => {
+      $(`summary-${key}`).textContent = key === "total" || ready ? String(counts[key]) : "—";
+    });
+    $("summary-servers").textContent = `${inventory.length} 台服务器`;
+    $("summary-unknown").closest(".summary-card").dataset.warning = String(ready && counts.unknown > 0);
+  }
   function gpuTable(gpus, current) {
     const table = element("table", "gpu-table");
     table.setAttribute("aria-label", "各张 GPU 的占用和显存");
@@ -132,6 +164,7 @@
     row.append(ip, hardware, usage); return row;
   }
   function render() {
+    renderSummary();
     if (inventory.length) $("machines-list").replaceChildren(...inventory.map(machineRow));
     const message = $("machines-message");
     const online = inventory.filter(item => state(snapshots.get(item.id)) === "online").length;

@@ -6,6 +6,19 @@
 #refresh-machines:disabled { opacity:.55;cursor:wait; }
 #refresh-machines:focus-visible { outline:3px solid #a6192e55;outline-offset:3px; }
 .machines-section { background:#f5f6f8;min-height:65vh;padding:28px 0; }
+.machines-overview { margin-bottom:24px; }
+.machines-summary { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px; }
+.summary-card { padding:20px 23px;background:#fff;border:1px solid var(--line);border-radius:7px; }
+.summary-card h2 { margin:0;font-size:14px;font-weight:500;color:var(--muted); }
+.summary-value { display:flex;align-items:baseline;gap:8px;margin:10px 0 6px;font-size:36px;line-height:1.2;font-weight:600;font-variant-numeric:tabular-nums;color:var(--navy-dark); }
+.summary-unit { font-size:13px;font-weight:400;color:var(--muted); }
+.summary-detail { margin:0;font-size:12px;color:var(--muted); }
+.summary-card--free { background:#f4faf7;border-color:#d6e8de; }
+.summary-card--free .summary-value { color:#24664c; }
+.summary-card--used .summary-value { color:var(--navy); }
+.summary-card--unknown[data-warning=true] { background:#fffaf0;border-color:#efdfc4; }
+.summary-card--unknown[data-warning=true] .summary-value { color:#956022; }
+.machines-summary-note { margin:12px 0 0;font-size:12px;line-height:1.8;color:var(--muted); }
 .machines-message { margin:0 0 20px;color:var(--muted);font-size:14px; }
 .machines-message[data-warning=true] { background:#fff6e7;color:#865516;border:1px solid #efdfc4;border-radius:6px;padding:13px 17px; }
 .machines-table { width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:7px;overflow:hidden;text-align:left; }
@@ -52,11 +65,15 @@
 .machine-empty { margin:0;padding:6px 0;font-size:13px;color:var(--muted); }
 .machines-footnote { font-size:12px;line-height:1.8;color:var(--muted);margin:20px 0 0; }
 @media(max-width:900px) {
+  .machines-summary { gap:12px; }
+  .summary-card { padding:18px 17px; }
   .machines-table>thead th,.machines-table>tbody>tr>th,.machines-table>tbody>tr>td { padding-left:17px;padding-right:17px; }
   .gpu-track { display:none; }
   .machine-ip { font-size:15px; }
 }
 @media(max-width:680px) {
+  .machines-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .summary-value { font-size:32px; }
   .machines-heading { align-items:flex-start;flex-direction:column;gap:18px; }
   .machines-table { display:block;background:none;border:0;overflow:visible; }
   .machines-table>thead { display:none; }

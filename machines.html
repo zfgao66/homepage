@@ -6,8 +6,8 @@ body_class: machines-page
 description: 按 IP 查看课题组服务器的 GPU、CPU、内存和硬盘使用情况。
 robots: noindex, nofollow, noarchive
 sitemap: false
-stylesheets: [/assets/css/machines.css?v=resources2]
-scripts: [/assets/js/machines-config.js?v=live1, /assets/js/machines.js?v=resources1]
+stylesheets: [/assets/css/machines.css?v=summary1]
+scripts: [/assets/js/machines-config.js?v=live1, /assets/js/machines.js?v=summary1]
 ---
 <section class="page-heading">
   <div class="page-shell page-heading__inner machines-heading">
@@ -17,6 +17,31 @@ scripts: [/assets/js/machines-config.js?v=live1, /assets/js/machines.js?v=resour
 </section>
 <section class="content-section machines-section">
   <div class="page-shell">
+    <section class="machines-overview" aria-label="GPU 资源汇总" aria-describedby="machines-summary-note">
+      <div class="machines-summary">
+        <article class="summary-card">
+          <h2>GPU 总数</h2>
+          <p class="summary-value"><span id="summary-total">—</span><span class="summary-unit">张</span></p>
+          <p id="summary-servers" class="summary-detail">正在读取服务器列表</p>
+        </article>
+        <article class="summary-card summary-card--free">
+          <h2>空余 GPU</h2>
+          <p class="summary-value"><span id="summary-free">—</span><span class="summary-unit">张</span></p>
+          <p class="summary-detail">低占用、低显存占用</p>
+        </article>
+        <article class="summary-card summary-card--used">
+          <h2>有占用 GPU</h2>
+          <p class="summary-value"><span id="summary-used">—</span><span class="summary-unit">张</span></p>
+          <p class="summary-detail">有计算或显存占用</p>
+        </article>
+        <article class="summary-card summary-card--unknown">
+          <h2>异常 / 未更新</h2>
+          <p class="summary-value"><span id="summary-unknown">—</span><span class="summary-unit">张</span></p>
+          <p class="summary-detail">不计入空余 GPU</p>
+        </article>
+      </div>
+      <p id="machines-summary-note" class="machines-summary-note">空余按 GPU 占用率低于 10%、显存已用低于 1 GiB 估算，使用前请查看下方逐卡数据。读取异常或超过 2 分钟未更新的显卡不计为空余。</p>
+    </section>
     <p id="machines-message" class="machines-message" role="status" aria-live="polite">正在获取服务器状态…</p>
     <table class="machines-table" aria-label="按 IP 列出的 GPU 使用情况">
       <thead><tr><th scope="col">IP / 资源使用</th><th scope="col">显卡 / CPU 配置</th><th scope="col">每张 GPU 的使用情况</th></tr></thead>
