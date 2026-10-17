@@ -1,36 +1,28 @@
 ---
 layout: default
-title: 服务器状态
+title: GPU 使用情况
 permalink: /machines/
 body_class: machines-page
-description: RUC-Nova 课题组服务器与 GPU 资源状态。
+description: 按 IP 查看课题组服务器的显卡型号、数量与 GPU 占用。
 robots: noindex, nofollow, noarchive
 sitemap: false
-stylesheets: [/assets/css/machines.css]
-scripts: [/assets/js/machines-config.js, /assets/js/machines.js]
+stylesheets: [/assets/css/machines.css?v=ip2]
+scripts: [/assets/js/machines-config.js?v=ip2, /assets/js/machines.js?v=ip2]
 ---
 <section class="page-heading">
   <div class="page-shell page-heading__inner machines-heading">
-    <div><p class="eyebrow">RUC-Nova · Computing resources</p><h1>服务器状态</h1><p>查看每台机器的 GPU 占用与剩余显存，使用前先了解资源情况。</p></div>
-    <div class="machines-live"><span class="live-dot"></span><span>每 30 秒更新</span><button id="refresh-machines" type="button">立即刷新 ↻</button></div>
+    <div><h1>GPU 使用情况</h1><p>按 IP 查看显卡配置，以及每张 GPU 的占用和显存使用量。</p></div>
+    <button id="refresh-machines" type="button">刷新数据 ↻</button>
   </div>
 </section>
 <section class="content-section machines-section">
   <div class="page-shell">
-    <div class="machines-summary" aria-label="资源概览">
-      <div><span>在线机器</span><strong id="online-count">—</strong><small id="machine-total">正在读取</small></div>
-      <div><span>已识别 GPU</span><strong id="gpu-count">—</strong><small>仅统计最新数据</small></div>
-      <div><span>低占用 GPU</span><strong id="quiet-count">—</strong><small>利用率 ≤10% · 显存占用 ≤20%</small></div>
-      <div><span>最近获取</span><strong id="updated-time" class="summary-time">—</strong><small id="updated-date">北京时间</small></div>
-    </div>
-    <div class="machines-toolbar">
-      <label>机房 <select id="location-filter"><option value="">全部机房</option><option>609</option><option>503</option><option>光电实验</option><option>理工楼</option></select></label>
-      <label>状态 <select id="status-filter"><option value="">全部机器</option><option value="quiet">有低占用 GPU</option><option value="interrupted">数据中断 / 未接入</option></select></label>
-      <label class="machine-search"><span class="sr-only">搜索机器、IP 或 GPU 型号</span><input id="machine-search" type="search" placeholder="搜索机器、IP 或 GPU 型号"></label>
-    </div>
     <p id="machines-message" class="machines-message" role="status" aria-live="polite">正在获取服务器状态…</p>
-    <div id="machines-grid" class="machines-grid" aria-label="机器列表"></div>
-    <p class="machines-footnote">低占用仅代表当前采样结果，长任务启动前请与使用者确认。数据超过 2 分钟未更新时，会显示“数据中断”。</p>
+    <table class="machines-table" aria-label="按 IP 列出的 GPU 使用情况">
+      <thead><tr><th scope="col">IP</th><th scope="col">显卡配置</th><th scope="col">每张 GPU 的使用情况</th></tr></thead>
+      <tbody id="machines-list"><tr><td colspan="3">正在读取…</td></tr></tbody>
+    </table>
+    <p class="machines-footnote">共 7 台服务器、32 张 GPU。占用数据超过 2 分钟未更新时显示“—”，不代表空闲。时间均为北京时间。</p>
     <noscript><p>请启用浏览器 JavaScript，以查看自动更新的机器状态。</p></noscript>
   </div>
 </section>

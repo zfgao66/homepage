@@ -3,11 +3,12 @@
   const config = window.MACHINES_CONFIG || {};
   const $ = id => document.getElementById(id);
   const number = value => typeof value === "number" && Number.isFinite(value);
-  const percent = value => number(value) ? `${Math.round(value)}%` : "—";
   const gib = value => number(value) ? (value / 1024).toFixed(1) : "—";
-  const timeFormat = new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  const dateFormat = new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit" });
-  let machines = [], fetchedAt = 0, lastSuccess = null, haveResponse = false, failed = false, busy = false;
+  const sampleFormat = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Asia/Shanghai", month: "2-digit", day: "2-digit", hour12: false,
+    hour: "2-digit", minute: "2-digit", second: "2-digit"
+  });
+  let inventory = [], snapshots = new Map(), fetchedAt = 0, haveResponse = false, failed = false, busy = false;
 
   function element(tag, className, text) {
     const node = document.createElement(tag);
@@ -16,98 +17,75 @@
     return node;
   }
   function state(machine) {
-    if (machine.status === "online" && number(machine.age_seconds)) {
+    if (machine?.status === "online" && number(machine.age_seconds)) {
       return machine.age_seconds + (performance.now() - fetchedAt) / 1000 <= (config.staleAfterSeconds || 120) ? "online" : "stale";
     }
-    return machine.status || "unknown";
+    return machine?.status || "waiting";
   }
-  function quiet(gpu) {
-    return number(gpu.utilization_pct) && number(gpu.memory_used_mib) && number(gpu.memory_total_mib) &&
-      gpu.memory_total_mib > 0 && gpu.utilization_pct <= 10 && gpu.memory_used_mib / gpu.memory_total_mib <= 0.2;
+  function gpuTable(gpus, current) {
+    const table = element("table", "gpu-table");
+    table.setAttribute("aria-label", "各张 GPU 的占用和显存");
+    const thead = element("thead"), titles = element("tr");
+    ["GPU", "占用率", "显存（已用 / 总量）"].forEach(text => {
+      const th = element("th", "", text); th.scope = "col"; titles.append(th);
+    });
+    thead.append(titles);
+    const tbody = element("tbody");
+    gpus.forEach(gpu => {
+      const row = element("tr");
+      const label = number(gpu.index) ? `GPU ${gpu.index}` : "编号未知";
+      row.append(element("td", "", label));
+      const usage = element("td"), load = element("div", "gpu-load");
+      const utilization = current === "online" && number(gpu.utilization_pct) ? gpu.utilization_pct : null;
+      load.append(element("span", number(utilization) ? "" : "gpu-unavailable", number(utilization) ? `${Math.round(utilization)}%` : "—"));
+      if (number(utilization)) {
+        const track = element("span", "gpu-track"), fill = element("span");
+        track.setAttribute("aria-hidden", "true");
+        fill.style.width = `${Math.max(0, Math.min(100, utilization))}%`;
+        fill.dataset.high = String(utilization >= 80); track.append(fill); load.append(track);
+      }
+      usage.append(load); row.append(usage);
+      const used = current === "online" ? gpu.memory_used_mib : null;
+      const memory = element("td", number(used) ? "" : "gpu-unavailable");
+      if (!number(gpu.index) && !number(gpu.memory_total_mib)) {
+        memory.append(element("span", "gpu-problem", current === "online" ? "读取异常" : "上次读取异常"));
+      } else {
+        memory.textContent = `${gib(used)} / ${gib(gpu.memory_total_mib)} GiB`;
+      }
+      row.append(memory); tbody.append(row);
+    });
+    table.append(thead, tbody); return table;
   }
-  function metric(label, value, detail, ratio) {
-    const row = element("div", "gpu-metric");
-    row.append(element("span", "", label));
-    const body = element("div");
-    const values = element("div", "gpu-value");
-    values.append(element("span", "", value), element("span", "", detail));
-    const track = element("div", "gpu-track");
-    track.setAttribute("aria-hidden", "true");
-    if (number(ratio)) {
-      const fill = element("span");
-      fill.style.width = `${Math.min(100, Math.max(0, ratio))}%`;
-      fill.dataset.high = String(ratio >= 80);
-      track.append(fill);
+  function machineRow(item) {
+    const machine = snapshots.get(item.id), current = state(machine);
+    const row = element("tr"), ip = element("th"); ip.scope = "row";
+    ip.append(element("span", "machine-ip", item.id));
+    const badge = element("span", "machine-badge", current === "online" ? "占用已更新" : "占用未更新");
+    badge.dataset.state = current; ip.append(badge);
+    const sampledAt = machine?.telemetry?.observed_at;
+    if (sampledAt && Number.isFinite(Date.parse(sampledAt))) {
+      ip.append(element("span", "machine-last", `最近采样 ${sampleFormat.format(new Date(sampledAt))}`));
     }
-    body.append(values, track); row.append(body); return row;
-  }
-  function gpuRow(gpu, expired = false) {
-    const row = element("div", "gpu-row");
-    const title = element("div", "gpu-title");
-    const name = element("span", "gpu-name");
-    name.append(element("span", "gpu-index", number(gpu.index) ? `#${gpu.index}` : gpu.pci_bus_id || "未知编号"), document.createTextNode(gpu.name));
-    const known = number(gpu.utilization_pct) && number(gpu.memory_used_mib) && number(gpu.memory_total_mib) && gpu.memory_total_mib > 0;
-    const status = element("span", "gpu-state", expired ? "指标已过期" : !known ? "部分指标不可读" : quiet(gpu) ? "低占用" : "使用中");
-    status.dataset.quiet = String(known && quiet(gpu)); title.append(name, status); row.append(title);
-    row.append(metric("利用率", percent(gpu.utilization_pct), "GPU", gpu.utilization_pct));
-    const ratio = number(gpu.memory_used_mib) && number(gpu.memory_total_mib) && gpu.memory_total_mib > 0 ? gpu.memory_used_mib / gpu.memory_total_mib * 100 : null;
-    const free = number(ratio) ? `${gib(Math.max(0, gpu.memory_total_mib - gpu.memory_used_mib))} GiB 剩余` : "剩余量未知";
-    row.append(metric("显存", `${gib(gpu.memory_used_mib)} / ${gib(gpu.memory_total_mib)} GiB`, free, ratio));
-    row.append(element("p", "gpu-environment", `温度 ${number(gpu.temperature_c) ? Math.round(gpu.temperature_c) + " °C" : "—"}　·　功耗 ${number(gpu.power_w) ? Math.round(gpu.power_w) + " W" : "—"}`));
-    return row;
-  }
-  function card(machine) {
-    const current = state(machine);
-    const data = current === "online" ? machine.telemetry : null;
-    const article = element("article", "machine-card");
-    const head = element("div", "machine-card__head");
-    const title = element("div");
-    title.append(element("h2", "", machine.name), element("p", "machine-address", `${machine.id} · ${machine.location}${machine.position ? " · " + machine.position : ""}`));
-    const badge = element("span", "machine-badge", ({ online: "在线", stale: "数据中断", waiting: "未接入", unknown: "状态未知" })[current] || "状态未知");
-    badge.dataset.state = current; head.append(title, badge); article.append(head);
-    const cpu = element("div", "machine-cpu");
-    cpu.append(element("span", "", `CPU ${percent(data?.cpu_percent)}`), element("span", "", `内存 ${gib(data?.memory_used_mib)} / ${gib(data?.memory_total_mib)} GiB`));
-    article.append(cpu);
-    if (machine.telemetry?.gpus.length) {
-      const gpus = element("div", "machine-gpus");
-      machine.telemetry.gpus.forEach(gpu => {
-        const expired = current !== "online";
-        const values = expired ? { ...gpu, utilization_pct: null, memory_used_mib: null, memory_total_mib: null, temperature_c: null, power_w: null } : gpu;
-        gpus.append(gpuRow(values, expired));
-      });
-      article.append(gpus);
+    const hardware = element("td");
+    hardware.append(element("span", "machine-model", item.gpu_model), element("span", "machine-count", `${item.gpu_count} 张`));
+    const usage = element("td");
+    if (machine?.telemetry?.gpus?.length) {
+      usage.append(gpuTable(machine.telemetry.gpus, current));
     } else {
-      const message = current === "stale" ? "暂未收到新的状态，最近一次指标已过期。" : current === "waiting" ? "等待服务器首次上报。" : current !== "online" ? "暂时无法确认这台机器的状态。" : data.gpu_error ? "GPU 指标暂不可读。" : "未检测到 NVIDIA GPU。";
-      article.append(element("p", "machine-empty", message));
+      usage.append(element("p", "machine-empty", "占用数据暂不可用"));
     }
-    const last = machine.received_at ? `最近上报：${dateFormat.format(new Date(machine.received_at))} ${timeFormat.format(new Date(machine.received_at))}` : "最近上报：—";
-    article.append(element("p", "machine-last", last)); return article;
+    row.append(ip, hardware, usage); return row;
   }
   function render() {
-    const online = machines.filter(machine => state(machine) === "online");
-    const gpus = online.flatMap(machine => machine.telemetry?.gpus || []);
-    $("online-count").textContent = haveResponse ? online.length : "—";
-    $("machine-total").textContent = machines.length ? `共 ${machines.length} 台机器` : "正在读取";
-    $("gpu-count").textContent = haveResponse ? gpus.length : "—";
-    $("quiet-count").textContent = haveResponse ? gpus.filter(quiet).length : "—";
-    if (lastSuccess) {
-      $("updated-time").textContent = timeFormat.format(lastSuccess);
-      $("updated-date").textContent = `${dateFormat.format(lastSuccess)} · 北京时间`;
-    }
-    const query = $("machine-search").value.trim().toLowerCase();
-    const location = $("location-filter").value, filter = $("status-filter").value;
-    const visible = machines.filter(machine => {
-      if (location && machine.location !== location) return false;
-      if (filter === "quiet" && !(state(machine) === "online" && machine.telemetry?.gpus.some(quiet))) return false;
-      if (filter === "interrupted" && state(machine) === "online") return false;
-      const text = [machine.id, machine.name, machine.location, ...(machine.telemetry?.gpus || []).map(gpu => gpu.name)].join(" ").toLowerCase();
-      return !query || text.includes(query);
-    });
-    $("machines-grid").replaceChildren(...visible.map(card));
-    if (!visible.length && machines.length) $("machines-grid").append(element("p", "machines-empty", "没有符合条件的机器。"));
-    const message = $("machines-message"); message.dataset.error = String(failed);
-    document.querySelector(".live-dot").dataset.error = String(failed);
-    message.textContent = failed ? "暂时无法获取最新状态，正在自动重试。请留意各台机器的最近上报时间。" : !haveResponse ? "正在获取服务器状态…" : `已收到 ${online.length} / ${machines.length} 台机器的最新状态；${machines.filter(machine => state(machine) === "waiting").length} 台尚未接入。`;
+    if (inventory.length) $("machines-list").replaceChildren(...inventory.map(machineRow));
+    const message = $("machines-message");
+    const online = inventory.filter(item => state(snapshots.get(item.id)) === "online").length;
+    message.dataset.warning = String(Boolean(config.reportingPending || failed || (haveResponse && online < inventory.length)));
+    message.textContent = config.reportingPending ? "实时自动更新尚未接通。显卡配置已核实；占用数据未更新时显示“—”，不代表空闲。"
+      : failed ? "暂时无法获取最新占用，正在重试。显卡配置仍可查看。"
+      : !haveResponse ? "正在获取 GPU 占用数据…"
+      : online < inventory.length ? `${online} / ${inventory.length} 台服务器的占用已更新，其余暂不可用。每 30 秒刷新。`
+      : "每 30 秒刷新 GPU 占用数据。";
   }
   async function refresh() {
     if (busy) return;
@@ -119,14 +97,17 @@
       if (!response.ok) throw new Error("Status unavailable");
       const payload = await response.json();
       if (payload.schema_version !== 1 || !Array.isArray(payload.machines) || !payload.machines.length || payload.machines.some(machine => !machine.id || !["online", "stale", "waiting"].includes(machine.status) || (machine.telemetry && !Array.isArray(machine.telemetry.gpus)))) throw new Error("Invalid status");
-      machines = payload.machines; fetchedAt = performance.now(); lastSuccess = new Date(); haveResponse = true; failed = false;
+      snapshots = new Map(payload.machines.map(machine => [machine.id, machine]));
+      fetchedAt = performance.now(); haveResponse = true; failed = false;
     } catch { failed = true; }
     finally { clearTimeout(timeout); busy = false; $("refresh-machines").disabled = false; render(); }
   }
-  ["location-filter", "status-filter", "machine-search"].forEach(id => $(id).addEventListener(id === "machine-search" ? "input" : "change", render));
   $("refresh-machines").addEventListener("click", refresh);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
-  fetch("/assets/machines/inventory.json", { credentials: "omit" }).then(response => response.json()).then(data => { if (!haveResponse) { machines = data; render(); } }).catch(() => {});
+  fetch("/assets/machines/inventory.json?v=ip2", { cache: "no-store", credentials: "omit" })
+    .then(response => { if (!response.ok) throw new Error("Inventory unavailable"); return response.json(); })
+    .then(data => { inventory = data; render(); })
+    .catch(() => { $("machines-list").replaceChildren(); $("machines-message").textContent = "服务器列表读取失败，请刷新页面。"; });
   refresh();
   setInterval(() => { if (!document.hidden) refresh(); }, config.refreshMs || 30000);
   setInterval(() => { if (!document.hidden && haveResponse) render(); }, 5000);
