@@ -141,17 +141,22 @@ def main():
     if not endpoint or not token:
         parser.error('reporting configuration is missing')
     interval = max(15, int(os.environ.get('MACHINES_INTERVAL', '30')))
+    failures = 0
     while True:
         try:
             upload(snapshot(args.machine_id), endpoint, token)
+            failures = 0
             if args.send_once:
                 print('Upload verified')
                 return
         except Exception as exc:
-            print('Report failed: ' + type(exc).__name__, file=sys.stderr, flush=True)
+            failures = min(5, failures + 1)
+            status = ' (' + str(exc.code) + ')' if isinstance(exc, urllib.error.HTTPError) else ''
+            print('Report failed: ' + type(exc).__name__ + status, file=sys.stderr, flush=True)
             if args.send_once:
                 raise SystemExit(1)
-        time.sleep(interval + random.uniform(-2, 2))
+        delay = min(300, interval * 2 ** failures)
+        time.sleep(delay + random.uniform(-2, 2))
 
 
 if __name__ == '__main__':

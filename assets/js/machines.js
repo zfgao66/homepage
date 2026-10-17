@@ -41,13 +41,13 @@
     }
     body.append(values, track); row.append(body); return row;
   }
-  function gpuRow(gpu) {
+  function gpuRow(gpu, expired = false) {
     const row = element("div", "gpu-row");
     const title = element("div", "gpu-title");
     const name = element("span", "gpu-name");
     name.append(element("span", "gpu-index", number(gpu.index) ? `#${gpu.index}` : gpu.pci_bus_id || "未知编号"), document.createTextNode(gpu.name));
     const known = number(gpu.utilization_pct) && number(gpu.memory_used_mib) && number(gpu.memory_total_mib) && gpu.memory_total_mib > 0;
-    const status = element("span", "gpu-state", !known ? "部分指标不可读" : quiet(gpu) ? "低占用" : "使用中");
+    const status = element("span", "gpu-state", expired ? "指标已过期" : !known ? "部分指标不可读" : quiet(gpu) ? "低占用" : "使用中");
     status.dataset.quiet = String(known && quiet(gpu)); title.append(name, status); row.append(title);
     row.append(metric("利用率", percent(gpu.utilization_pct), "GPU", gpu.utilization_pct));
     const ratio = number(gpu.memory_used_mib) && number(gpu.memory_total_mib) && gpu.memory_total_mib > 0 ? gpu.memory_used_mib / gpu.memory_total_mib * 100 : null;
@@ -68,9 +68,14 @@
     const cpu = element("div", "machine-cpu");
     cpu.append(element("span", "", `CPU ${percent(data?.cpu_percent)}`), element("span", "", `内存 ${gib(data?.memory_used_mib)} / ${gib(data?.memory_total_mib)} GiB`));
     article.append(cpu);
-    if (data && data.gpus.length) {
+    if (machine.telemetry?.gpus.length) {
       const gpus = element("div", "machine-gpus");
-      data.gpus.forEach(gpu => gpus.append(gpuRow(gpu))); article.append(gpus);
+      machine.telemetry.gpus.forEach(gpu => {
+        const expired = current !== "online";
+        const values = expired ? { ...gpu, utilization_pct: null, memory_used_mib: null, memory_total_mib: null, temperature_c: null, power_w: null } : gpu;
+        gpus.append(gpuRow(values, expired));
+      });
+      article.append(gpus);
     } else {
       const message = current === "stale" ? "暂未收到新的状态，最近一次指标已过期。" : current === "waiting" ? "等待服务器首次上报。" : current !== "online" ? "暂时无法确认这台机器的状态。" : data.gpu_error ? "GPU 指标暂不可读。" : "未检测到 NVIDIA GPU。";
       article.append(element("p", "machine-empty", message));

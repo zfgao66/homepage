@@ -19,7 +19,7 @@ set timeout 40
 set transcript ""
 set auth 0
 set sudoauth 0
-spawn -noecho /usr/bin/ssh -T -o ConnectTimeout=8 -o ConnectionAttempts=1 -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=yes -o NumberOfPasswordPrompts=1 -o PreferredAuthentications=password,keyboard-interactive -o PubkeyAuthentication=no -o LogLevel=ERROR -l wkli $env(MONITOR_HOST) $env(MONITOR_COMMAND)
+spawn -noecho /usr/bin/ssh $env(MONITOR_TTY) -o ConnectTimeout=8 -o ConnectionAttempts=1 -o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=yes -o NumberOfPasswordPrompts=1 -o PreferredAuthentications=password,keyboard-interactive -o PubkeyAuthentication=no -o LogLevel=ERROR -l wkli $env(MONITOR_HOST) $env(MONITOR_COMMAND)
 expect {
   -re {(?i)password: ?$} {
     append transcript $expect_out(buffer)
@@ -59,7 +59,8 @@ expect {
 
 def ssh(host, password, command, deployment=None):
     encoded = base64.b64encode(json.dumps(deployment).encode()).decode() if deployment else '__unused_configuration__'
-    env = dict(os.environ, MONITOR_HOST=host, MONITOR_PASSWORD=password, MONITOR_COMMAND=command, MONITOR_DEPLOYMENT=encoded)
+    env = dict(os.environ, MONITOR_HOST=host, MONITOR_PASSWORD=password, MONITOR_COMMAND=command,
+               MONITOR_DEPLOYMENT=encoded, MONITOR_TTY='-tt' if command.startswith('sudo ') else '-T')
     process = subprocess.run(['/usr/bin/expect', '-c', DRIVER], env=env, stdout=subprocess.PIPE,
                              stderr=subprocess.STDOUT, text=True, timeout=60)
     output = process.stdout.replace(password, '<redacted>').replace(encoded, '<redacted>')
