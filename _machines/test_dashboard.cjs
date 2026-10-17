@@ -4,6 +4,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../assets/js/machines.js'), 'utf8');
+const configuration = fs.readFileSync(path.join(__dirname, '../assets/js/machines-config.js'), 'utf8');
 const primary = 'https://primary.test/status', fallback = 'https://fallback.test/status';
 const inventory = ['10.20.6.38', '10.20.5.8'].map(id => ({id, gpu_count: 4, gpu_model: 'RTX 3090'}));
 const card = (index, utilization_pct = 0, memory_used_mib = 20) => ({index, utilization_pct, memory_used_mib, memory_total_mib: 24576});
@@ -20,7 +21,7 @@ class Element {
   closest() { return this; }
 }
 
-function boot({fail = [], hang = [], bodyHang = [], hold = [], data = payload(), byRoute = {}, cache = new Map(), storageBlocked = false, embedded = null} = {}) {
+function boot({fail = [], httpFail = [], hang = [], bodyHang = [], hold = [], data = payload(), byRoute = {}, cache = new Map(), storageBlocked = false, embedded = null, deployedConfig = false} = {}) {
   const nodes = new Map(), calls = [], timers = new Map(), intervals = [], releases = new Map();
   let timerId = 0, elapsed = 0;
   const node = id => { if (!nodes.has(id)) nodes.set(id, new Element()); return nodes.get(id); };
@@ -43,11 +44,12 @@ function boot({fail = [], hang = [], bodyHang = [], hold = [], data = payload(),
       // Deliberately ignore AbortSignal to reproduce a stalled browser transport.
       if (hang.includes(url)) return new Promise(() => {});
       if (fail.includes(url)) throw new TypeError('Route unavailable');
-      const response = {ok: true, json: async () => bodyHang.includes(url) ? new Promise(() => {}) : (byRoute[url] || data)};
+      const response = {ok: !httpFail.includes(url), json: async () => bodyHang.includes(url) ? new Promise(() => {}) : (byRoute[url] || data)};
       if (hold.includes(url)) return new Promise(resolve => releases.set(url, () => resolve(response)));
       return response;
     }
   };
+  if (deployedConfig) vm.runInNewContext(configuration, context);
   vm.runInNewContext(source, context);
   return {node, calls, timers, intervals, releases, cache,
     counts: () => Object.fromEntries(['total', 'free', 'used', 'unknown'].map(key => [key, node(`summary-${key}`).textContent])),
@@ -56,7 +58,24 @@ function boot({fail = [], hang = [], bodyHang = [], hold = [], data = payload(),
 }
 
 (async () => {
-  let test = boot({hang: [primary]});
+  const direct = 'https://43.155.209.84/machines-api/status';
+  let test = boot({deployedConfig: true});
+  await flush();
+  assert.deepEqual(test.calls, [direct], 'The deployed dashboard uses one direct API and does not hide failure with an external fallback');
+  assert.deepEqual(test.counts(), {total: '8', free: '8', used: '0', unknown: '0'});
+  assert.equal(test.intervals[0].ms, 120000);
+
+  for (const options of [{fail: [direct]}, {httpFail: [direct]}, {data: {error: 'Invalid response'}}, {hang: [direct]}, {bodyHang: [direct]}]) {
+    test = boot({...options, deployedConfig: true});
+    await flush(); test.timeOut(); await flush();
+    assert.deepEqual(test.calls, [direct]);
+    assert.deepEqual(test.counts(), {total: '8', free: '—', used: '—', unknown: '—'});
+    assert.equal(test.node('refresh-machines').disabled, false);
+    assert.match(test.node('machines-message').textContent, /暂时无法连接数据服务/);
+    assert.doesNotMatch(test.node('machines-message').textContent, /8 秒内未能获取/, 'HTTP errors and malformed responses must not be described as timeouts');
+  }
+
+  test = boot({hang: [primary]});
   await flush();
   assert.deepEqual(test.calls, [primary, fallback]);
   assert.deepEqual(test.counts(), {total: '8', free: '8', used: '0', unknown: '0'}, 'A healthy route must render without waiting for a stalled route');
@@ -69,7 +88,7 @@ function boot({fail = [], hang = [], bodyHang = [], hold = [], data = payload(),
     await flush(); test.timeOut(); await flush();
     assert.deepEqual(test.counts(), {total: '8', free: '—', used: '—', unknown: '—'});
     assert.equal(test.node('refresh-machines').disabled, false, 'Even an abort-ignoring transport or body read must release the refresh button');
-    assert.match(test.node('machines-message').textContent, /8 秒内未能获取/);
+    assert.match(test.node('machines-message').textContent, /暂时无法连接数据服务/);
   }
 
   const stale = payload();
@@ -107,5 +126,5 @@ function boot({fail = [], hang = [], bodyHang = [], hold = [], data = payload(),
   test = boot({data: metrics}); await flush();
   assert.deepEqual(test.counts(), {total: '8', free: '1', used: '2', unknown: '5'});
   test.expire(); assert.deepEqual(test.counts(), {total: '8', free: '0', used: '0', unknown: '8'});
-  console.log('Dashboard checks passed: parallel routes, strict header/body deadlines, fresh-over-stale selection, immediate cache display, expiry, blocked storage, and two-minute polling.');
+  console.log('Dashboard checks passed: deployed direct API only, honest failure states, strict header/body deadlines, immediate cache display, expiry, blocked storage, embedded snapshots, and two-minute polling.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

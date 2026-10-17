@@ -7,13 +7,7 @@ description: 按 IP 查看课题组服务器的 GPU、CPU、内存和硬盘使�
 robots: noindex, nofollow, noarchive
 sitemap: false
 stylesheets: [/assets/css/machines.css?v=mobile4]
-scripts: [/assets/js/machines-config.js?v=mobile4, /assets/js/machines-frame.js?v=mobile4, /assets/js/machines.js?v=mobile4]
+scripts: [/assets/js/machines-config.js?v=direct5, /assets/js/machines.js?v=direct5]
 ---
-<div id="machines-standard">
 {% include machines-content.html %}
 <script id="machines-inventory" type="application/json">{% include_relative assets/machines/inventory.json %}</script>
-</div>
-<div id="machines-relay-view" hidden data-pending="true">
-  <iframe id="machines-relay-frame" title="服务器实时资源状态" referrerpolicy="no-referrer"></iframe>
-</div>
-<p id="machines-connection-help" class="page-shell machines-connection-help" hidden>如果仍无法显示，可<a href="https://43.155.209.84/machines/">直接打开服务器状态页</a>。</p>

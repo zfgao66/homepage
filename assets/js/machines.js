@@ -174,7 +174,7 @@
     message.dataset.warning = String(Boolean(config.reportingPending || failed || (haveResponse && online < inventory.length)));
     message.textContent = config.reportingPending ? "实时自动更新尚未接通。显卡配置已核实；占用数据未更新时显示“—”，不代表空闲。"
       : failed ? haveResponse && online > 0 ? "暂时无法更新，正显示上次数据；请查看采样时间。每 2 分钟自动重试。"
-        : "8 秒内未能获取实时数据，等待已结束。占用情况暂无法确认；可手动刷新，每 2 分钟也会自动重试。"
+        : "暂时无法连接数据服务，占用情况暂无法确认。可手动刷新，每 2 分钟也会自动重试。"
       : fromCache ? "已显示上次成功获取的数据，正在后台更新。请查看下方采样时间。"
       : !haveResponse ? "正在连接实时数据（最多等待 8 秒）…"
       : online < inventory.length ? `${online} / ${inventory.length} 台服务器的占用已更新，其余暂不可用。每 2 分钟刷新。`
