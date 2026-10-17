@@ -57,9 +57,34 @@ def run_cycle(config, selected=None):
         futures = [pool.submit(collect_and_upload, ip, config['tokens'][ip],
                               config['endpoint'], config['ssh_config']) for ip in hosts]
         results = [future.result() for future in concurrent.futures.as_completed(futures)]
-    for result in results:
-        print(json.dumps(result), flush=True)
     return results
+
+
+class StatusReporter:
+    """Keep only current health in memory and avoid logging every sample."""
+
+    def __init__(self, heartbeat_seconds=3600):
+        self.states = {}
+        self.last_heartbeat = None
+        self.heartbeat_seconds = heartbeat_seconds
+
+    def report(self, results, now=None):
+        now = time.monotonic() if now is None else now
+        for result in results:
+            ip = result['ip']
+            state = tuple(result.get(key) for key in
+                          ('ok', 'gpus', 'error', 'ssh_exit_code', 'http_status'))
+            if self.states.get(ip) != state:
+                print(json.dumps(result), flush=True)
+                self.states[ip] = state
+        if self.last_heartbeat is None:
+            self.last_heartbeat = now
+        elif now - self.last_heartbeat >= self.heartbeat_seconds:
+            print(json.dumps({'event': 'collector_health',
+                              'online': sorted(ip for ip, state in self.states.items() if state[0]),
+                              'unavailable': sorted(ip for ip, state in self.states.items() if not state[0])}),
+                  flush=True)
+            self.last_heartbeat = now
 
 
 def main():
@@ -73,13 +98,18 @@ def main():
     interval = max(15, int(config.get('interval', 30)))
     if args.once:
         results = run_cycle(config)
+        for result in results:
+            print(json.dumps(result), flush=True)
         raise SystemExit(0 if all(item['ok'] for item in results) else 1)
     failures = dict.fromkeys(HOSTS, 0)
     next_due = dict.fromkeys(HOSTS, 0)
+    reporter = StatusReporter()
     while True:
         started = time.monotonic()
         selected = [ip for ip in HOSTS if next_due[ip] <= started]
-        for result in run_cycle(config, selected):
+        results = run_cycle(config, selected)
+        reporter.report(results)
+        for result in results:
             ip = result['ip']
             failures[ip] = 0 if result['ok'] else min(5, failures[ip] + 1)
             delay = interval if result['ok'] else min(300, interval * 2 ** (failures[ip] - 1))

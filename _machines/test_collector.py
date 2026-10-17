@@ -1,6 +1,8 @@
 import datetime
+import io
 import json
 import unittest
+from contextlib import redirect_stdout
 from unittest import mock
 
 import collector
@@ -34,6 +36,32 @@ class CollectorTests(unittest.TestCase):
         self.assertFalse(result['ok'])
         upload.assert_not_called()
         self.assertNotIn('secret-fixture', json.dumps(result))
+
+    def test_health_logging_suppresses_samples_but_reports_failure_and_recovery(self):
+        reporter = collector.StatusReporter()
+        healthy = {'ip': '10.20.6.38', 'ok': True, 'gpus': 4, 'observed_at': 'first'}
+        failed = {'ip': healthy['ip'], 'ok': False, 'error': 'TimeoutExpired'}
+        output = io.StringIO()
+        with redirect_stdout(output):
+            reporter.report([healthy], now=0)
+            for second in range(30, 3600, 30):
+                reporter.report([dict(healthy, observed_at=str(second))], now=second)
+            reporter.report([failed], now=3600)
+            reporter.report([failed], now=3630)
+            reporter.report([healthy], now=3660)
+        rows = [json.loads(line) for line in output.getvalue().splitlines()]
+        self.assertEqual([row['ok'] for row in rows if 'ok' in row], [True, False, True])
+        heartbeat = [row for row in rows if row.get('event') == 'collector_health']
+        self.assertEqual(len(heartbeat), 1)
+        self.assertEqual(heartbeat[0]['unavailable'], [healthy['ip']])
+        self.assertEqual(len(reporter.states), 1)
+
+    def test_collection_does_not_write_successful_snapshots_to_logs(self):
+        config = {'tokens': {'10.20.6.38': 'secret-fixture'}, 'endpoint': 'https://example.test/api/ingest', 'ssh_config': '/tmp/config'}
+        output = io.StringIO()
+        with mock.patch.object(collector, 'collect_and_upload', return_value={'ip': '10.20.6.38', 'ok': True}), redirect_stdout(output):
+            self.assertEqual(len(collector.run_cycle(config)), 1)
+        self.assertEqual(output.getvalue(), '')
 
 
 if __name__ == '__main__':
