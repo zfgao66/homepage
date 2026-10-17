@@ -67,7 +67,7 @@
   .machines-table>tbody>tr>td:last-child { grid-column:1/-1;border-top:1px solid var(--line);padding-top:12px; }
   .machine-ip { font-size:16px; }
   .machine-model { font-size:16px; }
-  .machine-cpu-config { max-width:140px; }
+  .machine-cpu-config { max-width:110px; }
   .machine-cpu-config .resource-label { text-align:right; }
   .cpu-model { font-size:11px; }
   .cpu-counts { font-size:10px; }
