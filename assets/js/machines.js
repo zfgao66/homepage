@@ -10,6 +10,7 @@
     hour: "2-digit", minute: "2-digit", second: "2-digit"
   });
   let inventory = [], snapshots = new Map(), fetchedAt = 0, haveResponse = false, failed = false, busy = false;
+  let preferredStatusUrl = config.statusUrl;
 
   function element(tag, className, text) {
     const node = document.createElement(tag);
@@ -48,7 +49,7 @@
       });
       counts.unknown += total - readable;
     });
-    const ready = haveResponse || failed;
+    const ready = haveResponse;
     ["total", "free", "used", "unknown"].forEach(key => {
       $(`summary-${key}`).textContent = key === "total" || ready ? String(counts[key]) : "—";
     });
@@ -170,25 +171,40 @@
     const online = inventory.filter(item => state(snapshots.get(item.id)) === "online").length;
     message.dataset.warning = String(Boolean(config.reportingPending || failed || (haveResponse && online < inventory.length)));
     message.textContent = config.reportingPending ? "实时自动更新尚未接通。显卡配置已核实；占用数据未更新时显示“—”，不代表空闲。"
-      : failed ? "暂时无法获取最新占用，正在重试。显卡配置仍可查看。"
+      : failed ? "暂时无法连接实时数据服务，正在重试。占用情况暂无法确认，不代表显卡故障或空闲。"
       : !haveResponse ? "正在获取服务器资源数据…"
       : online < inventory.length ? `${online} / ${inventory.length} 台服务器的占用已更新，其余暂不可用。每 30 秒刷新。`
       : "每 30 秒刷新 GPU、CPU、内存和硬盘使用情况。";
   }
-  async function refresh() {
-    if (busy) return;
-    busy = true; $("refresh-machines").disabled = true;
+  async function loadStatus(url) {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 6000);
     try {
-      const response = await fetch(config.statusUrl, { cache: "no-store", credentials: "omit", signal: controller.signal });
+      const response = await fetch(url, { cache: "no-store", credentials: "omit", signal: controller.signal });
       if (!response.ok) throw new Error("Status unavailable");
       const payload = await response.json();
       if (payload.schema_version !== 1 || !Array.isArray(payload.machines) || !payload.machines.length || payload.machines.some(machine => !machine.id || !["online", "stale", "waiting"].includes(machine.status) || (machine.telemetry && !Array.isArray(machine.telemetry.gpus)))) throw new Error("Invalid status");
+      return payload;
+    } finally { clearTimeout(timeout); }
+  }
+  async function refresh() {
+    if (busy) return;
+    busy = true; $("refresh-machines").disabled = true;
+    try {
+      const urls = [...new Set([preferredStatusUrl, ...(config.statusUrls || [config.statusUrl])].filter(Boolean))];
+      let payload = null;
+      for (const url of urls) {
+        try {
+          payload = await loadStatus(url);
+          preferredStatusUrl = url;
+          break;
+        } catch { /* Try the alternate route; failed requests never establish availability. */ }
+      }
+      if (!payload) throw new Error("No status route available");
       snapshots = new Map(payload.machines.map(machine => [machine.id, machine]));
       fetchedAt = performance.now(); haveResponse = true; failed = false;
     } catch { failed = true; }
-    finally { clearTimeout(timeout); busy = false; $("refresh-machines").disabled = false; render(); }
+    finally { busy = false; $("refresh-machines").disabled = false; render(); }
   }
   $("refresh-machines").addEventListener("click", refresh);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });

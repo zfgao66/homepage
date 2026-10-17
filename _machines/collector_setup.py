@@ -72,7 +72,7 @@ def install(config):
     if UNIT.exists() and 'RUC-Nova read-only GPU collection through SSH gateway' not in UNIT.read_text():
         raise RuntimeError('An unrelated service exists')
     ETC.mkdir(mode=0o755, exist_ok=True)
-    for name in ('agent.py', 'collector.py'):
+    for name in ('agent.py', 'collector.py', 'status_api.py'):
         atomic(BASE / name, base64.b64decode(config['files'][name]))
     atomic(UNIT, base64.b64decode(config['files']['machines-collector.service']))
     ssh_config = '''Host machines-gateway
@@ -106,7 +106,8 @@ Host *
     atomic(ETC / 'ssh_config', ssh_config.encode())
     atomic(ETC / 'known_hosts', config['known_hosts'].encode())
     runtime_config = {'endpoint': config['endpoint'], 'tokens': config['tokens'],
-                      'ssh_config': str(ETC / 'ssh_config'), 'interval': 30}
+                      'ssh_config': str(ETC / 'ssh_config'), 'interval': 30,
+                      'serve_status': {'port': 8273}}
     atomic(ETC / 'config.json', json.dumps(runtime_config).encode(), 0o600)
     subprocess.run(['systemd-analyze', 'verify', str(UNIT)], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     subprocess.run(['systemctl', 'daemon-reload'], check=True)
