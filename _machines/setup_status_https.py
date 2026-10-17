@@ -83,6 +83,15 @@ def main():
         access_log off;
         add_header X-Content-Type-Options nosniff always;
     }
+    location = /machines { return 302 /machines/; }
+    location = /machines/ {
+        proxy_pass http://127.0.0.1:8273/machines/;
+        proxy_connect_timeout 3s;
+        proxy_read_timeout 5s;
+        proxy_cache off;
+        access_log off;
+        add_header X-Content-Type-Options nosniff always;
+    }
     location / { return 404; }
 }
 '''

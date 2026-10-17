@@ -13,6 +13,7 @@ set transcript ""
 set auth 0
 set sudoauth 0
 spawn -noecho /usr/bin/ssh $env(ADMIN_TTY) -p $env(ADMIN_PORT) -o ConnectTimeout=10 -o ConnectionAttempts=1 -o ServerAliveInterval=5 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=accept-new -o NumberOfPasswordPrompts=1 -o PreferredAuthentications=password,keyboard-interactive -o PubkeyAuthentication=no -o LogLevel=ERROR -l $env(ADMIN_USER) $env(ADMIN_HOST) $env(ADMIN_COMMAND)
+match_max 262144
 stty raw -echo < $spawn_out(slave,name)
 expect {
   -re {(?i)password: ?$} {

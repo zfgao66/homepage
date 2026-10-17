@@ -179,6 +179,7 @@
       : !haveResponse ? "正在连接实时数据（最多等待 8 秒）…"
       : online < inventory.length ? `${online} / ${inventory.length} 台服务器的占用已更新，其余暂不可用。每 2 分钟刷新。`
       : "每 2 分钟更新 GPU、CPU、内存和硬盘使用情况；采样时间见各台服务器。";
+    document.dispatchEvent(new CustomEvent("machines:status", {detail: {fresh: online > 0, fromCache}}));
   }
   function validPayload(payload) {
     return payload?.schema_version === 1 && Array.isArray(payload.machines) && payload.machines.length > 0
@@ -201,6 +202,15 @@
       }]));
       fetchedAt = performance.now(); haveResponse = true; fromCache = true;
     } catch { /* Storage can be disabled by browser privacy settings. */ }
+  }
+  function restoreEmbedded() {
+    try {
+      const payload = JSON.parse($("machines-initial-status")?.textContent || "null");
+      if (!validPayload(payload)) return false;
+      snapshots = new Map(payload.machines.map(machine => [machine.id, machine]));
+      fetchedAt = performance.now(); haveResponse = true;
+      return true;
+    } catch { return false; }
   }
   function saveLatest(payload) {
     try { localStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), payload })); }
@@ -246,18 +256,19 @@
     });
   }
   async function refresh() {
-    if (busy) return;
+    if (busy || window.MACHINES_PAUSED) return;
     busy = true; $("refresh-machines").disabled = true;
     const controllers = [];
     try {
       const urls = [...new Set([config.statusUrl, ...(config.statusUrls || [])].filter(Boolean))];
       controllers.push(...urls.map(() => new AbortController()));
       const payload = await firstSnapshot(urls, controllers);
+      if (window.MACHINES_PAUSED) return;
       snapshots = new Map(payload.machines.map(machine => [machine.id, machine]));
       fetchedAt = performance.now(); haveResponse = true; failed = false; fromCache = false;
       saveLatest(payload);
     } catch { failed = true; }
-    finally { controllers.forEach(controller => controller.abort()); busy = false; $("refresh-machines").disabled = false; render(); }
+    finally { controllers.forEach(controller => controller.abort()); busy = false; $("refresh-machines").disabled = false; if (!window.MACHINES_PAUSED) render(); }
   }
   $("refresh-machines").addEventListener("click", refresh);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
@@ -265,7 +276,8 @@
     const embedded = JSON.parse($("machines-inventory")?.textContent || "null");
     if (Array.isArray(embedded) && embedded.length) inventory = embedded;
   } catch { /* Older pages can still load the external inventory. */ }
-  restoreLatest();
+  const embedded = restoreEmbedded();
+  if (!embedded) restoreLatest();
   render();
   if (!inventory.length) {
     fetch("/assets/machines/inventory.json?v=ip2", { cache: "no-store", credentials: "omit" })
@@ -273,7 +285,7 @@
       .then(data => { inventory = data; render(); })
       .catch(() => { $("machines-list").replaceChildren(); $("machines-message").textContent = "服务器列表读取失败，请刷新页面。"; });
   }
-  refresh();
+  if (!embedded) refresh();
   setInterval(() => { if (!document.hidden) refresh(); }, config.refreshMs || 120000);
-  setInterval(() => { if (!document.hidden && haveResponse) render(); }, 5000);
+  setInterval(() => { if (!document.hidden && haveResponse && !window.MACHINES_PAUSED) render(); }, 5000);
 })();

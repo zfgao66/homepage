@@ -64,6 +64,9 @@
 .gpu-problem { font-size:11px;color:#956022; }
 .machine-empty { margin:0;padding:6px 0;font-size:13px;color:var(--muted); }
 .machines-footnote { font-size:12px;line-height:1.8;color:var(--muted);margin:20px 0 0; }
+#machines-relay-view[data-pending=true] { position:absolute;left:-20000px;top:0;width:100%;visibility:hidden; }
+#machines-relay-frame { display:block;width:100%;height:800px;border:0;background:#f5f6f8; }
+.machines-connection-help { padding-top:16px;padding-bottom:16px;font-size:14px;color:var(--muted); }
 @media(max-width:900px) {
   .machines-summary { gap:12px; }
   .summary-card { padding:18px 17px; }

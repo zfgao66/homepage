@@ -2,9 +2,13 @@
 import datetime
 import http.server
 import json
+import pathlib
 import threading
 import time
 import urllib.parse
+
+DASHBOARD_PATH = pathlib.Path(__file__).with_name('dashboard.html')
+DASHBOARD_MARKER = '__MACHINES_LATEST_SNAPSHOT__'
 
 ALLOWED_ORIGINS = frozenset(('http://gaozefeng.tech', 'https://gaozefeng.tech',
                              'http://www.gaozefeng.tech', 'https://www.gaozefeng.tech',
@@ -46,6 +50,8 @@ class LatestSnapshots:
 
 
 def create_server(store, port):
+    # Read the small immutable bundle once; never retain rendered snapshots or history.
+    dashboard = DASHBOARD_PATH.read_text() if DASHBOARD_PATH.exists() else None
     class Handler(http.server.BaseHTTPRequestHandler):
         server_version = 'MachinesStatus'
         sys_version = ''
@@ -85,7 +91,23 @@ def create_server(store, port):
             self.reply(204, None)
 
         def do_GET(self):
-            if urllib.parse.urlsplit(self.path).path != '/api/status':
+            path = urllib.parse.urlsplit(self.path).path
+            if path in ('/machines', '/machines/') and dashboard is not None:
+                # Inline the current data in the first HTML response, with script-safe JSON.
+                snapshot = json.dumps(store.response(), ensure_ascii=False, allow_nan=False).replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
+                payload = dashboard.replace(DASHBOARD_MARKER, snapshot).encode()
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Content-Length', str(len(payload)))
+                self.send_header('Cache-Control', 'no-store')
+                self.send_header('X-Robots-Tag', 'noindex, nofollow, noarchive')
+                self.send_header('X-Content-Type-Options', 'nosniff')
+                self.send_header('Content-Security-Policy', "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors http://gaozefeng.tech https://gaozefeng.tech http://www.gaozefeng.tech https://www.gaozefeng.tech http://127.0.0.1:8788")
+                self.end_headers()
+                if self.command != 'HEAD':
+                    self.wfile.write(payload)
+                return
+            if path != '/api/status':
                 self.reply(404, {'error': 'Not found'})
                 return
             self.reply(200, store.response())

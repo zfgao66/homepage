@@ -6,49 +6,14 @@ body_class: machines-page
 description: 按 IP 查看课题组服务器的 GPU、CPU、内存和硬盘使用情况。
 robots: noindex, nofollow, noarchive
 sitemap: false
-stylesheets: [/assets/css/machines.css?v=summary1]
-scripts: [/assets/js/machines-config.js?v=instant3, /assets/js/machines.js?v=instant3]
+stylesheets: [/assets/css/machines.css?v=mobile4]
+scripts: [/assets/js/machines-config.js?v=mobile4, /assets/js/machines-frame.js?v=mobile4, /assets/js/machines.js?v=mobile4]
 ---
-<section class="page-heading">
-  <div class="page-shell page-heading__inner machines-heading">
-    <div><h1>GPU 使用情况</h1><p>按 IP 查看 GPU、CPU、内存和硬盘使用情况。</p></div>
-    <button id="refresh-machines" type="button">刷新数据 ↻</button>
-  </div>
-</section>
-<section class="content-section machines-section">
-  <div class="page-shell">
-    <section class="machines-overview" aria-label="GPU 资源汇总" aria-describedby="machines-summary-note">
-      <div class="machines-summary">
-        <article class="summary-card">
-          <h2>GPU 总数</h2>
-          <p class="summary-value"><span id="summary-total">—</span><span class="summary-unit">张</span></p>
-          <p id="summary-servers" class="summary-detail">正在读取服务器列表</p>
-        </article>
-        <article class="summary-card summary-card--free">
-          <h2>空余 GPU</h2>
-          <p class="summary-value"><span id="summary-free">—</span><span class="summary-unit">张</span></p>
-          <p class="summary-detail">低占用、低显存占用</p>
-        </article>
-        <article class="summary-card summary-card--used">
-          <h2>有占用 GPU</h2>
-          <p class="summary-value"><span id="summary-used">—</span><span class="summary-unit">张</span></p>
-          <p class="summary-detail">有计算或显存占用</p>
-        </article>
-        <article class="summary-card summary-card--unknown">
-          <h2>异常 / 未更新</h2>
-          <p class="summary-value"><span id="summary-unknown">—</span><span class="summary-unit">张</span></p>
-          <p class="summary-detail">不计入空余 GPU</p>
-        </article>
-      </div>
-      <p id="machines-summary-note" class="machines-summary-note">空余按 GPU 占用率低于 10%、显存已用低于 1 GiB 估算，使用前请查看下方逐卡数据。每 2 分钟更新；读取异常或超过 5 分钟未更新的显卡不计为空余。</p>
-    </section>
-    <p id="machines-message" class="machines-message" role="status" aria-live="polite">正在获取服务器状态…</p>
-    <table class="machines-table" aria-label="按 IP 列出的 GPU 使用情况">
-      <thead><tr><th scope="col">IP / 资源使用</th><th scope="col">显卡 / CPU 配置</th><th scope="col">每张 GPU 的使用情况</th></tr></thead>
-      <tbody id="machines-list"><tr><td colspan="3">正在读取…</td></tr></tbody>
-    </table>
-    <p class="machines-footnote">共 7 台服务器、32 张 GPU。内存显示已用 / 总量，硬盘显示本地分区的可用 / 总量，剩余不足 10% 时提示。每 2 分钟更新，数据超过 5 分钟未更新时显示“—”，不代表空闲。时间均为北京时间。</p>
-    <noscript><p>请启用浏览器 JavaScript，以查看自动更新的机器状态。</p></noscript>
-  </div>
-</section>
+<div id="machines-standard">
+{% include machines-content.html %}
 <script id="machines-inventory" type="application/json">{% include_relative assets/machines/inventory.json %}</script>
+</div>
+<div id="machines-relay-view" hidden data-pending="true">
+  <iframe id="machines-relay-frame" title="服务器实时资源状态" referrerpolicy="no-referrer"></iframe>
+</div>
+<p id="machines-connection-help" class="page-shell machines-connection-help" hidden>如果仍无法显示，可<a href="https://43.155.209.84/machines/">直接打开服务器状态页</a>。</p>

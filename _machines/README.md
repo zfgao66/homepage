@@ -29,13 +29,16 @@
 3. 公网服务器的 `machines-collector.service` 每约 30 秒，通过该连接及受限 SSH 转发，读取上述 7 台机器的真实 GPU 指标。
 4. 同一个采集进程在内存中保留各机器的最新快照，以只读接口监听 `127.0.0.1:8273`；已有 nginx 将 `https://43.155.209.84/machines-api/status` 转发到该接口。接口每次请求重新计算数据年龄，停止采集不会把旧数据误认为空闲。
 5. 原有 HTTPS 上报继续更新备用云端状态服务；备用上传失败不延迟本机快照的采集，也不触发采集退避。
-6. GitHub Pages 网页每 2 分钟同时尝试直连和备用接口，第一份未过期的数据先显示；不再先等直连失败。两条链路一起受 8 秒硬超时限制，覆盖响应头和 JSON 正文读取，即使浏览器不响应 AbortSignal 也会结束等待。页面优先恢复本浏览器上次成功的数据，标记“上次数据”，再后台更新。后台采集仍独立每 30 秒运行，打开页面无需重新采集或等待下一轮。
+6. 公网服务器同时提供 `https://43.155.209.84/machines/`。同一个采集进程将最新快照内嵌在首次 HTML 响应中，样式和脚本也包含在同一份页面内；初次显示不再依赖额外的跨域 Fetch 或本机缓存。后续只请求同源 `/machines-api/status`，每 2 分钟更新。
+7. GitHub Pages 的 `/machines/` 同时尝试页面嵌入和原来的两条 JSON 连接，首个有新数据的结果决定展示方式。页面嵌入成功后暂停外层 JSON 轮询；JSON 先成功则移除备用页面。两种方式复用同一份界面和指标规则。只接受明确来源且来自指定 iframe 的尺寸 / 就绪消息，不传输登录信息或采样正文。两条 JSON 连接保留 8 秒超时和本机最新缓存，原本可用的电脑线路不会因某个网络屏蔽 IP 地址而失效。所有方式均不触发内网重新采集。
 
 网页通过 Jekyll 内嵌同一份库存 JSON，首屏硬件清单无需另发请求。浏览器 `localStorage` 的 `machines.latest.v1` 仅保存一份最新快照，约十几 KB，每次成功覆盖；没有历史序列。缓存恢复会累加离线时间，超过 5 分钟的占用显示“—”。首次访问或浏览器禁用存储时仍需一次网络读取。
 
 网页关闭、管理电脑退出后，采集仍由两台服务器上的系统服务运行；两个服务都设置了开机自启和异常重连。
 
-备用云端服务为 `https://ruc-nova-machines-status.classyjay7.chatgpt.site`，Sites 项目 ID 为 `appgprj_6ad30235451881918763f042d3967530`，源码在本次工作目录的 `status-api` 项目中。云端仅保留各机器最新一次经过校验的采样。不同网络对两条链路的访问不同，因此网页并行尝试；2026-10-17 用户手机流量已验证直连接口可访问，实际 Chrome 网络记录也验证了备用接口可用。只读直连接口同时支持受限来源、GET / HEAD 的跨域预检。
+备用云端服务为 `https://ruc-nova-machines-status.classyjay7.chatgpt.site`，Sites 项目 ID 为 `appgprj_6ad30235451881918763f042d3967530`，源码在本次工作目录的 `status-api` 项目中。云端仅保留各机器最新一次经过校验的采样。不同网络对访问方式的支持不同：2026-10-17 用户手机能直接打开 JSON 地址，但在网页内跨域读取仍失败，因此不能以直接打开成功代替手机网页验证。实际 Chrome 网络记录验证了备用接口可用；本机代理环境也会关闭 IP 地址连接。只读直连接口支持受限来源的 GET / HEAD 跨域预检；新增页面不依赖该能力。
+
+嵌入版本限制 `frame-ancestors` 为原网页域名及本机开发预览，`connect-src 'self'`，没有写接口。响应不缓存、不写访问日志，只有约 80 KB 的当前页面。采集器只多保留约 70 KB 的静态模板，不新增常驻进程，也不保存历史网页。页面入口仍不出现在首页或导航。
 
 公网服务器和内网机器不保存历史指标或采样文件。公网采集器的内存中只有每台机器最新一条快照，云端按机器 IP 覆盖上一条记录；本机浏览器也仅覆盖一份缓存。采集日志只记录首次状态、故障或恢复等状态变化，以及每小时一条健康摘要；不为每次成功采样或接口读取写日志。日志交给系统现有的滚动日志机制管理。
 
@@ -97,6 +100,10 @@ sudo systemctl restart machines-relay.service
 python3 -m unittest discover -s _machines -p 'test_*.py'
 node --check assets/js/machines.js
 node _machines/test_dashboard.cjs
+node _machines/test_frame.cjs
+python3 _machines/build_dashboard.py --output /tmp/dashboard.html
 ```
+
+更改界面后，用 `build_dashboard.py` 重新生成 bundle，通过现有受保护维护连接更新 `/opt/machines-collector/dashboard.html`，然后重启 `machines-collector.service`。共享界面在 `_includes/machines-content.html`，库存仍以 `assets/machines/inventory.json` 为准；构建不包含密码、密钥、上报 token 或配置文件。`status_api.py` 启动时只读取该固定文件，不提供任意文件读取。`setup_status_https.py` 包含两个独立的页面路径，保留其他应用路由。
 
 测试覆盖未知 GPU 指标、单卡查询失败、物理核心与线程计数、绑定挂载去重、普通用户可用空间、单个分区读取失败、跨机器误报、过期采样、单机连接失败和重复日志抑制、故障及恢复记录。接口另验证了扩展指标的校验与旧采样的兼容。上线验证检查服务器日志、云端连续多轮采样时间及正式网页的实际展示。

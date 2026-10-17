@@ -1,5 +1,7 @@
 import json
 import threading
+import pathlib
+import tempfile
 import unittest
 import urllib.error
 import urllib.request
@@ -7,6 +9,7 @@ from unittest import mock
 
 import collector
 import status_api
+import build_dashboard
 
 
 class DirectStatusTests(unittest.TestCase):
@@ -72,4 +75,40 @@ class DirectStatusTests(unittest.TestCase):
             server.shutdown()
             server.server_close()
             thread.join(timeout=2)
+
+    def test_same_origin_page_contains_latest_data_without_external_subresources(self):
+        bundle = build_dashboard.build()
+        self.assertNotIn('{%', bundle)
+        self.assertNotIn('<script src=', bundle)
+        self.assertNotIn('<link rel="stylesheet"', bundle)
+        with tempfile.TemporaryDirectory() as directory:
+            page = pathlib.Path(directory) / 'dashboard.html'
+            page.write_text(bundle)
+            with mock.patch.object(status_api, 'DASHBOARD_PATH', page):
+                server = status_api.create_server(self.store, 0)
+            thread = threading.Thread(target=server.serve_forever, daemon=True)
+            thread.start()
+            try:
+                url = 'http://127.0.0.1:%s/machines/?embed=1' % server.server_address[1]
+                self.store.publish(dict(self.snapshot, cpu_model='</script><script>alert(1)</script>'))
+                with urllib.request.urlopen(url) as response:
+                    html = response.read().decode()
+                    self.assertEqual(response.headers.get_content_type(), 'text/html')
+                    self.assertEqual(response.headers['Cache-Control'], 'no-store')
+                    self.assertIn("connect-src 'self'", response.headers['Content-Security-Policy'])
+                    self.assertIn('frame-ancestors http://gaozefeng.tech', response.headers['Content-Security-Policy'])
+                    self.assertNotIn(status_api.DASHBOARD_MARKER, html)
+                    self.assertNotIn('</script><script>alert(1)', html)
+                    data = json.loads(html.split('<script id="machines-initial-status" type="application/json">')[1].split('</script>')[0])
+                    self.assertEqual(data['machines'][0]['age_seconds'], 0)
+                self.now += 600
+                with urllib.request.urlopen(url) as response:
+                    html = response.read().decode()
+                    data = json.loads(html.split('<script id="machines-initial-status" type="application/json">')[1].split('</script>')[0])
+                    self.assertEqual(data['machines'][0]['age_seconds'], 600)
+                    self.assertEqual(data['machines'][0]['status'], 'stale')
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join(timeout=2)
 

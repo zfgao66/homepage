@@ -20,14 +20,16 @@ class Element {
   closest() { return this; }
 }
 
-function boot({fail = [], hang = [], bodyHang = [], hold = [], data = payload(), byRoute = {}, cache = new Map(), storageBlocked = false} = {}) {
+function boot({fail = [], hang = [], bodyHang = [], hold = [], data = payload(), byRoute = {}, cache = new Map(), storageBlocked = false, embedded = null} = {}) {
   const nodes = new Map(), calls = [], timers = new Map(), intervals = [], releases = new Map();
   let timerId = 0, elapsed = 0;
   const node = id => { if (!nodes.has(id)) nodes.set(id, new Element()); return nodes.get(id); };
   node('machines-inventory').textContent = JSON.stringify(inventory);
+  if (embedded) node('machines-initial-status').textContent = JSON.stringify(embedded);
   const context = {
     window: {MACHINES_CONFIG: {statusUrl: primary, statusUrls: [primary, fallback], refreshMs: 120000, staleAfterSeconds: 300}},
-    document: {getElementById: node, createElement: () => new Element(), addEventListener() {}, hidden: false},
+    document: {getElementById: node, createElement: () => new Element(), addEventListener() {}, dispatchEvent() {}, hidden: false},
+    CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } },
     performance: {now: () => elapsed}, Intl, Date, Map, Set, Number, Math, String, Boolean, AbortController,
     localStorage: {
       getItem: key => { if (storageBlocked) throw new Error('Storage blocked'); return cache.get(key) || null; },
@@ -92,6 +94,12 @@ function boot({fail = [], hang = [], bodyHang = [], hold = [], data = payload(),
   assert.equal(test.counts().free, '0', 'Old cache must never imply free GPUs');
   assert.equal(test.counts().unknown, '8');
   test = boot({storageBlocked: true}); await flush(); assert.equal(test.counts().free, '8');
+
+  test = boot({embedded: payload(), hang: [primary, fallback], storageBlocked: true});
+  assert.equal(test.counts().free, '8', 'The initial HTML must show current metrics without a second network request or local storage');
+  assert.deepEqual(test.calls, []);
+  assert.equal(test.intervals[0].ms, 120000);
+  test.expire(); assert.equal(test.counts().unknown, '8', 'Inline data must expire if later collection or connectivity stops');
 
   const metrics = payload();
   metrics.machines[0].telemetry.gpus = [card(0, 9.9, 1023), card(1, 10), card(2, 0, 1024), {index: null}];
