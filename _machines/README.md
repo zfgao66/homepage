@@ -44,3 +44,17 @@ python3 _machines/manage.py sample --output /tmp/machines-samples.json
 维护程序在交互模式中隐藏密码输入；自动化模式仅从管道接收临时配置。运行时凭证不应通过命令行参数或仓库文件传递。
 
 新增机器时，同步更新 `assets/machines/inventory.json` 和云端 `lib/inventory.ts`，为新机器配置独立上报凭证，再安装采集服务。
+
+## 待完成的域名接入
+
+页面已发布，但实验室服务器向默认 `chatgpt.site` 主机自动上报时收到云端的 HTTP 403；经默认服务端认证方式测试仍未解决。现已申请 `machines-api.gaozefeng.tech`，等待域名管理员在 DNSPod 的 `gaozefeng.tech` 解析中添加以下三条记录。它们是公开的 DNS 验证记录，不是服务器或上报密码。
+
+| 类型 | 主机记录 | 记录值 |
+| --- | --- | --- |
+| CNAME | machines-api | custom-domains.chatgpt.site. |
+| TXT | _openai-site-verification.machines-api | openai-site-verification=bQFWpL_di42LZhijSArRnHpleCOdGXJgYldhMcsDm-M |
+| TXT | _cf-custom-hostname.machines-api | f8e650c4-ce6e-4ed8-a667-0d5e7269511a |
+
+自定义域名 ID：`appgdom_6ad306ea8af48191aed57ccf5636d2b2`。添加记录后，需要核对 Sites 域名和证书状态、验证实验室服务器对新地址的访问，再更新服务器的 `MACHINES_INGEST_URL` 及网页的 `statusUrl`。旧的上报 token 可以沿用，不需要重置服务器登录密码。
+
+目前只完成过从管理电脑发起的真实采样写入验证，不能据此声称服务器持续上报已成功。若暂时没有后续上报，页面会在 120 秒后显示数据中断。`10.20.6.11` 与 `10.20.6.12` 仍未接入；`10.20.5.8` 的一张 3090 无法返回指标，其余三张能正常查询。
