@@ -1,8 +1,8 @@
 # RUC-Nova GPU 资源管理平台
 
-固定入口：`http://gaozefeng.tech/machines/`。首页与导航不添加入口，页面设置 `noindex`、`nofollow`、`noarchive`，不加入 sitemap。本版本将 GitHub Pages 入口改为跳转页，实际平台位于 `https://43.155.209.84/machines/`。隐藏入口不代替登录保护；原域名入口需在 GitHub 发布后再次确认。
+固定入口：`http://gaozefeng.tech/machines/`。首页与导航不添加入口，页面设置 `noindex`、`nofollow`、`noarchive`，不加入 sitemap。本版本将 GitHub Pages 入口改为跳转页，实际平台位于 `https://43.155.209.84/machines/`。隐藏入口不代替登录保护；原域名无查询参数的新跳转内容和到正式登录页的浏览器导航均已验证。
 
-截至北京时间 2026-10-31，HTTPS 平台已经部署并验证登录、真实采样及服务重启后登记持久化；绑定物理网卡且绕开代理的 HTTPS 读取正常。53 项 Python 测试、4 组 Node 测试、两个独立浏览器以及 360×800 视口操作通过。GitHub 提交 / 推送及原域名入口发布后确认仍待记录；物理手机新版反馈尚未取得，未重启整台虚拟机。具体证据和范围见 [ACCEPTANCE.md](ACCEPTANCE.md)。共享访问密码通过课题组内部渠道提供，公开文档和源码不保存明文密码。
+截至北京时间 2026-10-31，HTTPS 平台已经部署并验证登录、真实采样及服务重启后登记持久化；绑定物理网卡且绕开代理的 HTTPS 读取正常。53 项 Python 测试、4 组 Node 测试、两个独立浏览器以及 360×800 视口操作通过。功能代码已推送至 master（`db6a5183f4fe2668042898ed1c9c46569e40b622`），原域名入口已验证；七项发布文件的本机与线上 SHA256 一致。物理手机新版反馈尚未取得，未重启整台虚拟机。具体证据和范围见 [ACCEPTANCE.md](ACCEPTANCE.md)。共享访问密码通过课题组内部渠道提供，公开文档和源码不保存明文密码。
 
 ## 功能与数据口径
 
@@ -81,7 +81,7 @@ nginx → 127.0.0.1:8273/api/*
 
 监控最新快照在进程内，服务重启后等待下一轮采样恢复；登记、变更历史、会话在磁盘 SQLite 中，服务重启不丢失。浏览器可覆盖缓存一份最新监控快照，不存监控时间序列；缓存年龄随离线时间累加，不会把旧数据算成空闲。登记不会因关闭网页或退出管理电脑而停止保存。
 
-采集日志只记录状态变化和定期健康摘要；nginx 管理路径关闭访问日志。新功能不为每次轮询保存历史遥测，但会持久保存登记及其变更历史。公网服务 `MemoryMax=256M` 和中转服务 `MemoryMax=64M` 是限制，不是预留内存；发布后应核对实际占用。
+采集日志只记录状态变化和定期健康摘要；nginx 管理路径关闭访问日志。新功能不为每次轮询保存历史遥测，但会持久保存登记及其变更历史。公网服务 `MemoryMax=256M` 和中转服务 `MemoryMax=64M` 是限制，不是预留内存。本次线上采集服务实际内存为 38,608,896 字节，约 36.8 MiB；没有新增常驻后端进程。线上仅保留一条明确标注的已取消验收记录，当前 0 条有效申请，历史保留。
 
 ## 文件、私有配置与权限
 
@@ -133,9 +133,11 @@ Python 测试覆盖采样、采集、鉴权、HTTP、SQLite 和并发；Node 测
 
 `setup_status_https.py` 复用 `install_management.py.nginx_config()`，两文件必须放在同一目录后执行。它仅在既有默认 HTTP 站点加入 ACME 验证 include，保留其他应用路由；独立 HTTPS 配置把整个 `/machines-api/` 前缀转发到受保护后端，不能恢复成旧的单一公开 status 路由。它不配置管理密码，也不证明后端已通过登录验收。
 
-证书使用独立 `/opt/machines-certbot` 环境，不改其他应用的 Python 依赖；证书与账号保存在 `/etc/machines-monitor-tls`。`machines-status-cert-renew.timer` 每 6 小时检查续期，成功后先 `nginx -t` 再 reload，不常驻 Certbot 进程。不要删除 HTTP `/.well-known/acme-challenge/` 路由或关闭续期 timer。
+证书使用独立 `/opt/machines-certbot` 环境，不改其他应用的 Python 依赖；证书与账号保存在 `/etc/machines-monitor-tls`。本次检查采集服务及续期 timer 均为 enabled，timer active，当前证书有效期为 2026-10-27 至 2026-11-03。`machines-status-cert-renew.timer` 每 6 小时检查续期，成功后先 `nginx -t` 再 reload，不常驻 Certbot 进程。不要删除 HTTP `/.well-known/acme-challenge/` 路由或关闭续期 timer。
 
-无需新增 DNS 记录。公网 TCP 443 必须在腾讯云防火墙和主机网络规则中放行；回环 8273、22638 不向公网开放。验收须关闭代理，不能以代理下成功代替手机/普通网络直连测试。
+本次发布的最新备份目录为 `/var/lib/machines-management-deploy-backups/20261030T180948903217Z`，包含 SQLite 一致性备份，恢复方法见下节。GitHub Pages 工作流 `41104571745` 已确认 `completed / success`，对应上述功能提交，更新时间为 `2026-10-30T18:14:13Z`；实际新版入口内容和跳转也已验证。
+
+无需新增 DNS 记录。公网 TCP 443 必须在腾讯云防火墙和主机网络规则中放行；回环 8273、22638 不向公网开放。验收须关闭代理，不能以代理下成功代替手机/普通网络直连测试。本次物理 en0 直连检查绕开代理；原域名检查另通过真实 Pages IP 的 `--resolve` 绕过本机 Clash 假 DNS，具体证据见验收记录。
 
 ## 备份、恢复与回滚
 
