@@ -1,8 +1,12 @@
-# GPU 使用情况
+# RUC-Nova GPU 资源管理平台
 
-访问地址：`http://gaozefeng.tech/machines/`。首页及导航不放入口；设置了 `noindex`、`sitemap: false`。知道地址的人可以查看，页面没有登录凭证或远程操作功能。
+固定入口：`http://gaozefeng.tech/machines/`。首页与导航不添加入口，页面设置 `noindex`、`nofollow`、`noarchive`，不加入 sitemap。本版本将 GitHub Pages 入口改为跳转页，实际平台位于 `https://43.155.209.84/machines/`。隐藏入口不代替登录保护；原域名入口需在 GitHub 发布后再次确认。
 
-只按 IP 显示用户指定的 7 台服务器：
+截至北京时间 2026-10-31，HTTPS 平台已经部署并验证登录、真实采样及服务重启后登记持久化；绑定物理网卡且绕开代理的 HTTPS 读取正常。53 项 Python 测试、4 组 Node 测试、两个独立浏览器以及 360×800 视口操作通过。GitHub 提交 / 推送及原域名入口发布后确认仍待记录；物理手机新版反馈尚未取得，未重启整台虚拟机。具体证据和范围见 [ACCEPTANCE.md](ACCEPTANCE.md)。共享访问密码通过课题组内部渠道提供，公开文档和源码不保存明文密码。
+
+## 功能与数据口径
+
+保留原有 7 台服务器、32 张 GPU 的监控，在每台服务器下增加共享使用登记：
 
 | IP | 显卡 | 数量 |
 | --- | --- | --- |
@@ -14,98 +18,183 @@
 | 10.20.6.135 | RTX 3090 | 4 |
 | 10.20.1.21 | H100 | 8 |
 
-共 32 张卡。型号和数量已通过真实采样核实，保存在 `assets/machines/inventory.json`；占用中断时仍显示硬件配置。`10.20.5.8` 有一张卡无法返回指标，保留“编号未知 / 读取异常”，不推测编号、不按零占用处理。`10.20.6.11` 和 `10.20.6.12` 尚未连接，不在网页列表或本次采集中。
+库存以 `assets/machines/inventory.json` 为准。`10.20.6.11`、`10.20.6.12` 不在当前采集范围。读取失败的显卡仍占库存，不能按空闲卡计算。
 
-顶部按同一批快照汇总 GPU 总数、空余、有占用及异常 / 未更新数量。空余按 GPU 占用率低于 10% 且显存已用低于 1024 MiB 估算，不保证无人使用；使用前应查看逐卡指标。缺少指标、异常编号、重复编号及超过 5 分钟的采样均不计为空余。获取过采样后，三种状态的数量之和等于库存 GPU 总数；没有本机缓存且首次连接失败时动态数量显示“—”，不能据此判断 32 张 GPU 都异常。汇总在浏览器内计算，不增加服务器采集。
+- 监控保留逐卡 GPU 利用率、显存、CPU、内存、本地磁盘、异常状态与采样时间。磁盘只读取已挂载本地文件系统容量，不扫描目录；绑定挂载去重，排除虚拟、网络及启动文件系统，可用空间使用普通用户可写的 `f_bavail`。
+- 实时空余按 GPU 利用率低于 10%、已用显存低于 1024 MiB 估算。缺失、错误、重复编号和超过 5 分钟的采样不计为空余。未取得数据时显示“—”；采样时间用北京时间显示。
+- 登记支持 8/24/48/72 小时、7/15/30 天和自定义结束时间。超过 7 天的连续计划标为长期，30 天登记不会因 GPU 空闲、采样中断或经过 72 小时而失效。
+- 姓名、微信、IP、GPU 数量、开始与结束时间必填；GPU 编号、用途、使用方式、长备注可选。指定编号时数量必须匹配，且不能重复或超出库存。全部时间统一按北京时间输入和显示。
+- 所有人共用访问密码，无独立账号或审批。登录成员可查看、编辑、续期、提前结束登记，或取消尚未开始的预约；变更历史保留。到期只改变状态，不删除记录。
+- 时间区间按“含开始、不含结束”处理。指定 GPU 重叠或同时申请总量超过库存时显示联系人及冲突说明；必须明确确认后才能继续，双方记录都保留。提交时在数据库事务内重新检查，不能依赖先前预览结果。
+- 当前有效申请卡数按正在使用的登记相加，协调中的重叠申请可能使数量超过库存；长期数含有效的当前/未来登记；即将到期指正在使用且未来 24 小时内结束。
+- 7/30 天统计按微信号归并。登记 GPU 卡时按统计窗口内已发生的登记时间计算；同人在同机重叠时按“指定 GPU 并集”和“最大同时申请张数”中较大值去重，不同服务器相加。提前结束、取消和到期续期空档不多计。申请次数按窗口内创建记录计，包含后来取消的申请；长期登记时长按长期区间的时间并集计算。界面展示服务端中文统计说明。
 
-每个 IP 下同时显示 CPU 使用率、内存已用 / 总量、本地硬盘各分区的可用 / 总量。配置栏显示 CPU 型号、物理核心数、线程数，多路机器还显示 CPU 颗数。剩余空间不足 10% 的分区单独提示，不用数据盘空余量掩盖系统盘紧张的情况。
+登记是公开协调计划，不能据此认定 GPU 正在满负荷计算，也不会锁卡、执行 SSH 管理命令、杀进程、操作 Slurm 或发送微信。已有受限 SSH 连接仅继续承担采样职责。
 
-磁盘指标只读取本地已挂载文件系统的容量，不扫描文件目录、不统计虚拟内存盘或网络挂载；同一设备的绑定挂载不重复展示。排除 `/boot` 等启动分区。可用空间使用普通用户能够写入的 `f_bavail`，不把管理员保留空间计算为可用。
+## 架构与认证边界
 
-## 正在运行的数据链路
+```text
+GitHub Pages /machines/（仅跳转）
+        ↓ HTTPS
+43.155.209.84 /machines/（密码界面及登录后的平台）
+        ↓ 同源 /machines-api/*，浏览器 Cookie + CSRF
+nginx → 127.0.0.1:8273/api/*
+        ├─ 内存：每台机器最新一条监控快照
+        └─ SQLite：共享登记、历史、幂等响应、登录会话
+```
 
-1. `10.20.6.38` 上的 `machines-relay.service` 主动建立到公网服务器 `43.155.209.84` 的 SSH 加密连接。
-2. 连接只在公网服务器本机的 `127.0.0.1:22638` 监听，指向内网中转机的 SSH。没有向公网开放内网 SSH 端口。
-3. 公网服务器的 `machines-collector.service` 每约 30 秒，通过该连接及受限 SSH 转发，读取上述 7 台机器的真实 GPU 指标。
-4. 同一个采集进程在内存中保留各机器的最新快照，以只读接口监听 `127.0.0.1:8273`；已有 nginx 将 `https://43.155.209.84/machines-api/status` 转发到该接口。接口每次请求重新计算数据年龄，停止采集不会把旧数据误认为空闲。
-5. 原有 HTTPS 上报继续更新备用云端状态服务；备用上传失败不延迟本机快照的采集，也不触发采集退避。
-6. 公网服务器同时提供 `https://43.155.209.84/machines/`。同一个采集进程将最新快照内嵌在首次 HTML 响应中，样式和脚本也包含在同一份页面内；初次显示不再依赖额外的跨域 Fetch 或本机缓存。后续只请求同源 `/machines-api/status`，每 2 分钟更新。
-7. GitHub Pages 的 `/machines/` 只读取 `https://43.155.209.84/machines-api/status`，不再通过 `chatgpt.site` 备用接口或隐藏 iframe 获取数据。页面保留 8 秒请求上限、本机最新缓存及每 2 分钟刷新。请求失败时保留已获取的快照并显示无法连接，不把 HTTP 错误、无效数据等失败一律称为超时。网页读取不会触发内网重新采集。
+`status_api.py` 与采集器位于同一进程，不新增常驻后端服务。浏览器不再跨域读取旧备用站点，也不通过 iframe、JSONP 或 GitHub 内容获取私有数据。
 
-网页通过 Jekyll 内嵌同一份库存 JSON，首屏硬件清单无需另发请求。浏览器 `localStorage` 的 `machines.latest.v1` 仅保存一份最新快照，约十几 KB，每次成功覆盖；没有历史序列。缓存恢复会累加离线时间，超过 5 分钟的占用显示“—”。首次访问或浏览器禁用存储时仍需一次网络读取。
+`management_auth.py` 使用带随机盐的 PBKDF2-SHA256 密码哈希。哈希仅在服务器私有配置中；登录请求由后端核验，不能通过前端弹窗绕过。会话凭证采用 `__Host-machines_session` Cookie，设置 `Secure`、`HttpOnly`、`SameSite=Lax`、`Path=/`；无持久化 Cookie 有效期，服务端额外限制 24 小时。SQLite 只保存会话令牌的 SHA256 指纹。退出即撤销服务端会话，复制的旧 Cookie 同样失效。
 
-网页关闭、管理电脑退出后，采集仍由两台服务器上的系统服务运行；两个服务都设置了开机自启和异常重连。
+匿名访问 `/machines/` 返回登录页，不内嵌监控快照或会话 CSRF；登录后才内嵌最新快照以减少首屏请求。监控、登记、历史、概览和统计接口都需要有效会话。所有写接口（包括冲突预览、退出）校验同源 Origin 和会话绑定 CSRF，登录也校验 Origin。不开放跨域读写。密码校验有请求速率和并发上限；请求体最大 32 KiB，字段另有限长、类型和数值范围校验。
 
-备用云端服务为 `https://ruc-nova-machines-status.classyjay7.chatgpt.site`，Sites 项目 ID 为 `appgprj_6ad30235451881918763f042d3967530`，源码在本次工作目录的 `status-api` 项目中。采集器目前仍向该服务上报，每台机器仅保留最新采样；网页已不再依赖这条连接。只读直连接口支持受限来源的 GET / HEAD 跨域预检，独立服务器页面则使用同源接口。
+接口响应使用 `Cache-Control: no-store`；平台 CSP 限制 `connect-src 'self'` 和 `frame-ancestors 'none'`。用户字段通过文本节点显示，HTML 内嵌 JSON 转义脚本边界。错误响应不返回密码、配置或堆栈。退出/会话失效会清空页面私有内容与最新快照缓存，取消迟到请求。
 
-腾讯云轻量服务器的防火墙必须允许公网 TCP 443。2026-10-17 已确认原规则仅放行 22、80、8080 和 ICMP，导致 HTTPS 请求在到达服务器前被丢弃；电脑通过代理读取备用接口成功掩盖了这项配置缺失。经用户确认，已增加来源 `0.0.0.0/0`、TCP 443、允许、备注 `GPU status HTTPS` 的规则。绑定物理网络接口并绕开代理后，接口返回 200，约 0.15 秒取得 7 台服务器、32 张 GPU 的新鲜快照，独立页面也返回 200。后续验收必须包含无代理访问，不能用备用线路成功代替主接口验证。
+### 服务端接口
 
-独立服务器页面保留原有 `frame-ancestors` 限制及 `connect-src 'self'`，没有写接口。响应不缓存、不写访问日志，只有约 80 KB 的当前页面。采集器只多保留约 70 KB 的静态模板，不新增常驻进程，也不保存历史网页。旧的嵌入脚本保留用于兼容尚未更新的网页缓存，新版页面不加载它。页面入口仍不出现在首页或导航。
+外部路径前缀为 `/machines-api/`，nginx 转至本机 `/api/`：
 
-公网服务器和内网机器不保存历史指标或采样文件。公网采集器的内存中只有每台机器最新一条快照，云端按机器 IP 覆盖上一条记录；本机浏览器也仅覆盖一份缓存。采集日志只记录首次状态、故障或恢复等状态变化，以及每小时一条健康摘要；不为每次成功采样或接口读取写日志。日志交给系统现有的滚动日志机制管理。
+| 方法 | 路径 | 行为 |
+| --- | --- | --- |
+| POST | `/login` | 密码校验、设置会话 Cookie |
+| GET | `/session` | 会话及 CSRF |
+| POST | `/logout` | 撤销当前会话 |
+| GET | `/status` | 最新监控快照及真实数据年龄 |
+| GET | `/registrations?history=1` | 登记列表；省略 history 仅列有效记录，可按 machine_id 过滤 |
+| POST | `/registrations/preview` | 验证表单并预览冲突，编辑可带 exclude_id |
+| POST | `/registrations` | 创建登记 |
+| PATCH | `/registrations/<id>` | 编辑登记 |
+| POST | `/registrations/<id>/extend`、`/end`、`/cancel` | 续期、提前结束、取消未来预约 |
+| GET | `/registrations/<id>/history` | 不可变更的操作历史 |
+| GET | `/overview`、`/statistics?days=7` 或 `days=30` | 登记汇总与窗口统计 |
 
-`setup_status_https.py` 只为默认 HTTP 站点增加 ACME 验证路径，保留已有应用路由，并新增独立的 443 只读状态入口。IP 地址证书使用 [Certbot 支持的短期证书](https://letsencrypt.org/2026/03/11/shorter-certs-certbot/)。证书、账号私钥及续期配置在根用户专有的 `/etc/machines-monitor-tls`；`/opt/machines-certbot` 为独立环境，不修改应用的 Python 依赖。`machines-status-cert-renew.timer` 每 6 小时检查续期，成功后校验并重载 nginx；Certbot 平时不常驻运行，自己的日志只留一个轮换备份。
+写入使用 UUID `Idempotency-Key`，同一键重试返回原结果；改变内容不能复用旧键。编辑和状态操作须带 `expected_version`，过期版本返回 409。冲突需要 `conflict_ack: true` 明确确认。SQLite 使用事务、WAL 和忙等待，持久化数据是多客户端的唯一事实来源。
 
-内网的采样命令短时运行后退出；保留少量 SSH 连接以免每 30 秒重复建立连接。中转机另有一个加密回连进程。公网服务的 `MemoryMax=256M`、中转服务的 `MemoryMax=64M` 是上限，不是预留内存。不要删除采样命令、密钥或关闭这两个服务，否则自动更新会中断。
+## 保持不变的采集链路
 
-该方案不需要修改 DNS。公网服务器直连原公共跳板机 `202.112.116.48:52622` 的尝试超时，最终使用上述内网主动回连。公共跳板机上的本次临时采集密钥已经移除。此前准备但未启用的 `machines-api.gaozefeng.tech` 自定义域名已撤销。
+1. 内网 `10.20.6.38` 的 `machines-relay.service` 主动建立到公网服务器的 SSH 加密回连。
+2. 公网只在本机 `127.0.0.1:22638` 监听回连端口，指向内网中转机 SSH；没有向公网开放内网 SSH。
+3. `machines-collector.service` 约每 30 秒通过受限 SSH 转发并发采集这 7 台机器。每台机器只保留最新快照，单机故障独立退避，不阻塞其他机器。
+4. 本机 `127.0.0.1:8273` 提供认证后的监控与管理接口。网页初次登录读取最新数据，监控每 2 分钟刷新，登记通常每 30 秒刷新；打开登记表单时不自动重绘登记，监控渲染不替换表单和展开内容。
+5. `install_management.py` 在部署时将私有配置的 `endpoint` 置为空串，停止向旧备用云端服务上传，本次线上配置已核查为关闭。采集仍正常运行；旧 token 字段暂保留以兼容机器清单，不应再启用旧上传作为网页回退。2026-10-31，旧 Sites 备用服务的访问策略已改为仅所有者（revision 3）。停止上传不等于删除旧站点已经持有的历史快照。
 
-## 账号、密钥与权限
+监控最新快照在进程内，服务重启后等待下一轮采样恢复；登记、变更历史、会话在磁盘 SQLite 中，服务重启不丢失。浏览器可覆盖缓存一份最新监控快照，不存监控时间序列；缓存年龄随离线时间累加，不会把旧数据算成空闲。登记不会因关闭网页或退出管理电脑而停止保存。
 
-- 公网采集进程以无登录权限、无 sudo 权限的 `machines-collector` 用户运行。
-- 公网私钥位于 `/var/lib/machines-collector/id_ed25519`，只保存在该机器上。内网机器的对应公钥被强制限制为执行 `/opt/machines-monitor/agent.py --once --machine-id <IP>`。
-- 中转机的该公钥另外只允许连接清单中 7 个 IP 的 SSH 端口。其余目标不在允许列表中。
-- 内网连接进程以无登录权限、无 sudo 权限的 `machines-relay` 用户运行，私钥只在该内网机的 `/var/lib/machines-relay/id_ed25519`。
-- 公网的 `machines-tunnel` 系统账号无登录权限、无 sudo 权限，对应密钥只允许使用固定的本机回连端口，不能执行命令。
-- 每台机器的独立上报 token 位于公网 `/etc/machines-collector/config.json`，权限 `0600`；通过 systemd `LoadCredential` 提供给进程。云端主密钥由 Sites secret `MACHINES_INGEST_SECRET` 保管。
-- 登录密码、私钥、token 不进入仓库或网页。运行时 SSH 主机密钥严格核对，HTTPS 证书正常校验。
+采集日志只记录状态变化和定期健康摘要；nginx 管理路径关闭访问日志。新功能不为每次轮询保存历史遥测，但会持久保存登记及其变更历史。公网服务 `MemoryMax=256M` 和中转服务 `MemoryMax=64M` 是限制，不是预留内存；发布后应核对实际占用。
 
-## 状态含义
+## 文件、私有配置与权限
 
-- 占用已更新：采样年龄不超过 5 分钟。网页统一使用接口给出的 `age_seconds` 加本地经过时间判断。
-- 上次数据：当前先显示本浏览器保存的最近一份快照，网络更新尚未完成；采样时间保留，过期占用不会算空闲。
-- 占用未更新：尚无数据，或采样年龄超过 5 分钟。过期占用率和已用显存显示“—”，不是空闲；已确认的总显存仍显示。
-- 最近采样：指标实际生成时间，北京时间，不使用网页刷新时间代替。
-- CPU、已用内存和磁盘可用量也在数据过期时显示“—”；CPU 配置、总内存与分区容量保留最近一次已知值。
-- 读取异常：某卡无法查询。整机查询失败时逐卡查询，保留其他卡正常数据。
+| 位置 | 用途 |
+| --- | --- |
+| `/opt/machines-collector/` | 已部署 Python 代码、采样 agent 与自包含 dashboard.html |
+| `/etc/machines-collector/config.json` | 0600 私有采集/管理配置，通过 systemd LoadCredential 读取 |
+| `/var/lib/machines-collector/registrations.sqlite3` | 持久 SQLite，0600，归采集服务用户；同目录可能有 WAL/SHM |
+| `/var/lib/machines-collector/` | 服务 StateDirectory，0700；也包含既有受限 SSH 私钥 |
+| `/etc/nginx/conf.d/machines-status-https.conf` | 独立 HTTPS 平台路由 |
+| `/etc/machines-monitor-tls/` | 0700，IP 证书、ACME 账号私钥和续期配置 |
+| `/var/lib/machines-management-deploy-backups/` | 0700，部署前代码/配置/nginx 及 SQLite 一致性备份 |
 
-采集器拒绝机器 IP 不符、过期或未来时间异常的采样。单台失败不阻止其他机器更新；失败重试逐步延长，最长约 5 分钟。
+私有配置中的 `serve_status.management` 包含 `database`、`password_hash`、`origin`，origin 为 `https://43.155.209.84`；缺失配置时后端拒绝以公开模式启动。密码通过交互式输入生成哈希或安全的私有载荷提供，不放命令参数、公开仓库、构建文件或操作日志。变更共享密码时还应明确撤销已有会话；更换哈希本身不会自动删除会话表。
 
-## 运维
+公网采集账户 `machines-collector`、内网回连账户 `machines-relay`、公网隧道账户 `machines-tunnel` 均为专用系统账户，无登录 shell、无 sudo。对应公钥只允许既定采样命令、固定本机回连端口及清单内的 SSH 目标。继续严格核对 SSH 主机密钥和 HTTPS 证书。不要删除采样程序或密钥，也不要停用这些采集服务来清理所谓历史数据。
 
-公网服务器上：
+仓库忽略数据库及 WAL/SHM、运行目录和私有本地配置。仍需检查待提交文件，避免在新命名文件或发布包中误带真实申请记录、私钥、Cookie、密码哈希或配置。备份包含私有数据，同样不能上传 GitHub。
+
+## 构建、发布与证书维护
+
+在仓库根目录运行完整测试与构建：
+
+```sh
+python3 -m unittest discover -s _machines -p 'test_*.py' -v
+node --check assets/js/machines.js
+node --check assets/js/machines-management.js
+node _machines/test_dashboard.cjs
+node _machines/test_frame.cjs
+node _machines/test_management.cjs
+node _machines/test_management_races.cjs
+python3 _machines/build_dashboard.py --output /tmp/machines-dashboard.html
+```
+
+Python 测试覆盖采样、采集、鉴权、HTTP、SQLite 和并发；Node 测试覆盖原监控、北京时间/长期边界、登录门控、退出清理和异步表单竞态。测试只使用临时目录及虚构人员。测试通过后仍需完成 [ACCEPTANCE.md](ACCEPTANCE.md) 的实际浏览器和线上场景，尤其是 360px 操作、复制微信、冲突确认、服务重启和无代理访问。运行中的真实登记不能作为破坏性测试数据。
+
+`build_dashboard.py` 将共享 include、CSS、监控 JS、管理 JS 和库存合并成一个 HTML，快照和会话保留服务端替换标记；构建不包含密码、数据库或真实登记。GitHub `machines.html` 只是跳转入口；后台 bundle 和 Python 代码须单独部署，推送 GitHub 不会更新云服务器。
+
+既有服务器升级顺序：
+
+1. 确认当前服务、证书、持久目录及备份可用，记录旧代码版本。不要重新执行历史 `collector_setup.py` 覆盖配置。
+2. 测试并构建 bundle。发布清单必须恰好包含 `collector.py`、`status_api.py`、`management_auth.py`、`reservations.py`、`dashboard.html`、`install_management.py`、`setup_status_https.py` 七项；两个运维脚本一并更新，确保共用 nginx 路由生成函数。已部署的 `agent.py` 和 SSH 配置继续使用。
+3. 在仓库外、权限 0600 的私有载荷中提供 `password_hash` 与 `files` 映射。各文件内容为 base64 字符串，整个 JSON 再编码为一行 base64；通过现有受保护维护连接的 stdin 交给 `install_management.py`。不把明文密码或载荷打印到终端日志。服务器本地的等价调用是 `sudo python3 install_management.py < /private/staging/release-payload.b64`。
+4. 安装器校验文件清单和 Python 语法，先备份现有代码、配置、nginx 以及存在的 SQLite，再短暂停止采集服务、更新文件与私有配置、启动服务，检查匿名状态接口为 401，最后校验并重载 nginx。部署回执只包含结果、备份路径和数据库路径。
+5. 从无代理网络验证 GitHub 入口跳转、正确/错误密码、匿名 401、两独立会话共享记录、刷新/退出、最新采样和服务重启。核对 nginx、采集器、证书续期状态及资源用量。浏览器自动化和物理手机实测要分别记录。
+6. 提交并发布 GitHub 入口和源码，记录提交 SHA 与实际服务器部署版本；清理私有临时发布载荷，按现有运维策略保留受限备份。不要仅凭安装器返回成功就宣称全部业务验收完成。
+
+`install_management.py` 更新既有运行环境，不负责首次创建系统账户、SSH 回连或证书。`collector_setup.py` 是旧公开上传架构的初始安装工具，目前仍会写旧 endpoint 和不含 management 的配置；不能用于重装新平台。新增服务器也需要同步更新后端 HOSTS、库存、采集清单及受限 SSH 转发，不能仅修改网页列表。
+
+`setup_status_https.py` 复用 `install_management.py.nginx_config()`，两文件必须放在同一目录后执行。它仅在既有默认 HTTP 站点加入 ACME 验证 include，保留其他应用路由；独立 HTTPS 配置把整个 `/machines-api/` 前缀转发到受保护后端，不能恢复成旧的单一公开 status 路由。它不配置管理密码，也不证明后端已通过登录验收。
+
+证书使用独立 `/opt/machines-certbot` 环境，不改其他应用的 Python 依赖；证书与账号保存在 `/etc/machines-monitor-tls`。`machines-status-cert-renew.timer` 每 6 小时检查续期，成功后先 `nginx -t` 再 reload，不常驻 Certbot 进程。不要删除 HTTP `/.well-known/acme-challenge/` 路由或关闭续期 timer。
+
+无需新增 DNS 记录。公网 TCP 443 必须在腾讯云防火墙和主机网络规则中放行；回环 8273、22638 不向公网开放。验收须关闭代理，不能以代理下成功代替手机/普通网络直连测试。
+
+## 备份、恢复与回滚
+
+SQLite 使用 WAL。运行中不要只复制主 `.sqlite3` 文件；应使用 SQLite backup API 生成一致性备份。下面命令在公网服务器创建私有人工备份，不输出数据库内容：
+
+```sh
+sudo python3 - <<'PY'
+import datetime
+import os
+import pathlib
+import shutil
+import sqlite3
+os.umask(0o077)
+root = pathlib.Path('/var/lib/machines-management-deploy-backups')
+root.mkdir(mode=0o700, exist_ok=True)
+folder = root / ('manual-' + datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ'))
+folder.mkdir(mode=0o700)
+with sqlite3.connect('file:/var/lib/machines-collector/registrations.sqlite3?mode=ro', uri=True) as source:
+    with sqlite3.connect(folder / 'registrations.sqlite3') as target:
+        source.backup(target)
+shutil.copy2('/etc/machines-collector/config.json', folder / 'config.json')
+os.chmod(folder / 'config.json', 0o600)
+print(folder)
+PY
+```
+
+每次正式部署还自动保存七个发布文件、私有配置和独立 nginx 文件；`manifest.json` 将原路径映射到备份编号。SQLite 备份包含会话、历史和幂等记录，需要与其他私有配置同等级保护。备份保留按现有运维策略处理，不自动删除登记历史。
+
+安装器失败时会恢复原代码、配置和 nginx，重启服务并重新校验 nginx；它不会用旧数据库覆盖新增登记。首次管理平台升级前的旧版本没有认证，因此回退到旧公开代码会改变访问边界，应先限制该平台入口并准备兼容的修复版本。
+
+确需恢复损坏或误操作的数据库时：
+
+1. 选择经确认的 SQLite 备份，先保全当前数据库及 `-wal`、`-shm`，并记录恢复时间点会丢失哪些后续操作。普通代码回滚无需恢复数据库。
+2. 停止 `machines-collector.service`，确认不再有数据库连接。将当前 DB/WAL/SHM 一起移到私有保全目录；不能让旧 WAL 配合恢复后的主文件继续使用。
+3. 从一致性备份复制主数据库到 `/var/lib/machines-collector/registrations.sqlite3`，设置属主 `machines-collector:machines-collector`、权限 0600，父目录 0700。备份本身保持不动。恢复私有配置时保留与该代码兼容的 management 设置及正确权限。
+4. 对恢复副本执行 `PRAGMA integrity_check`，应返回 `ok`。恢复会带回备份时仍有效的会话和幂等记录；需要强制重新登录时，在服务停止期间清空 `auth_sessions`，不要删除登记表。
+5. 启动采集服务，验证匿名 401、登录、记录/历史/统计和新采样。恢复操作与实际重启范围写入验收记录；不要把服务重启称作整机重启。
+
+## 日常运维
+
+公网服务器：
 
 ```sh
 sudo systemctl status machines-collector.service
 sudo journalctl -u machines-collector.service --no-pager -n 30
-sudo systemctl restart machines-collector.service
+sudo systemctl is-enabled machines-collector.service
 sudo systemctl status machines-status-cert-renew.timer
+sudo systemctl list-timers machines-status-cert-renew.timer
+sudo nginx -t
 ```
 
-内网中转机 `10.20.6.38` 上：
+内网中转机 `10.20.6.38`：
 
 ```sh
 sudo systemctl status machines-relay.service
 sudo journalctl -u machines-relay.service --no-pager -n 30
-sudo systemctl restart machines-relay.service
+sudo systemctl is-enabled machines-relay.service
 ```
 
-暂停本功能时，停用采集器和中转服务；直连接口会不可用，已有数据超过五分钟后在网页显示占用未更新。不要停用 nginx 等其他应用共用的服务。
+需要重载应用时只重启 `machines-collector.service`；无需重启整台服务器。暂停本功能可停止采集器/回连服务，但不要停用其他应用共用的 nginx。停止采集后旧监控随时间失效，持久登记仍在数据库中。
 
-旧的 `machines-agent.service` 已在 7 台机器上停止并禁用。保留 `/opt/machines-monitor/agent.py` 作为受限 SSH 采样命令，不再由内网机器直接访问云端。
-
-本仓库的 `collector_setup.py`、`relay_setup.py`、`authorize_collector.py` 为可重复执行的安装维护程序，通过 `ssh_admin.py` 从管道接收配置。保留已有其他用户授权，不修改全局 SSH 规则。新增机器需同步更新采集器及受限转发的 IP 清单、网页库存、云端 `lib/inventory.ts`，并配置对应采样公钥和独立上报凭证。
-
-## 本地验证
-
-```sh
-python3 -m unittest discover -s _machines -p 'test_*.py'
-node --check assets/js/machines.js
-node _machines/test_dashboard.cjs
-node _machines/test_frame.cjs
-python3 _machines/build_dashboard.py --output /tmp/dashboard.html
-```
-
-更改界面后，用 `build_dashboard.py` 重新生成 bundle，通过现有受保护维护连接更新 `/opt/machines-collector/dashboard.html`，然后重启 `machines-collector.service`。共享界面在 `_includes/machines-content.html`，库存仍以 `assets/machines/inventory.json` 为准；构建不包含密码、密钥、上报 token 或配置文件。`status_api.py` 启动时只读取该固定文件，不提供任意文件读取。`setup_status_https.py` 包含两个独立的页面路径，保留其他应用路由。
-
-测试覆盖未知 GPU 指标、单卡查询失败、物理核心与线程计数、绑定挂载去重、普通用户可用空间、单个分区读取失败、跨机器误报、过期采样、单机连接失败和重复日志抑制、故障及恢复记录。接口另验证了扩展指标的校验与旧采样的兼容。上线验证检查服务器日志、云端连续多轮采样时间及正式网页的实际展示。
+旧 `machines-agent.service` 不承担当前采集任务；各内网机器保留 `/opt/machines-monitor/agent.py` 作为受限 SSH 单次采样命令。采集器拒绝机器 IP 不符、过期或异常未来时间的采样；单台失败独立退避，最长约 5 分钟。GPU/CPU/内存/磁盘数据过期显示“—”，已知硬件配置可保留，绝不能把“没有取得数据”显示成“无人使用”。

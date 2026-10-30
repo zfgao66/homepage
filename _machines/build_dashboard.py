@@ -16,18 +16,19 @@ def build():
     content = (ROOT / '_includes/machines-content.html').read_text()
     inventory = json.loads((ROOT / 'assets/machines/inventory.json').read_text())
     css = '\n'.join((ROOT / path).read_text() for path in ('assets/css/site.css', 'assets/css/machines.css'))
-    config = {'statusUrl': '/machines-api/status', 'statusUrls': [], 'refreshMs': 120000,
+    config = {'statusUrl': '/machines-api/status', 'apiBase': '/machines-api', 'requireAuth': True, 'statusUrls': [], 'refreshMs': 120000,
               'staleAfterSeconds': 300, 'reportingPending': False}
-    bridge = (ROOT / '_machines/dashboard_bridge.js').read_text()
     script = (ROOT / 'assets/js/machines.js').read_text()
+    management = (ROOT / 'assets/js/machines-management.js').read_text()
     return ('<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width, initial-scale=1">'
             '<meta name="robots" content="noindex,nofollow,noarchive">'
-            '<title>GPU 使用情况 · RUC-Nova</title><style>' + css + '</style></head>'
+            '<title>RUC-Nova GPU 资源管理平台</title><style>' + css + '</style></head>'
             '<body class="machines-page"><main>' + content + '</main>'
             '<script id="machines-inventory" type="application/json">' + safe_json(inventory) + '</script>'
             '<script id="machines-initial-status" type="application/json">' + MARKER + '</script>'
-            '<script>window.MACHINES_CONFIG = ' + safe_json(config) + ';\n' + bridge + '\n' + script + '</script>'
+            '<script id="machines-initial-session" type="application/json">__MACHINES_INITIAL_SESSION__</script>'
+            '<script>window.MACHINES_CONFIG = ' + safe_json(config) + ';\n' + script + '\n' + management + '</script>'
             '</body></html>')
 
 

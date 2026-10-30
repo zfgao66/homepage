@@ -97,3 +97,119 @@
   .gpu-table th:first-child { width:25%; }
   .gpu-table th:nth-child(2) { width:25%; }
 }
+
+/* Shared registration interface. Monitor rows and registration rows stay independent. */
+[hidden] { display:none !important; }
+.machines-login { min-height:80vh;display:grid;place-items:center;padding:40px 20px;background:#f5f6f8; }
+.login-card { width:100%;max-width:460px;padding:30px;background:#fff;border:1px solid var(--line,#d9e0e7);border-radius:12px;box-sizing:border-box; }
+.login-card h1 { font-size:28px;line-height:1.35;margin:10px 0 16px; }
+.login-eyebrow { color:var(--ruc-red,#b71935);font-weight:600;font-size:13px; }
+.login-card form { display:grid;gap:12px;margin-top:24px; }
+.login-card input,.management-field input,.management-field textarea,.management-field select,.management-filters input,.management-filters select,.management-section-heading select { width:100%;box-sizing:border-box;border:1px solid #b8c5d0;border-radius:5px;background:#fff;padding:10px 12px;font:inherit;font-size:16px;min-height:44px;color:var(--ink,#253b4b); }
+.management-field input:focus,.management-field textarea:focus,.management-field select:focus,.login-card input:focus { outline:2px solid #a6192e55;outline-offset:2px; }
+.management-field input:disabled,.management-field select:disabled,.management-field textarea:disabled { background:#f0f2f5;color:#596673; }
+.management-button { display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:40px;padding:9px 13px;border:1px solid #b8c5d0;border-radius:5px;color:var(--navy,#253b4b);background:#fff;font:inherit;font-size:13px;line-height:1.4;text-decoration:none;cursor:pointer;white-space:normal; }
+.management-button.primary { background:var(--navy,#253b4b);border-color:var(--navy,#253b4b);color:#fff; }
+.management-button.danger { color:#9e3042; }
+.management-button:disabled { opacity:.55;cursor:wait; }
+.management-button:focus-visible,summary:focus-visible { outline:3px solid #a6192e55;outline-offset:2px; }
+.management-actions { display:flex;align-items:center;flex-wrap:wrap;gap:8px; }
+.management-muted { color:var(--muted,#667583);font-size:12px;line-height:1.75;overflow-wrap:anywhere; }
+.management-message { font-size:14px;line-height:1.7;overflow-wrap:anywhere; }
+.management-message:empty { display:none; }
+.management-message[data-warning=true] { padding:12px 14px;border:1px solid #e8d4b3;border-radius:6px;background:#fff6e7;color:#805019; }
+.registration-summary { border-top:3px solid #597e75; }
+.machines-rules { padding:19px 22px;margin:0 0 24px;border:1px solid #e7d5ac;background:#fff9e9;border-radius:8px;color:#594724; }
+.machines-rules h2 { font-size:19px;margin:0 0 12px; }
+.machines-rules ol { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 30px;padding-left:22px;margin:0; }
+.machines-rules li { font-size:13px;line-height:1.7;padding-left:2px; }
+.machines-rules strong { color:#6a4714; }
+.machines-table>tbody>tr.machine-registration-row>td { padding:0 23px 24px;background:#fafcfc;border-top:0; }
+.machine-registrations { padding:18px 0 0;border-top:1px dashed #cdd9d6; }
+.management-section-heading { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px; }
+.management-section-heading h2,.management-section-heading h3 { font-size:18px;margin:0; }
+.management-section-heading>label { display:flex;align-items:center;gap:8px;font-size:13px; }
+.management-section-heading select { width:auto; }
+.registration-count { font-size:12px;color:var(--muted,#667583); }
+.registrations-list { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
+.registration-card { min-width:0;padding:16px;border:1px solid #d8e2df;border-radius:7px;background:#fff;overflow-wrap:anywhere; }
+.registration-card p { margin:7px 0;font-size:12px;line-height:1.7; }
+.registration-card .management-actions { margin-top:13px; }
+.registration-card-heading { display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px; }
+.registration-card h4,.registration-card h3 { font-size:16px;margin:0; }
+.registration-badges { display:flex;flex-wrap:wrap;gap:5px; }
+.registration-badge { display:inline-block;padding:3px 7px;border-radius:4px;font-size:11px;line-height:1.6;background:#eef1f4;color:#526272; }
+.registration-badge[data-status=active] { background:#e6f2eb;color:#24664c; }
+.registration-badge[data-status=scheduled] { background:#eaf0f9;color:#385c8a; }
+.registration-badge.long-term { background:#eaf0ed;color:#476b5a; }
+.registration-badge.conflict { background:#fff0dc;color:#936128; }
+.registration-contact { display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:12px;margin:8px 0; }
+.registration-contact>span { min-width:0;overflow-wrap:anywhere; }
+.registration-contact .management-button { padding:4px 8px;font-size:11px;min-height:32px; }
+.registration-description,.registration-notes p { white-space:pre-wrap;overflow-wrap:anywhere; }
+.registration-notes { font-size:12px;line-height:1.7;margin:8px 0; }
+.registration-notes summary { cursor:pointer;color:#3a6572;overflow-wrap:anywhere; }
+.registration-long-note,.registration-long-notice { padding:10px 12px;background:#f5f8ee;border-radius:5px;color:#566443;font-size:12px;line-height:1.8; }
+.management-panel { margin-top:28px;padding:22px;background:#fff;border:1px solid var(--line,#d9e0e7);border-radius:8px; }
+.management-filters { display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px; }
+.management-filters label { display:grid;gap:6px;flex:1;min-width:180px;font-size:13px; }
+#history-results { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
+#history-results>.management-muted { grid-column:1/-1; }
+.management-inline-check { display:flex;align-items:flex-start;gap:8px;font-size:13px;line-height:1.7; }
+.management-inline-check input { flex-shrink:0;width:18px;height:18px;margin-top:3px;accent-color:#253b4b; }
+.registration-statistics-table { width:100%;border-collapse:collapse;font-size:13px;text-align:left; }
+.registration-statistics-table th,.registration-statistics-table td { padding:11px 9px;border-bottom:1px solid #e5e9ed;overflow-wrap:anywhere; }
+.registration-statistics-table th { color:var(--muted,#667583);font-size:12px;font-weight:500; }
+.registration-dialog { width:min(720px,calc(100% - 28px));max-width:720px;max-height:calc(100dvh - 28px);margin:auto;padding:0;border:1px solid #cad5df;border-radius:10px;color:var(--ink,#253b4b);background:#fff;box-sizing:border-box;overflow:auto;overscroll-behavior:contain; }
+.registration-dialog::backdrop { background:#15283888; }
+.dialog-heading { position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:15px;background:#fff;border-bottom:1px solid #e1e7ec;padding:16px 22px; }
+.dialog-heading h2 { font-size:20px;margin:0; }
+#registration-dialog-content { padding:20px 22px; }
+#registration-dialog-content>.registration-card { margin-top:12px; }
+.registration-form { display:grid;gap:15px; }
+.registration-form-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px; }
+.management-field { display:grid;gap:7px;font-size:13px;min-width:0; }
+.management-field textarea { resize:vertical;min-height:100px; }
+.gpu-choice { display:flex;flex-wrap:wrap;gap:9px 18px;margin:0;padding:12px;border:1px solid #d9e0e7;border-radius:6px;min-width:0; }
+.gpu-choice legend { font-size:13px;padding:0 5px; }
+.gpu-choice label { display:flex;align-items:center;gap:6px;min-height:32px;font-size:13px; }
+.gpu-choice input { width:17px;height:17px;accent-color:#253b4b; }
+.registration-conflicts { padding:15px;border:1px solid #e1bd83;border-radius:6px;background:#fff8eb; }
+.registration-conflicts h3 { font-size:16px;margin:0 0 12px; }
+.conflict-person { margin:10px 0;padding-bottom:9px;border-bottom:1px solid #ead9ba;overflow-wrap:anywhere; }
+.conflict-person p { font-size:13px;margin:6px 0; }
+.dialog-footer { padding:12px 0 0;border-top:1px solid #e1e7ec; }
+.wechat-copy-fallback { max-width:100%;box-sizing:border-box;font-size:16px; }
+@media(max-width:900px) { .registrations-list { grid-template-columns:1fr; } .machines-rules ol { grid-template-columns:1fr; } }
+@media(max-width:680px) {
+  .machines-heading h1 { font-size:28px; }
+  .machines-heading>.management-actions { width:100%;gap:6px; }
+  .machines-heading .management-button,#refresh-machines { font-size:12px;padding:9px 10px; }
+  .machines-summary .summary-card { padding:15px 12px; }
+  .summary-card h2 { font-size:12px; }
+  .summary-detail { font-size:11px; }
+  .machines-rules { padding:16px; }
+  .machines-rules li { font-size:12px; }
+  .machines-table>tbody>tr[data-machine-id] { margin-bottom:0;border-radius:7px 7px 0 0; }
+  .machines-table>tbody>tr.machine-registration-row { display:block;border-top:0;border-radius:0 0 7px 7px;margin-bottom:20px;background:#fafcfc; }
+  .machines-table>tbody>tr.machine-registration-row>td { display:block;padding:0 13px 16px;border:0;background:transparent; }
+  .machine-registrations { padding-top:15px; }
+  .management-section-heading { align-items:flex-start; }
+  .machine-registrations .management-section-heading>.management-actions { width:100%;justify-content:space-between; }
+  .registration-card { padding:13px; }
+  .registration-card-heading { flex-direction:column; }
+  .management-panel { padding:16px 13px; }
+  #history-results { grid-template-columns:1fr; }
+  .registration-form-grid { grid-template-columns:1fr; }
+  .registration-dialog { max-height:calc(100dvh - 16px);width:calc(100% - 16px); }
+  .dialog-heading { padding:12px 15px; }
+  .dialog-heading h2 { font-size:18px; }
+  #registration-dialog-content { padding:15px; }
+  .dialog-footer>.management-button { flex:1;min-height:44px; }
+  .registration-statistics-table,.registration-statistics-table tbody,.registration-statistics-table tr { display:block; }
+  .registration-statistics-table thead { display:none; }
+  .registration-statistics-table tr { padding:10px 0;border-bottom:1px solid #e1e7ec; }
+  .registration-statistics-table td { display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:5px 0;border:0;text-align:right; }
+  .registration-statistics-table td:before { content:attr(data-label);flex-shrink:0;color:#667583;font-size:12px;text-align:left; }
+}
+.registration-change-confirmation { padding:12px;border:1px solid #ccd9df;border-radius:6px;background:#f3f7fa; }

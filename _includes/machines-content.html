@@ -1,42 +1,69 @@
+<section id="machines-login" class="machines-login" aria-labelledby="machines-login-title">
+  <div class="login-card">
+    <p class="login-eyebrow">RUC-Nova · 课题组共享资源</p>
+    <h1 id="machines-login-title">GPU 资源管理平台</h1>
+    <p>查看实时状态，登记使用计划，与同学协调 GPU 资源。</p>
+    <form id="machines-login-form">
+      <label for="machines-password">课题组访问密码</label>
+      <input id="machines-password" name="password" type="password" autocomplete="current-password" required maxlength="128">
+      <button class="management-button primary" type="submit">进入平台</button>
+      <p id="machines-login-message" class="management-message" role="status" aria-live="polite"></p>
+    </form>
+    <p class="management-muted">无需注册账号。使用结束后可退出；登记由课题组共同维护。</p>
+  </div>
+</section>
+<div id="machines-app" hidden>
 <section class="page-heading">
   <div class="page-shell page-heading__inner machines-heading">
-    <div><h1>GPU 使用情况</h1><p>按 IP 查看 GPU、CPU、内存和硬盘使用情况。</p></div>
-    <button id="refresh-machines" type="button">刷新数据 ↻</button>
+    <div><h1>GPU 资源管理平台</h1><p><strong>先登记，再使用。</strong>尊重已有预约，冲突请通过微信协调。</p></div>
+    <div class="management-actions"><button id="refresh-machines" type="button">刷新监控 ↻</button><button id="refresh-registrations" class="management-button" type="button">刷新登记</button><button id="machines-logout" class="management-button" type="button">退出</button></div>
   </div>
 </section>
 <section class="content-section machines-section">
   <div class="page-shell">
     <section class="machines-overview" aria-label="GPU 资源汇总" aria-describedby="machines-summary-note">
       <div class="machines-summary">
-        <article class="summary-card">
-          <h2>GPU 总数</h2>
-          <p class="summary-value"><span id="summary-total">—</span><span class="summary-unit">张</span></p>
-          <p id="summary-servers" class="summary-detail">正在读取服务器列表</p>
-        </article>
-        <article class="summary-card summary-card--free">
-          <h2>空余 GPU</h2>
-          <p class="summary-value"><span id="summary-free">—</span><span class="summary-unit">张</span></p>
-          <p class="summary-detail">低占用、低显存占用</p>
-        </article>
-        <article class="summary-card summary-card--used">
-          <h2>有占用 GPU</h2>
-          <p class="summary-value"><span id="summary-used">—</span><span class="summary-unit">张</span></p>
-          <p class="summary-detail">有计算或显存占用</p>
-        </article>
-        <article class="summary-card summary-card--unknown">
-          <h2>异常 / 未更新</h2>
-          <p class="summary-value"><span id="summary-unknown">—</span><span class="summary-unit">张</span></p>
-          <p class="summary-detail">不计入空余 GPU</p>
-        </article>
+        <article class="summary-card"><h2>GPU 总数</h2><p class="summary-value"><span id="summary-total">—</span><span class="summary-unit">张</span></p><p id="summary-servers" class="summary-detail">正在读取服务器列表</p></article>
+        <article class="summary-card summary-card--free"><h2>实时空余 GPU</h2><p class="summary-value"><span id="summary-free">—</span><span class="summary-unit">张</span></p><p class="summary-detail">低占用、低显存；请同时查看登记</p></article>
+        <article class="summary-card summary-card--used"><h2>实时有占用 GPU</h2><p class="summary-value"><span id="summary-used">—</span><span class="summary-unit">张</span></p><p class="summary-detail">有计算或显存占用</p></article>
+        <article class="summary-card summary-card--unknown"><h2>异常 / 未更新</h2><p class="summary-value"><span id="summary-unknown">—</span><span class="summary-unit">张</span></p><p class="summary-detail">不计入空余 GPU</p></article>
+        <article class="summary-card registration-summary"><h2>当前有效申请卡数</h2><p class="summary-value"><span id="registration-active-cards">—</span><span class="summary-unit">张</span></p><p class="summary-detail">当前时间内的登记，含协调中的重叠申请</p></article>
+        <article class="summary-card registration-summary"><h2>当前长期申请</h2><p class="summary-value"><span id="registration-long-term">—</span><span class="summary-unit">条</span></p><p class="summary-detail">有效登记且计划超过 7 天</p></article>
+        <article class="summary-card registration-summary"><h2>即将到期</h2><p class="summary-value"><span id="registration-expiring">—</span><span class="summary-unit">条</span></p><p class="summary-detail">未来 24 小时内结束</p></article>
       </div>
-      <p id="machines-summary-note" class="machines-summary-note">空余按 GPU 占用率低于 10%、显存已用低于 1 GiB 估算，使用前请查看下方逐卡数据。每 2 分钟更新；读取异常或超过 5 分钟未更新的显卡不计为空余。</p>
+      <p id="machines-summary-note" class="machines-summary-note">实时空余按 GPU 占用率低于 10%、显存已用低于 1 GiB 估算；读取异常或超过 5 分钟未更新的显卡不计为空余。监控每 2 分钟更新。登记不会锁定 GPU，也不会因暂时空闲而自动取消；使用前请同时查看监控与登记。</p>
     </section>
+    <section class="machines-rules" aria-labelledby="machines-rules-title">
+      <h2 id="machines-rules-title">⚠ GPU 使用须知</h2>
+      <ol>
+        <li><strong>先登记，再使用。</strong>填写姓名、微信号、GPU 数量和预计使用时间，方便同学了解资源安排。</li>
+        <li><strong>尊重已有登记。</strong>利用率为 0 也可能有等待中的任务或长期计划，请先查看登记，避免直接占用。</li>
+        <li><strong>长期使用请明确备注。</strong>一周、一个月或更长时间的计划，请写明研究用途、使用周期与使用方式。</li>
+        <li><strong>出现冲突请主动沟通。</strong>通过微信联系对应申请人，不要擅自中断他人任务。</li>
+        <li><strong>提前结束请及时释放登记。</strong>任务完成或不再需要 GPU 时，请主动结束申请。</li>
+        <li><strong>合理申请，避免浪费。</strong>按真实计算需求申请数量和时间，避免为可能的未来需求长期占用多卡。</li>
+      </ol>
+    </section>
+    <p id="registrations-message" class="management-message" role="status" aria-live="polite"></p>
     <p id="machines-message" class="machines-message" role="status" aria-live="polite">正在获取服务器状态…</p>
-    <table class="machines-table" aria-label="按 IP 列出的 GPU 使用情况">
+    <table class="machines-table" aria-label="按 IP 列出的 GPU 监控与使用登记">
       <thead><tr><th scope="col">IP / 资源使用</th><th scope="col">显卡 / CPU 配置</th><th scope="col">每张 GPU 的使用情况</th></tr></thead>
       <tbody id="machines-list"><tr><td colspan="3">正在读取…</td></tr></tbody>
     </table>
-    <p class="machines-footnote">共 7 台服务器、32 张 GPU。内存显示已用 / 总量，硬盘显示本地分区的可用 / 总量，剩余不足 10% 时提示。每 2 分钟更新，数据超过 5 分钟未更新时显示“—”，不代表空闲。时间均为北京时间。</p>
-    <noscript><p>请启用浏览器 JavaScript，以查看自动更新的机器状态。</p></noscript>
+    <p class="machines-footnote">共 7 台服务器、32 张 GPU。内存显示已用 / 总量，硬盘显示本地分区的可用 / 总量，剩余不足 10% 时提示。监控超过 5 分钟未更新时显示“—”，不代表空闲。所有日期、时间均为北京时间（UTC+8）。登记仅用于协调，不会操作服务器上的计算任务。</p>
+    <section class="management-panel" aria-labelledby="registration-history-title">
+      <div class="management-section-heading"><h2 id="registration-history-title">公共登记记录</h2><label class="management-inline-check"><input id="history-show" type="checkbox"> 查询全部历史</label></div>
+      <p class="management-muted">可查询到期、提前结束及取消的记录；每条记录均可查看变更历史。</p>
+      <div id="history-controls" class="management-filters" hidden><label>服务器<select id="history-machine"><option value="">全部服务器</option></select></label><label>姓名或微信号<input id="history-search" type="search" maxlength="80" placeholder="输入姓名或微信号"></label></div>
+      <div id="history-results" hidden></div>
+    </section>
+    <section class="management-panel" aria-labelledby="registration-statistics-title">
+      <div class="management-section-heading"><h2 id="registration-statistics-title">使用登记统计</h2><label>统计范围<select id="statistics-days"><option value="7">最近 7 天</option><option value="30">最近 30 天</option></select></label></div>
+      <p class="management-muted">登记卡时是申请的 GPU 数量 × 有效登记时长，不等于真实 GPU 计算卡时。提前结束、续期和重叠登记按统计规则处理。</p>
+      <p id="statistics-method" class="management-muted"></p><div id="statistics-results" aria-live="polite">正在读取统计…</div>
+    </section>
+    <noscript><p>请启用浏览器 JavaScript，以登录并查看机器状态和使用登记。</p></noscript>
   </div>
 </section>
+</div>
+<dialog id="registration-dialog" class="registration-dialog" aria-labelledby="registration-dialog-title"><div class="dialog-heading"><h2 id="registration-dialog-title">申请使用 GPU</h2><button class="management-button" id="registration-dialog-close" type="button" aria-label="关闭表单">关闭</button></div><div id="registration-dialog-content"></div></dialog>

@@ -45,7 +45,8 @@ def collect_and_upload(machine_id, token, endpoint, ssh_config, snapshot_store=N
         result = {'ip': machine_id, 'ok': True, 'gpus': len(data['gpus']),
                   'observed_at': data['observed_at']}
         try:
-            agent.upload(data, endpoint, token)
+            if endpoint:
+                agent.upload(data, endpoint, token)
         except Exception as error:
             if snapshot_store is None:
                 raise
@@ -119,7 +120,7 @@ def main():
     snapshot_store = None
     if config.get('serve_status'):
         snapshot_store = status_api.LatestSnapshots(HOSTS)
-        status_api.start_server(snapshot_store, int(config['serve_status']['port']))
+        status_api.start_server(snapshot_store, int(config['serve_status']['port']), config['serve_status'].get('management'))
     while True:
         started = time.monotonic()
         selected = [ip for ip in HOSTS if next_due[ip] <= started]

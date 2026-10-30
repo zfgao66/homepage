@@ -1,0 +1,9 @@
+__pycache__/
+*.py[cod]
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+.runtime/
+_machines/private/
+_machines/config.local.json

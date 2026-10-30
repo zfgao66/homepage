@@ -13,9 +13,9 @@ const flush = () => new Promise(setImmediate);
 const cacheKey = 'machines.latest.v1';
 
 class Element {
-  constructor() { this.dataset = {}; this.style = {}; this.textContent = ''; this.listeners = {}; }
-  append() {}
-  replaceChildren() {}
+  constructor() { this.dataset = {}; this.style = {}; this.textContent = ''; this.listeners = {}; this.children = []; }
+  append(...children) { this.children.push(...children); }
+  replaceChildren(...children) { this.children = children; }
   setAttribute() {}
   addEventListener(name, listener) { this.listeners[name] = listener; }
   closest() { return this; }
@@ -53,6 +53,7 @@ function boot({fail = [], httpFail = [], hang = [], bodyHang = [], hold = [], da
   vm.runInNewContext(source, context);
   return {node, calls, timers, intervals, releases, cache,
     counts: () => Object.fromEntries(['total', 'free', 'used', 'unknown'].map(key => [key, node(`summary-${key}`).textContent])),
+    text: () => { const read = item => [item.textContent, ...item.children.map(read)].join(' '); return read(node('machines-list')); },
     expire: () => { elapsed = 301000; intervals[1].fn(); },
     timeOut: () => { for (const fn of [...timers.values()]) fn(); }};
 }
@@ -126,5 +127,13 @@ function boot({fail = [], httpFail = [], hang = [], bodyHang = [], hold = [], da
   test = boot({data: metrics}); await flush();
   assert.deepEqual(test.counts(), {total: '8', free: '1', used: '2', unknown: '5'});
   test.expire(); assert.deepEqual(test.counts(), {total: '8', free: '0', used: '0', unknown: '8'});
+  const incomplete = payload(); incomplete.machines[0].telemetry.gpus = [0, 1, 2].map(index => card(index));
+  test = boot({data: incomplete}); await flush();
+  assert.equal(test.counts().unknown, '1');
+  assert.match(test.text(), /1 张 GPU 未返回指标（编号未知）/);
+  incomplete.machines[0].telemetry.gpus.push({index: null});
+  test = boot({data: incomplete}); await flush();
+  assert.match(test.text(), /读取异常/);
+  assert.doesNotMatch(test.text(), /张 GPU 未返回指标/, 'An existing unidentified error row must not be reported twice as a missing card');
   console.log('Dashboard checks passed: deployed direct API only, honest failure states, strict header/body deadlines, immediate cache display, expiry, blocked storage, embedded snapshots, and two-minute polling.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

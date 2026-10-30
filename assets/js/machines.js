@@ -12,6 +12,8 @@
   const cacheKey = "machines.latest.v1", requestTimeout = 8000;
   const staleAfter = config.staleAfterSeconds || 300;
   let inventory = [], snapshots = new Map(), fetchedAt = 0, haveResponse = false, failed = false, busy = false, fromCache = false;
+  let running = false, generation = 0;
+  const monitorRows = new Map(), activeRequests = new Set();
 
   function element(tag, className, text) {
     const node = document.createElement(tag);
@@ -161,14 +163,29 @@
     const usage = element("td");
     if (machine?.telemetry?.gpus?.length) {
       usage.append(gpuTable(machine.telemetry.gpus, current));
+      const cards = machine.telemetry.gpus;
+      const reportedIndices = new Set(cards.filter(gpu => Number.isInteger(gpu.index) && gpu.index >= 0 && gpu.index < item.gpu_count).map(gpu => gpu.index));
+      const unidentifiedRows = cards.filter(gpu => !Number.isInteger(gpu.index) || gpu.index < 0 || gpu.index >= item.gpu_count).length;
+      const missing = Math.max(0, item.gpu_count - reportedIndices.size - unidentifiedRows);
+      if (missing) usage.append(element("p", "machine-empty gpu-problem", `${missing} 张 GPU 未返回指标（编号未知），不计入空余 GPU。`));
     } else {
       usage.append(element("p", "machine-empty", "占用数据暂不可用"));
     }
     row.append(ip, hardware, usage); return row;
   }
   function render() {
+    if (!running) return;
     renderSummary();
-    if (inventory.length) $("machines-list").replaceChildren(...inventory.map(machineRow));
+    if (inventory.length && config.requireAuth) {
+      if (!monitorRows.size) $("machines-list").replaceChildren();
+      inventory.forEach(item => {
+        const replacement = machineRow(item), existing = monitorRows.get(item.id);
+        replacement.dataset.machineId = item.id;
+        if (existing) existing.replaceChildren(...replacement.childNodes);
+        else { monitorRows.set(item.id, replacement); $("machines-list").append(replacement); }
+      });
+      document.dispatchEvent(new CustomEvent("machines:monitor-render", {detail: {inventory}}));
+    } else if (inventory.length) $("machines-list").replaceChildren(...inventory.map(machineRow));
     const message = $("machines-message");
     const online = inventory.filter(item => state(snapshots.get(item.id)) === "online").length;
     message.dataset.warning = String(Boolean(config.reportingPending || failed || (haveResponse && online < inventory.length)));
@@ -219,7 +236,8 @@
   async function loadStatus(url, controller) {
     let timeout;
     const read = (async () => {
-      const response = await fetch(url, { cache: "no-store", credentials: "omit", signal: controller.signal });
+      const response = await fetch(url, { cache: "no-store", credentials: "same-origin", signal: controller.signal });
+      if (response.status === 401 && running && activeRequests.has(controller)) document.dispatchEvent(new CustomEvent("machines:session-expired"));
       if (!response.ok) throw new Error("Status unavailable");
       const payload = await response.json();
       if (!validPayload(payload)) throw new Error("Invalid status");
@@ -256,19 +274,24 @@
     });
   }
   async function refresh() {
-    if (busy || window.MACHINES_PAUSED) return;
+    if (!running || busy || window.MACHINES_PAUSED) return;
+    const requestGeneration = generation;
     busy = true; $("refresh-machines").disabled = true;
     const controllers = [];
     try {
       const urls = [...new Set([config.statusUrl, ...(config.statusUrls || [])].filter(Boolean))];
       controllers.push(...urls.map(() => new AbortController()));
+      controllers.forEach(controller => activeRequests.add(controller));
       const payload = await firstSnapshot(urls, controllers);
-      if (window.MACHINES_PAUSED) return;
+      if (!running || requestGeneration !== generation || window.MACHINES_PAUSED) return;
       snapshots = new Map(payload.machines.map(machine => [machine.id, machine]));
       fetchedAt = performance.now(); haveResponse = true; failed = false; fromCache = false;
       saveLatest(payload);
-    } catch { failed = true; }
-    finally { controllers.forEach(controller => controller.abort()); busy = false; $("refresh-machines").disabled = false; if (!window.MACHINES_PAUSED) render(); }
+    } catch { if (requestGeneration === generation) failed = true; }
+    finally {
+      controllers.forEach(controller => { controller.abort(); activeRequests.delete(controller); });
+      if (requestGeneration === generation) { busy = false; $("refresh-machines").disabled = false; if (!window.MACHINES_PAUSED) render(); }
+    }
   }
   $("refresh-machines").addEventListener("click", refresh);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
@@ -276,16 +299,32 @@
     const embedded = JSON.parse($("machines-inventory")?.textContent || "null");
     if (Array.isArray(embedded) && embedded.length) inventory = embedded;
   } catch { /* Older pages can still load the external inventory. */ }
-  const embedded = restoreEmbedded();
-  if (!embedded) restoreLatest();
-  render();
-  if (!inventory.length) {
+  function start() {
+    if (running) return;
+    running = true; generation++;
+    const embedded = restoreEmbedded();
+    if (!embedded) restoreLatest();
+    render();
+    if (!embedded) refresh();
+  }
+  function stop() {
+    running = false; generation++; busy = false;
+    activeRequests.forEach(controller => controller.abort()); activeRequests.clear();
+    snapshots.clear(); monitorRows.clear(); haveResponse = false; fromCache = false; failed = false;
+    try { localStorage.removeItem(cacheKey); } catch { /* Storage may be unavailable. */ }
+    if ($("machines-initial-status")) $("machines-initial-status").textContent = "null";
+    $("machines-list").replaceChildren();
+    ["total", "free", "used", "unknown"].forEach(key => { $(`summary-${key}`).textContent = "—"; });
+    $("machines-message").textContent = "登录后查看服务器状态。";
+  }
+  window.MachinesMonitor = Object.freeze({start, stop, refresh});
+  if (!inventory.length && !config.requireAuth) {
     fetch("/assets/machines/inventory.json?v=ip2", { cache: "no-store", credentials: "omit" })
       .then(response => { if (!response.ok) throw new Error("Inventory unavailable"); return response.json(); })
       .then(data => { inventory = data; render(); })
       .catch(() => { $("machines-list").replaceChildren(); $("machines-message").textContent = "服务器列表读取失败，请刷新页面。"; });
   }
-  if (!embedded) refresh();
+  if (!config.requireAuth) start();
   setInterval(() => { if (!document.hidden) refresh(); }, config.refreshMs || 120000);
-  setInterval(() => { if (!document.hidden && haveResponse && !window.MACHINES_PAUSED) render(); }, 5000);
+  setInterval(() => { if (running && !document.hidden && haveResponse && !window.MACHINES_PAUSED) render(); }, 5000);
 })();

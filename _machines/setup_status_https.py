@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
-"""Install an isolated HTTPS entry point without changing existing app routes."""
+"""Install HTTPS/renewal and the same protected routes as management deployment.
+
+Keep install_management.py beside this script. Certificate setup must never
+replace the management API prefix with the former read-only status location.
+"""
 import os
 import pathlib
 import subprocess
+
+from install_management import nginx_config
 
 IP = '43.155.209.84'
 TLS = pathlib.Path('/etc/machines-monitor-tls')
@@ -67,34 +73,7 @@ def main():
         '--webroot', '--webroot-path', str(ACME), '--ip-address', IP,
         '--cert-name', 'machines-api', '--deploy-hook', str(hook), *common)
 
-    config = '''server {
-    listen 443 ssl;
-    server_name 43.155.209.84;
-    ssl_certificate /etc/machines-monitor-tls/live/machines-api/fullchain.pem;
-    ssl_certificate_key /etc/machines-monitor-tls/live/machines-api/privkey.pem;
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_session_tickets off;
-    keepalive_timeout 10s;
-    location = /machines-api/status {
-        proxy_pass http://127.0.0.1:8273/api/status;
-        proxy_connect_timeout 3s;
-        proxy_read_timeout 5s;
-        proxy_cache off;
-        access_log off;
-        add_header X-Content-Type-Options nosniff always;
-    }
-    location = /machines { return 302 /machines/; }
-    location = /machines/ {
-        proxy_pass http://127.0.0.1:8273/machines/;
-        proxy_connect_timeout 3s;
-        proxy_read_timeout 5s;
-        proxy_cache off;
-        access_log off;
-        add_header X-Content-Type-Options nosniff always;
-    }
-    location / { return 404; }
-}
-'''
+    config = nginx_config()
     target = pathlib.Path('/etc/nginx/conf.d/machines-status-https.conf')
     previous = target.read_text() if target.exists() else None
     write(target, config)
@@ -131,7 +110,7 @@ WantedBy=timers.target
 ''')
     run('/usr/bin/systemctl', 'daemon-reload')
     run('/usr/bin/systemctl', 'enable', '--now', 'machines-status-cert-renew.timer')
-    print('HTTPS status endpoint and automatic certificate renewal are ready', flush=True)
+    print('HTTPS management routes and automatic certificate renewal are configured; verify backend authentication separately', flush=True)
 
 
 if __name__ == '__main__':
