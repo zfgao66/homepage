@@ -146,21 +146,20 @@
     if (counts.length) section.append(element("span", "cpu-counts", counts.join(" · ")));
     return section;
   }
-  function machineRow(item) {
+  function machineMonitor(item) {
     const machine = snapshots.get(item.id), current = state(machine);
-    const row = element("tr"), ip = element("th"); ip.scope = "row";
-    ip.append(element("span", "machine-ip", item.id));
+    const monitor = element("div", "machine-monitor"), status = element("div", "machine-monitor-status");
     const badge = element("span", "machine-badge", current === "online" ? fromCache ? "上次数据" : "占用已更新" : "占用未更新");
-    badge.dataset.state = fromCache && current === "online" ? "cached" : current; ip.append(badge);
+    badge.dataset.state = fromCache && current === "online" ? "cached" : current; status.append(badge);
     const sampledAt = machine?.telemetry?.observed_at;
     if (sampledAt && Number.isFinite(Date.parse(sampledAt))) {
-      ip.append(element("span", "machine-last", `最近采样 ${sampleFormat.format(new Date(sampledAt))}`));
+      status.append(element("span", "machine-last", `最近采样 ${sampleFormat.format(new Date(sampledAt))}`));
     }
-    ip.append(resources(machine?.telemetry, current));
-    const hardware = element("td");
-    hardware.append(element("span", "machine-model", item.gpu_model), element("span", "machine-count", `${item.gpu_count} 张`));
-    hardware.append(cpuConfiguration(machine?.telemetry));
-    const usage = element("td");
+    const grid = element("div", "machine-monitor-grid"), hardware = element("section", "machine-system-info");
+    hardware.setAttribute("aria-label", `${item.id} CPU、内存和硬盘`);
+    hardware.append(cpuConfiguration(machine?.telemetry), resources(machine?.telemetry, current));
+    const usage = element("section", "machine-gpu-info");
+    usage.append(element("h3", "machine-subheading", "每张 GPU 的使用情况"));
     if (machine?.telemetry?.gpus?.length) {
       usage.append(gpuTable(machine.telemetry.gpus, current));
       const cards = machine.telemetry.gpus;
@@ -171,21 +170,29 @@
     } else {
       usage.append(element("p", "machine-empty", "占用数据暂不可用"));
     }
-    row.append(ip, hardware, usage); return row;
+    grid.append(hardware, usage); monitor.append(status, grid); return monitor;
+  }
+  function machineCard(item) {
+    const card = element("article", "machine-card"), heading = element("header", "machine-card-heading");
+    card.dataset.machineId = item.id;
+    const title = element("h2", "machine-card-ip", item.id); title.id = `machine-${item.id.replace(/\./g, "-")}`;
+    card.setAttribute("aria-labelledby", title.id);
+    heading.append(title, element("p", "machine-card-hardware", `${item.gpu_model} · ${item.gpu_count} 张 GPU`));
+    const monitor = machineMonitor(item); card.append(heading, monitor);
+    return {card, monitor};
   }
   function render() {
     if (!running) return;
     renderSummary();
-    if (inventory.length && config.requireAuth) {
+    if (inventory.length) {
       if (!monitorRows.size) $("machines-list").replaceChildren();
       inventory.forEach(item => {
-        const replacement = machineRow(item), existing = monitorRows.get(item.id);
-        replacement.dataset.machineId = item.id;
-        if (existing) existing.replaceChildren(...replacement.childNodes);
-        else { monitorRows.set(item.id, replacement); $("machines-list").append(replacement); }
+        const existing = monitorRows.get(item.id);
+        if (existing) existing.monitor.replaceChildren(...machineMonitor(item).childNodes);
+        else { const created = machineCard(item); monitorRows.set(item.id, created); $("machines-list").append(created.card); }
       });
-      document.dispatchEvent(new CustomEvent("machines:monitor-render", {detail: {inventory}}));
-    } else if (inventory.length) $("machines-list").replaceChildren(...inventory.map(machineRow));
+      if (config.requireAuth) document.dispatchEvent(new CustomEvent("machines:monitor-render", {detail: {inventory}}));
+    }
     const message = $("machines-message");
     const online = inventory.filter(item => state(snapshots.get(item.id)) === "online").length;
     message.dataset.warning = String(Boolean(config.reportingPending || failed || (haveResponse && online < inventory.length)));

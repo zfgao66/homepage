@@ -16,6 +16,7 @@ class Element {
   constructor() { this.dataset = {}; this.style = {}; this.textContent = ''; this.listeners = {}; this.children = []; }
   append(...children) { this.children.push(...children); }
   replaceChildren(...children) { this.children = children; }
+  get childNodes() { return this.children; }
   setAttribute() {}
   addEventListener(name, listener) { this.listeners[name] = listener; }
   closest() { return this; }

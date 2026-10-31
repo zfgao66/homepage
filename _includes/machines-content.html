@@ -46,10 +46,7 @@
     </section>
     <p id="registrations-message" class="management-message" role="status" aria-live="polite"></p>
     <p id="machines-message" class="machines-message" role="status" aria-live="polite">正在获取服务器状态…</p>
-    <table class="machines-table" aria-label="按 IP 列出的 GPU 监控与使用登记">
-      <thead><tr><th scope="col">IP / 资源使用</th><th scope="col">显卡 / CPU 配置</th><th scope="col">每张 GPU 的使用情况</th></tr></thead>
-      <tbody id="machines-list"><tr><td colspan="3">正在读取…</td></tr></tbody>
-    </table>
+    <div id="machines-list" class="machine-cards" aria-label="按服务器分别显示的 GPU 监控与使用登记"><p>正在读取服务器…</p></div>
     <p class="machines-footnote">共 7 台服务器、32 张 GPU。内存显示已用 / 总量，硬盘显示本地分区的可用 / 总量，剩余不足 10% 时提示。监控超过 5 分钟未更新时显示“—”，不代表空闲。所有日期、时间均为北京时间（UTC+8）。登记仅用于协调，不会操作服务器上的计算任务。</p>
     <section class="management-panel" aria-labelledby="registration-history-title">
       <div class="management-section-heading"><h2 id="registration-history-title">公共登记记录</h2><label class="management-inline-check"><input id="history-show" type="checkbox"> 查询全部历史</label></div>

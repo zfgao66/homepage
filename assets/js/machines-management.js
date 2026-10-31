@@ -134,16 +134,16 @@
   function ensureRegistrationRows() {
     if (!authenticated) return;
     let added = false;
-    document.querySelectorAll('#machines-list > tr[data-machine-id]').forEach(monitorRow => {
-      const id = monitorRow.dataset.machineId;
+    document.querySelectorAll('#machines-list > article[data-machine-id]').forEach(card => {
+      const id = card.dataset.machineId;
       if (registrationRows.has(id)) return;
-      const row = el('tr', 'machine-registration-row'), cell = el('td'); cell.colSpan = 3;
       const section = el('section', 'machine-registrations'); section.setAttribute('aria-label', `${id} GPU 使用登记`);
-      const heading = el('div', 'management-section-heading'); heading.append(el('h3', '', 'GPU 使用登记'));
+      const heading = el('div', 'management-section-heading'); heading.append(el('h3', '', `${id} · GPU 使用登记`));
       const controls = el('div', 'management-actions'), count = el('span', 'registration-count', '正在读取登记');
       controls.append(count, button('申请使用 GPU', () => openForm(id), 'primary')); heading.append(controls);
-      const list = el('div', 'registrations-list'); section.append(heading, list); cell.append(section); row.append(cell); monitorRow.after(row);
-      registrationRows.set(id, {row, list, count});
+      const scope = el('p', 'management-muted registration-scope', '有效登记包含使用中和待开始的计划；登记与实际 GPU 占用分别显示。');
+      const list = el('div', 'registrations-list'); section.append(heading, scope, list); card.append(section);
+      registrationRows.set(id, {section, list, count});
       added = true;
     });
     if (added) renderRegistrations();
@@ -153,7 +153,9 @@
     registrationRows.forEach(({list, count}, id) => {
       const expanded = new Set([...list.querySelectorAll('.registration-card')].filter(card => card.querySelector('details[open]')).map(card => card.dataset.recordId));
       const current = sortRecords(records.filter(record => record.machine_id === id && active(record)));
-      count.textContent = `${current.length} 条有效登记`;
+      const people = new Set(current.map(record => record.wechat.normalize('NFKC').trim().toLowerCase())).size;
+      const activeCount = current.filter(record => record.status === 'active').length, scheduledCount = current.length - activeCount;
+      count.textContent = `有效登记 ${current.length} 条 · ${people} 人（使用中 ${activeCount} 条 / 待开始 ${scheduledCount} 条）`;
       list.replaceChildren(...(current.length ? current.map(record => recordCard(record)) : [el('p', 'management-muted', '暂无有效登记。请结合实时监控确认资源后再申请。')]));
       list.querySelectorAll('.registration-card').forEach(card => { if (expanded.has(card.dataset.recordId)) card.querySelectorAll('details').forEach(details => { details.open = true; }); });
     });

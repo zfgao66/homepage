@@ -21,12 +21,6 @@
 .machines-summary-note { margin:12px 0 0;font-size:12px;line-height:1.8;color:var(--muted); }
 .machines-message { margin:0 0 20px;color:var(--muted);font-size:14px; }
 .machines-message[data-warning=true] { background:#fff6e7;color:#865516;border:1px solid #efdfc4;border-radius:6px;padding:13px 17px; }
-.machines-table { width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:7px;overflow:hidden;text-align:left; }
-.machines-table>thead { background:#edf0f4;color:var(--navy); }
-.machines-table>thead th { font-size:14px;font-weight:600;padding:15px 23px; }
-.machines-table>thead th:first-child { width:26%; }
-.machines-table>thead th:nth-child(2) { width:23%; }
-.machines-table>tbody>tr>th,.machines-table>tbody>tr>td { padding:20px 23px;border-top:1px solid var(--line);vertical-align:top; }
 .machine-ip { display:block;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:17px;color:var(--navy-dark);font-weight:600;white-space:nowrap; }
 .machine-badge { display:inline-block;margin-top:9px;font-size:12px;font-weight:400;padding:2px 8px;border-radius:4px;background:#f0f2f5;color:#626e79; }
 .machine-badge[data-state=online] { background:#e8f4ee;color:#24664c; }
@@ -70,7 +64,6 @@
 @media(max-width:900px) {
   .machines-summary { gap:12px; }
   .summary-card { padding:18px 17px; }
-  .machines-table>thead th,.machines-table>tbody>tr>th,.machines-table>tbody>tr>td { padding-left:17px;padding-right:17px; }
   .gpu-track { display:none; }
   .machine-ip { font-size:15px; }
 }
@@ -78,13 +71,6 @@
   .machines-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .summary-value { font-size:32px; }
   .machines-heading { align-items:flex-start;flex-direction:column;gap:18px; }
-  .machines-table { display:block;background:none;border:0;overflow:visible; }
-  .machines-table>thead { display:none; }
-  .machines-table>tbody { display:block; }
-  .machines-table>tbody>tr { display:grid;grid-template-columns:minmax(0,1fr) auto;background:#fff;border:1px solid var(--line);border-radius:7px;margin-bottom:17px;overflow:hidden; }
-  .machines-table>tbody>tr>th,.machines-table>tbody>tr>td { display:block;border:0;padding:17px; }
-  .machines-table>tbody>tr>td:nth-child(2) { text-align:right;padding-left:0; }
-  .machines-table>tbody>tr>td:last-child { grid-column:1/-1;border-top:1px solid var(--line);padding-top:12px; }
   .machine-ip { font-size:16px; }
   .machine-model { font-size:16px; }
   .machine-cpu-config { max-width:110px; }
@@ -98,7 +84,7 @@
   .gpu-table th:nth-child(2) { width:25%; }
 }
 
-/* Shared registration interface. Monitor rows and registration rows stay independent. */
+/* Independent server cards keep monitoring and registration sections stable. */
 [hidden] { display:none !important; }
 .machines-login { min-height:80vh;display:grid;place-items:center;padding:40px 20px;background:#f5f6f8; }
 .login-card { width:100%;max-width:460px;padding:30px;background:#fff;border:1px solid var(--line,#d9e0e7);border-radius:12px;box-sizing:border-box; }
@@ -124,7 +110,6 @@
 .machines-rules ol { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 30px;padding-left:22px;margin:0; }
 .machines-rules li { font-size:13px;line-height:1.7;padding-left:2px; }
 .machines-rules strong { color:#6a4714; }
-.machines-table>tbody>tr.machine-registration-row>td { padding:0 23px 24px;background:#fafcfc;border-top:0; }
 .machine-registrations { padding:18px 0 0;border-top:1px dashed #cdd9d6; }
 .management-section-heading { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px; }
 .management-section-heading h2,.management-section-heading h3 { font-size:18px;margin:0; }
@@ -190,9 +175,6 @@
   .summary-detail { font-size:11px; }
   .machines-rules { padding:16px; }
   .machines-rules li { font-size:12px; }
-  .machines-table>tbody>tr[data-machine-id] { margin-bottom:0;border-radius:7px 7px 0 0; }
-  .machines-table>tbody>tr.machine-registration-row { display:block;border-top:0;border-radius:0 0 7px 7px;margin-bottom:20px;background:#fafcfc; }
-  .machines-table>tbody>tr.machine-registration-row>td { display:block;padding:0 13px 16px;border:0;background:transparent; }
   .machine-registrations { padding-top:15px; }
   .management-section-heading { align-items:flex-start; }
   .machine-registrations .management-section-heading>.management-actions { width:100%;justify-content:space-between; }
@@ -213,3 +195,52 @@
   .registration-statistics-table td:before { content:attr(data-label);flex-shrink:0;color:#667583;font-size:12px;text-align:left; }
 }
 .registration-change-confirmation { padding:12px;border:1px solid #ccd9df;border-radius:6px;background:#f3f7fa; }
+
+/* One persistent card contains both monitoring and registrations for one server. */
+.machine-cards { display:grid;gap:26px; }
+.machine-card { min-width:0;background:#fff;border:1px solid #b9cbd4;border-radius:10px;overflow:hidden;box-shadow:0 3px 10px #263b4f08; }
+.machine-card-heading { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px 24px;padding:18px 22px;background:#eaf1f5;border-bottom:1px solid #c9d9e1; }
+.machine-card-ip { margin:0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:21px;line-height:1.4;letter-spacing:.02em;color:#1d3548; }
+.machine-card-hardware { margin:0;font-size:16px;line-height:1.5;font-weight:600;color:#345165; }
+.machine-monitor { padding:18px 22px 22px; }
+.machine-monitor-status { display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;margin-bottom:17px; }
+.machine-monitor-status .machine-badge,.machine-monitor-status .machine-last { margin:0; }
+.machine-monitor-grid { display:grid;grid-template-columns:minmax(210px,.9fr) minmax(0,1.5fr);gap:26px; }
+.machine-system-info,.machine-gpu-info { min-width:0; }
+.machine-monitor .machine-cpu-config { margin:0;padding:0;border:0;max-width:none;text-align:left; }
+.machine-monitor .machine-cpu-config .resource-label { text-align:left; }
+.machine-monitor .cpu-model { font-size:13px; }
+.machine-monitor .cpu-counts { font-size:12px; }
+.machine-monitor .machine-resources { margin-top:14px;font-size:12px; }
+.machine-monitor .resource-label { font-size:12px; }
+.machine-subheading { margin:0 0 14px;font-size:14px;font-weight:600;font-family:inherit; }
+.machine-card>.machine-registrations { padding:20px 22px 22px;background:#f6faf8;border-top:1px solid #cbded6; }
+.machine-card .machine-registrations .management-section-heading { align-items:flex-start;margin-bottom:9px; }
+.machine-card .machine-registrations .management-section-heading h3 { font-family:inherit;font-size:16px;line-height:1.5; }
+.machine-card .machine-registrations .management-section-heading>.management-actions { justify-content:flex-end; }
+.machine-card .registration-count { display:block;font-size:12px;line-height:1.7; }
+.registration-scope { margin:0 0 14px; }
+@media(max-width:900px) {
+  .machine-monitor-grid { grid-template-columns:minmax(180px,.85fr) minmax(0,1.2fr);gap:20px; }
+  .machine-card .machine-registrations .management-section-heading { flex-direction:column; }
+  .machine-card .machine-registrations .management-section-heading>.management-actions { width:100%;justify-content:space-between; }
+}
+@media(max-width:680px) {
+  .machine-cards { gap:24px; }
+  .machine-card { border-color:#9eb7c6; }
+  .machine-card-heading { padding:15px 16px;gap:5px 14px; }
+  .machine-card-ip { font-size:20px; }
+  .machine-card-hardware { font-size:14px; }
+  .machine-monitor { padding:15px 16px 18px; }
+  .machine-monitor-grid { grid-template-columns:minmax(0,1fr);gap:19px; }
+  .machine-system-info { display:grid;grid-template-columns:minmax(0,1fr); }
+  .machine-gpu-info { padding-top:16px;border-top:1px solid #e0e7ec; }
+  .machine-monitor .machine-last { font-size:11px; }
+  .machine-monitor .cpu-model { font-size:13px; }
+  .machine-monitor .cpu-counts { font-size:12px; }
+  .machine-monitor .gpu-table { font-size:13px; }
+  .machine-card>.machine-registrations { padding:16px; }
+  .machine-card .machine-registrations .management-section-heading h3 { font-size:15px; }
+  .machine-card .machine-registrations .management-section-heading>.management-actions { align-items:flex-start;flex-direction:column;gap:10px; }
+  .machine-card .machine-registrations .management-section-heading>.management-actions>.primary { width:100%;min-height:44px; }
+}

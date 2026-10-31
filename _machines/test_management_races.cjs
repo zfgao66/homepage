@@ -31,12 +31,12 @@ class Element {
   node('machines-inventory').textContent = JSON.stringify([machine]);
   node('machines-initial-session').textContent = JSON.stringify({authenticated: true, csrf_token: 'test-csrf'});
   node('statistics-days').value = '7';
-  const monitorRow = new Element('tr'); monitorRow.dataset.machineId = machine.id; node('machines-list').append(monitorRow);
+  const monitorRow = new Element('article'); monitorRow.dataset.machineId = machine.id; node('machines-list').append(monitorRow);
   let stored = [];
   const context = {
     window: {MachinesMonitor: {start() {}, stop() {}}, addEventListener() {}},
     document: {getElementById: node, createElement: tag => new Element(tag), addEventListener() {}, hidden: false,
-      querySelectorAll: selector => selector === '#machines-list > tr[data-machine-id]' ? node('machines-list').children.filter(child => child.dataset.machineId) : []},
+      querySelectorAll: selector => selector === '#machines-list > article[data-machine-id]' ? node('machines-list').children.filter(child => child.dataset.machineId) : []},
     Date, Intl, JSON, Set, Map, Math, Number, String, Boolean, Error, AbortController, crypto: webcrypto, confirm: () => { throw new Error('Native confirmation dialogs must not be used'); },
     navigator: {clipboard: {writeText: async () => {}}}, setTimeout, clearTimeout, setInterval() {},
     fetch: (url, options) => {
