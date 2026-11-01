@@ -166,6 +166,16 @@ def _normalize(payload, base=None):
     return result
 
 
+def _check_duration(candidate, now, base=None):
+    # Existing plans remain readable/editable; only a new or changed time is limited.
+    start, end = _seconds(candidate['start_at']), _seconds(candidate['end_at'])
+    if base and candidate['start_at'] == base['start_at'] and candidate['end_at'] == base['end_at']:
+        return
+    anchor = max(start, now) if base else start
+    if end - anchor > 7 * DAY:
+        raise ReservationError('每次登记最多 7 天；续期后的结束时间最多为当前时间（未来预约为开始时间）起 7 天。')
+
+
 def _conflicts(candidate, records, exclude_id=None):
     start, end = _seconds(candidate['start_at']), _seconds(candidate['end_at'])
     proposed = _periods(candidate)
@@ -369,6 +379,7 @@ class ReservationStore:
             records = self._records(conn)
         base = self._find(records, exclude_id) if exclude_id else None
         candidate = _normalize(payload, base)
+        _check_duration(candidate, self.clock(), base)
         if base:
             candidate['registration_periods'] = _change_periods(base, candidate, self.clock())
         conflicts = _conflicts(candidate, records, exclude_id)
@@ -378,6 +389,7 @@ class ReservationStore:
     def create(self, payload, request_id):
         def apply(records, now):
             candidate = _normalize(payload)
+            _check_duration(candidate, now)
             conflicts = _conflicts(candidate, records)
             self._confirm(payload, conflicts)
             after = dict(candidate, id=str(uuid.uuid4()), created_at=_iso(now), updated_at=_iso(now),
@@ -393,6 +405,7 @@ class ReservationStore:
             self._version(before, expected_version)
             self._check_open(before)
             candidate = _normalize(payload, before)
+            _check_duration(candidate, now, before)
             candidate['registration_periods'] = _change_periods(before, candidate, now)
             conflicts = _conflicts(candidate, records, reservation_id)
             self._confirm(payload, conflicts)
@@ -419,6 +432,7 @@ class ReservationStore:
             after = dict(before)
             if action == 'extend':
                 candidate = _normalize(payload, before)
+                _check_duration(candidate, now, before)
                 if _seconds(candidate['end_at']) <= max(now, _seconds(before['end_at'])):
                     raise ReservationError('续期结束时间必须晚于原结束时间和当前时间')
                 candidate['registration_periods'] = _change_periods(before, candidate, now)

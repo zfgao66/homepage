@@ -244,9 +244,10 @@
     for (let index = 1; index <= machine.gpu_count; index++) { const option = el('option', '', String(index)); option.value = String(index); count.append(option); }
     count.value = String(record?.gpu_count || 1); countLabel.append(count); grid.append(countLabel);
     const start = field(grid, '计划开始时间 *（北京时间）', 'start_at', 'datetime-local', beijingValue(record?.start_at || new Date()), {required: true});
-    const durationLabel = el('label', 'management-field', mode === 'extend' ? '续期时长（从原结束时间起；已到期则从现在起）' : '预计使用时长'), duration = el('select');
-    [[8, '8 小时'], [24, '24 小时'], [48, '48 小时'], [72, '72 小时'], [168, '7 天'], [360, '15 天'], [720, '30 天'], ['custom', '自定义结束时间']].forEach(([value, text]) => { const option = el('option', '', text); option.value = String(value); duration.append(option); });
+    const durationLabel = el('label', 'management-field', mode === 'extend' ? '续期时长（从当前时间起；未来预约从开始时间起）' : '预计使用时长'), duration = el('select');
+    [[8, '8 小时'], [24, '24 小时'], [48, '48 小时'], [72, '72 小时'], [168, '7 天'], ['custom', '自定义结束时间']].forEach(([value, text]) => { const option = el('option', '', text); option.value = String(value); duration.append(option); });
     duration.value = record ? 'custom' : '24'; durationLabel.append(duration); grid.append(durationLabel);
+    grid.append(el('p', 'management-muted', '每次登记最多 7 天。续期后的结束时间最多为当前时间（未来预约为开始时间）起 7 天。'));
     const end = field(grid, '预计结束时间 *（北京时间）', 'end_at', 'datetime-local', beijingValue(record?.end_at || Date.now() + 24 * 3600000), {required: true});
     const indices = el('fieldset', 'gpu-choice'); indices.append(el('legend', '', '指定 GPU 编号（选填；不选则仅登记数量）'));
     const indexInputs = []; for (let index = 0; index < machine.gpu_count; index++) { const label = el('label'), checkbox = el('input'); checkbox.type = 'checkbox'; checkbox.value = String(index); checkbox.checked = Boolean(record?.gpu_indices?.includes(index)); label.append(checkbox, el('span', '', `GPU ${index}`)); indices.append(label); indexInputs.push(checkbox); }
@@ -272,7 +273,7 @@
     const showLong = () => { try { longNotice.hidden = !isLongTerm(beijingISO(start.value), beijingISO(end.value)); } catch { longNotice.hidden = true; } };
     const adjustEnd = () => {
       if (duration.value !== 'custom' && start.value) {
-        try { const base = mode === 'extend' ? Math.max(Date.parse(record.end_at), Date.now()) : Date.parse(beijingISO(start.value)); end.value = beijingValue(base + Number(duration.value) * 3600000); } catch { /* Native form validation reports missing times. */ }
+        try { const base = mode === 'extend' ? Math.max(Date.parse(record.start_at), Date.now()) : Date.parse(beijingISO(start.value)); end.value = beijingValue(base + Number(duration.value) * 3600000); } catch { /* Native form validation reports missing times. */ }
       }
       showLong();
     };
@@ -294,6 +295,9 @@
         if (selected.length && selected.length !== gpuCount) throw new Error('指定 GPU 编号数量必须与申请数量一致。');
         const startAt = beijingISO(start.value), endAt = beijingISO(end.value);
         if (Date.parse(endAt) <= Date.parse(startAt)) throw new Error('结束时间必须晚于开始时间。');
+        const unchangedTime = record && startAt === new Date(record.start_at).toISOString() && endAt === new Date(record.end_at).toISOString();
+        const durationAnchor = record ? Math.max(Date.parse(startAt), Date.now()) : Date.parse(startAt);
+        if (!unchangedTime && Date.parse(endAt) - durationAnchor > 7 * 86400000) throw new Error('每次登记最多 7 天，请缩短使用时间。');
         payload = {machine_id: machineId, name: name.value.trim(), wechat: wechat.value.trim(), gpu_count: gpuCount, gpu_indices: selected, start_at: startAt, end_at: endAt, purpose: purpose.value.trim(), notes: notes.value.trim(), usage_pattern: pattern.value.trim()};
         if (!payload.name || !payload.wechat) throw new Error('请填写姓名和微信号。');
         if (mode === 'extend' && Date.parse(endAt) <= Math.max(Date.parse(record.end_at), Date.now())) throw new Error('续期结束时间必须晚于原结束时间和当前时间。');

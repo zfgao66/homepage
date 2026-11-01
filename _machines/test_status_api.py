@@ -108,13 +108,28 @@ class DirectStatusTests(unittest.TestCase):
         return data
 
     def create(self, browser, **changes):
-        status, _, data = browser.request('POST', '/api/registrations', self.payload(**changes), request_id=str(uuid.uuid4()))
+        payload = self.payload(**changes)
+        # Seed historical long records to verify compatibility with the new limit.
+        if changes.get('end_at') and (datetime.datetime.fromisoformat(payload['end_at']) - datetime.datetime.fromisoformat(payload['start_at'])).total_seconds() > 7 * DAY:
+            with mock.patch('reservations._check_duration'):
+                status, _, data = browser.request('POST', '/api/registrations', payload, request_id=str(uuid.uuid4()))
+        else:
+            status, _, data = browser.request('POST', '/api/registrations', payload, request_id=str(uuid.uuid4()))
         self.assertEqual(status, 201, data)
         return data['registration']
 
     @staticmethod
     def embedded(html, identity):
         return json.loads(html.split('<script id="%s" type="application/json">' % identity)[1].split('</script>')[0])
+
+    def test_http_rejects_more_than_seven_days(self):
+        browser = self.browser()
+        payload = self.payload(end_at=status_api.timestamp(self.now + 7 * DAY + 1))
+        for path in ('/api/registrations', '/api/registrations/preview'):
+            result = browser.request('POST', path, payload, request_id=str(uuid.uuid4()))
+            self.assertEqual(result[0], 400)
+        payload['end_at'] = status_api.timestamp(self.now + 7 * DAY)
+        self.assertEqual(browser.request('POST', '/api/registrations', payload, request_id=str(uuid.uuid4()))[0], 201)
 
     def test_latest_only_and_stale_age_grows_without_new_collection(self):
         self.store.publish(self.snapshot)
@@ -311,9 +326,9 @@ class DirectStatusTests(unittest.TestCase):
         stale = browser.request('PATCH', path, {'expected_version': 1, 'notes': '旧界面'}, request_id=str(uuid.uuid4()))
         self.assertEqual((stale[0], stale[2]['code']), (409, 'version_conflict'))
         self.assertEqual(stale[2]['details']['current_version'], 2)
-        extended = browser.request('POST', path + '/extend', {'expected_version': 2, 'end_at': status_api.timestamp(self.started + 30 * DAY)}, request_id=str(uuid.uuid4()))
+        extended = browser.request('POST', path + '/extend', {'expected_version': 2, 'end_at': status_api.timestamp(self.started + 7 * DAY)}, request_id=str(uuid.uuid4()))
         self.assertEqual(extended[0], 200)
-        self.assertTrue(extended[2]['registration']['long_term'])
+        self.assertFalse(extended[2]['registration']['long_term'])
         self.now += 3600
         ended = browser.request('POST', path + '/end', {'expected_version': 3}, request_id=str(uuid.uuid4()))
         self.assertEqual((ended[0], ended[2]['registration']['status']), (200, 'ended'))

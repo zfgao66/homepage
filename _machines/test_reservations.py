@@ -7,6 +7,7 @@ import tempfile
 import threading
 import unittest
 import uuid
+from unittest import mock
 
 from reservations import DAY, HOSTS, ReservationError, ReservationStore
 
@@ -33,13 +34,37 @@ class ReservationTests(unittest.TestCase):
         return result
 
     def create(self, **changes):
-        return self.store.create(self.payload(**changes), str(uuid.uuid4()))
+        payload = self.payload(**changes)
+        # Long plans in these historical-statistics fixtures predate the 7-day policy.
+        try:
+            legacy = dt.datetime.fromisoformat(payload['end_at']) - dt.datetime.fromisoformat(payload['start_at']) > dt.timedelta(days=7)
+        except (ValueError, TypeError):
+            legacy = False
+        if legacy:
+            with mock.patch('reservations._check_duration'):
+                return self.store.create(payload, str(uuid.uuid4()))
+        return self.store.create(payload, str(uuid.uuid4()))
 
     def assertError(self, function, code='validation_error', status=400):
         with self.assertRaises(ReservationError) as raised:
             function()
         self.assertEqual((raised.exception.code, raised.exception.status), (code, status))
         return raised.exception
+
+    def test_seven_day_policy_cannot_be_bypassed_by_preview_edit_or_extend(self):
+        over = self.payload(end_at=iso(self.t0 + 7 * DAY + 1))
+        self.assertError(lambda: self.store.create(over, str(uuid.uuid4())))
+        self.assertError(lambda: self.store.preview(over))
+        record = self.store.create(self.payload(end_at=iso(self.t0 + 7 * DAY)), str(uuid.uuid4()))
+        self.assertError(lambda: self.store.update(record['id'], {'end_at':over['end_at']}, 1, str(uuid.uuid4())))
+        self.assertError(lambda: self.store.action(record['id'], 'extend', {'end_at':over['end_at']}, 1, str(uuid.uuid4())))
+        self.now += DAY
+        renewed = self.store.action(record['id'], 'extend', {'end_at':iso(self.now + 7 * DAY)}, 1, str(uuid.uuid4()))
+        self.assertEqual(renewed['end_at'], iso(self.now + 7 * DAY).replace('+00:00', '.000000Z'))
+        legacy = self.create(machine_id='10.20.6.38', end_at=iso(self.t0 + 30 * DAY))
+        edited = self.store.update(legacy['id'], {'notes':'保留旧计划'}, 1, str(uuid.uuid4()))
+        self.assertEqual(edited['end_at'], legacy['end_at'])
+        self.assertError(lambda: self.store.action(legacy['id'], 'extend', {'end_at':iso(self.t0 + 31 * DAY)}, 2, str(uuid.uuid4())))
 
     def test_monthly_record_persists_without_any_telemetry_and_survives_reopen(self):
         record = self.create(end_at=iso(self.t0 + 30 * DAY), gpu_indices=[0, 1])
