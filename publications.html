@@ -9,7 +9,7 @@ description: 高泽峰的学术论文与研究成果列表。
   <div class="page-shell page-heading__inner">
     <p class="eyebrow">Publications</p>
     <h1>学术发表</h1>
-    <p>研究成果涵盖AI for Science、自然语言处理、模型压缩、量子材料与计算物理。</p>
+    <p>研究成果涵盖AI for Science、自然语言处理、模型压缩、量子材料与计算物理，包括正式发表论文、已录用论文与预印本。</p>
   </div>
 </section>
 
@@ -46,14 +46,17 @@ description: 高泽峰的学术论文与研究成果列表。
           <h3><a href="{{ post.url | relative_url }}">{{ post.title }}</a></h3>
           <p class="publication-authors">{{ post.authors }}</p>
           <p class="publication-citation"><em>{{ post.venue }}</em>, {{ post.date | date: "%Y" }}</p>
+          {% if post.published_online %}<p class="publication-citation">首次在线发表：{{ post.published_online | date: "%Y-%m-%d" }}</p>{% endif %}
           <div class="publication-links" aria-label="{{ post.title }} 资源">
             {% if post.paper %}<a href="{{ post.paper | relative_url }}">PDF</a>{% endif %}
             {% if post.arxiv %}<a href="{{ post.arxiv }}">arXiv</a>{% endif %}
             {% if post.code %}<a href="{{ post.code }}">Code</a>{% endif %}
+            {% if post.data %}<a href="{{ post.data }}">Data</a>{% endif %}
+            {% if post.model %}<a href="{{ post.model }}">Model</a>{% endif %}
             {% if post.poster %}<a href="{{ post.poster | relative_url }}">Poster</a>{% endif %}
             {% if post.slides %}<a href="{{ post.slides | relative_url }}">Slides</a>{% endif %}
             {% if post.video %}<a href="{{ post.video }}">Video</a>{% endif %}
-            {% if post.link %}<a href="{{ post.link }}">Publisher</a>{% endif %}
+            {% if post.link %}<a href="{{ post.link }}">{{ post.link_label | default: "Publisher" }}</a>{% endif %}
           </div>
           <p class="publication-abstract">{{ post.excerpt | strip_html | strip_newlines }}</p>
         </div>

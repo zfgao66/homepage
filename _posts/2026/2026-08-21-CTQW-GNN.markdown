@@ -1,0 +1,14 @@
+---
+layout: post
+title: "Continuous-Time Quantum Walks based Graph Neural Network"
+date: 2026-08-21 04:53:16 +00:00
+image: images/2026/CTQW-GNN.png
+categories: 2026_research
+author: Ze-Feng Gao
+authors: "Yuliang Zhan, <strong>Zefeng Gao</strong>, Jian Li<sup>#</sup>, Yang Liu, Hao Sun<sup>#</sup>"
+venue: "CIKM 2026 (Accepted)"
+paper: /pdfs/2026/CTQW-GNN.pdf
+arxiv: https://arxiv.org/abs/2608.20738
+link: https://doi.org/10.1145/3799682.3840936
+---
+CTQW-GNN uses classically simulated continuous-time quantum walks to preserve graph-frequency information and mitigate over-smoothing. It combines unitary feature propagation, attention over long-range neighbors, and low-frequency aggregation, with theoretical analysis and evaluation on 14 homophilic and heterophilic graph benchmarks.

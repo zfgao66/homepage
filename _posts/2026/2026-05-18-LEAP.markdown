@@ -9,5 +9,7 @@ authors: "Xin-De Wang, Zhi-Rui Chen, <strong>Ze-Feng Gao<sup>#</sup></strong>, P
 venue: "Arxiv"
 paper: /pdfs/2026/LEAP.pdf
 arxiv: https://arxiv.org/abs/2605.20242
+data: https://github.com/WD928/LEAP
+model: https://huggingface.co/JH976/Perovskite-RL
 ---
 In this work, we develop LEAP (LLM-driven Exploration via Active Learning for Perovskites), an expert-in-the-loop closed-loop framework that couples a domain-specialized large language model with active learning for iterative additive prioritization, achieving improved device performance in proof-of-concept perovskite solar cell experiments.

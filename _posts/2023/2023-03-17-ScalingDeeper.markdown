@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Scaling Pre-trained Language Models to Deeper via Parameter-efficient Architecture"
-date:   2023-03-17 18:04:44 +00:00
+date:   2023-03-27 00:00:00 +00:00
 image: images/2023/ScalingDeeper.png
 categories: 2023_research
 author: Ze-Feng Gao

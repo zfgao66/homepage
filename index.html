@@ -62,7 +62,9 @@ description: 高泽峰，中国人民大学物理学院副教授，研究AI驱�
     </div>
     <div class="updates-layout">
       <ol class="updates-list">
-        <li><time class="update-date" datetime="2026-08">2026.08</time><a class="update-title" href="{{ '/publications/#year-2026' | relative_url }}">PhononBench 被 AI for Science 录用并上线</a></li>
+        <li><time class="update-date" datetime="2026-10">2026.10</time><a class="update-title" href="{{ '/publication/2026/Crystoria/' | relative_url }}">Crystoria 预印本发布：连接热力学与动力学稳定性的265万级晶体数据集</a></li>
+        <li><time class="update-date" datetime="2026-09">2026.09</time><a class="update-title" href="https://doi.org/10.1088/3050-287X/ae9ee4">PhononBench 正式发表于 AI for Science，评测扩展至7个模型、133,838个晶体结构</a></li>
+        <li><time class="update-date" datetime="2026-08">2026.08</time><a class="update-title" href="{{ '/publication/2026/CTQW-GNN/' | relative_url }}">量子行走图神经网络 CTQW-GNN 论文发布，已获 CIKM 2026 接收</a></li>
         <li><time class="update-date" datetime="2026-08">2026.08</time><a class="update-title" href="{{ '/publications/#year-2026' | relative_url }}">静态轨道哈密顿量筛选声子介导超导体工作发布</a></li>
         <li><time class="update-date" datetime="2026-07">2026.07</time><a class="update-title" href="https://m.sme-gov.cn/beijing/news/175906.html">入选“高创计划·青年人才托举工程”</a></li>
         <li><time class="update-date" datetime="2026-07">2026.07</time><span class="update-title">任中国人民大学物理学院副教授</span></li>
@@ -71,7 +73,7 @@ description: 高泽峰，中国人民大学物理学院副教授，研究AI驱�
       </ol>
       <aside class="highlight-note">
         <h3>2026研究进展</h3>
-        <p>围绕AI生成晶体的动力学稳定性，形成PhononBench、PhononBench-MP40与PhononScore，覆盖大规模基准数据、谱分辨验证和秒级稳定性评分。</p>
+        <p>从PhononBench、PhononBench-MP40到PhononScore，持续构建晶体动力学稳定性评估体系。新发布的Crystoria进一步连接热力学与动力学信息，提供2,649,640个晶体结构的开放数据，支撑材料生成、筛选与闭环发现。</p>
       </aside>
     </div>
   </div>
@@ -135,7 +137,7 @@ description: 高泽峰，中国人民大学物理学院副教授，研究AI驱�
     <div class="featured-publications">
       {% assign featured_count = 0 %}
       {% for post in site.posts %}
-      {% unless post.venue == "Arxiv" %}
+      {% unless post.venue == "Arxiv" or post.preprint %}
       <article class="featured-publication">
         <img src="{{ post.image | relative_url }}" alt="{{ post.title }} 论文配图">
         <div class="featured-publication__body">

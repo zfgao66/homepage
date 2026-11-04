@@ -10,5 +10,7 @@ venue: "Arxiv"
 paper: /pdfs/2026/InvDesMobility.pdf
 arxiv: https://arxiv.org/abs/2606.16133
 code: https://github.com/DreamLufei/invDesMobility
+link: https://dreamlufei.github.io/invDesMobility/
+link_label: Project
 ---
 In this work, we present InvDesMobility, a reliability-gated first-principles feedback framework that integrates multi-agent automated DFT, evidence stratification, generative structure proposal, acquisition ranking, and auditable release for closed-loop inverse design, screening 2.4 million structures and retaining reliability-gated high-mobility candidates.

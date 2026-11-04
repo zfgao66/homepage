@@ -2380,6 +2380,17 @@ strong {
   }
 }
 
+@media (max-width: 360px) {
+  .dataset-metrics div {
+    padding-right: 2px;
+    padding-left: 2px;
+  }
+
+  .dataset-metrics dt {
+    font-size: 14px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

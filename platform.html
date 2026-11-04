@@ -18,7 +18,7 @@ description: 面向AI for Science的材料设计模型、开放数据集与在�
   <div class="page-shell">
     <div class="stats-row platform-stats" aria-label="平台概览">
       <div class="stat-card"><strong>4</strong><span>核心模型与平台</span></div>
-      <div class="stat-card"><strong>3</strong><span>开放科学数据集</span></div>
+      <div class="stat-card"><strong>4</strong><span>开放科学数据集</span></div>
       <div class="stat-card"><strong>3</strong><span>代表性应用场景</span></div>
     </div>
     <div class="section-heading platform-section-heading">
@@ -103,6 +103,21 @@ description: 面向AI for Science的材料设计模型、开放数据集与在�
     </div>
     <div class="dataset-grid">
       <article class="dataset-card">
+        <img src="{{ '/images/2026/Crystoria.png' | relative_url }}" alt="Crystoria晶体数据集构建与声子筛选流程">
+        <div class="dataset-card__body">
+          <p class="platform-category">热力学与动力学数据</p>
+          <h3>Crystoria</h3>
+          <p>连接晶体的热力学与动力学稳定性，结合机器学习势结构松弛与谐声子筛选，提供2,649,640个晶体结构的开放数据，支持材料生成和稳定性预测。</p>
+          <dl class="dataset-metrics"><div><dt>约265万</dt><dd>晶体结构</dd></div><div><dt>89</dt><dd>元素</dd></div><div><dt>219</dt><dd>空间群</dd></div></dl>
+          <div class="platform-links">
+            <a class="platform-link" href="https://doi.org/10.5281/zenodo.23572554">访问数据集</a>
+            <a class="platform-link platform-link--secondary" href="https://github.com/KeXin-Pang/Crystoria">计算代码</a>
+            <a class="platform-link platform-link--secondary" href="https://arxiv.org/abs/2610.38195">论文</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="dataset-card">
         <img src="{{ '/images/2025/HTSC-2025.png' | relative_url }}" alt="HTSC-2025常压高温超导材料数据集">
         <div class="dataset-card__body">
           <p class="platform-category">超导材料数据</p>
@@ -121,8 +136,8 @@ description: 面向AI for Science的材料设计模型、开放数据集与在�
         <div class="dataset-card__body">
           <p class="platform-category">晶体动力学数据</p>
           <h3>PhononBench</h3>
-          <p>包含十万余个AI生成晶体及DFT级声子稳定性标注，用于系统评估材料生成模型的动力学稳定性与物理可行性。</p>
-          <dl class="dataset-metrics"><div><dt>108,843</dt><dd>生成结构</dd></div><div><dt>28,119</dt><dd>稳定结构</dd></div><div><dt>10+</dt><dd>性质标签</dd></div></dl>
+          <p>评测7个模型生成的133,838个晶体结构；其中32,995个结构在全布里渊区满足−0.001 THz严格稳定性阈值，为材料生成模型提供声子稳定性基准。</p>
+          <dl class="dataset-metrics"><div><dt>133,838</dt><dd>评测结构</dd></div><div><dt>32,995</dt><dd>严格阈值稳定结构</dd></div><div><dt>7</dt><dd>生成模型</dd></div></dl>
           <div class="platform-links">
             <a class="platform-link" href="https://github.com/xqh19970407/PhononBench">访问数据集</a>
           </div>

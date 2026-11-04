@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "YuLan: An Open-source Large Language Model"
-date:   2024-08-23 18:04:44 +00:00
+date:   2024-06-28 00:00:00 +00:00
 image: images/2024/yulan.png
 categories: 2024_research
 author: Ze-Feng Gao
@@ -9,7 +9,8 @@ authors: "Yutao Zhu, Kun Zhou, Kelong Mao, Wentong Chen, Yiding Sun, Zhipeng Che
 venue: "Arxiv"
 paper: /pdfs/2024/yulan.pdf
 arxiv: https://arxiv.org/abs/2406.19853
+code: https://github.com/RUC-GSAI/YuLan-Chat
 
 
 ---
-In this paper, we design a three-stage pre-training method to enhance YuLan's overall capabilities. Subsequent phases of training incorporate instruction-tuning and human alignment, employing a substantial volume of high-quality synthesized data. To facilitate the learning of complex and long-tail knowledge, we devise a curriculum-learning framework throughout across these stages, which helps LLMs learn knowledge in an easy-to-hard manner. 
+In this paper, we design a three-stage pre-training method to enhance YuLan's overall capabilities. Subsequent phases of training incorporate instruction-tuning and human alignment, employing a substantial volume of high-quality synthesized data. To facilitate the learning of complex and long-tail knowledge, we devise a curriculum-learning framework throughout across these stages, which helps LLMs learn knowledge in an easy-to-hard manner.
