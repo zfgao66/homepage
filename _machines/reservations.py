@@ -183,6 +183,16 @@ def _check_duration(candidate, now, base=None):
         raise ReservationError('每次登记最多 7 天；续期后的结束时间最多为当前时间（未来预约为开始时间）起 7 天。')
 
 
+def _start_now(candidate, now, base=None):
+    if base:
+        if candidate['start_at'] != base['start_at']:
+            raise ReservationError('开始时间不可修改，登记只能立即开始。', 400, 'future_start_not_allowed')
+    else:
+        if _seconds(candidate['start_at']) > now + 5:
+            raise ReservationError('不允许提前预约，请在实际开始使用时登记。', 400, 'future_start_not_allowed')
+        candidate['start_at'] = _iso(now)
+
+
 def _conflicts(candidate, records, exclude_id=None):
     start, end = _seconds(candidate['start_at']), _seconds(candidate['end_at'])
     proposed = _periods(candidate)
@@ -317,9 +327,9 @@ class ReservationStore:
 
     @staticmethod
     def _confirm(payload, conflicts):
-        if conflicts and payload.get('conflict_ack') is not True:
-            raise ReservationError('存在时间或 GPU 冲突，请先查看联系人并明确确认', 409,
-                                   'conflict_confirmation_required', {'conflicts': conflicts})
+        if conflicts:
+            raise ReservationError('所选 GPU 已有有效登记，不能重复提交。请等待释放或选择其他 GPU。', 409,
+                                   'reservation_conflict', {'conflicts': conflicts})
 
     def _write(self, operation, reservation_id, payload, expected_version, request_id, apply):
         try:
@@ -436,6 +446,7 @@ class ReservationStore:
             records = self._records(conn)
         base = self._find(records, exclude_id) if exclude_id else None
         candidate = _normalize(payload, base)
+        _start_now(candidate, self.clock(), base)
         _check_duration(candidate, self.clock(), base)
         if candidate.get('server_username') and (not base or not base.get('usage_segments') or candidate['server_username'] != base.get('server_username') or candidate['machine_id'] != base['machine_id']):
             with self._connect() as conn:
@@ -445,14 +456,46 @@ class ReservationStore:
                     raise ReservationError(str(error)) from None
         if base:
             candidate['registration_periods'] = _change_periods(base, candidate, self.clock())
+        if base is None or any(candidate[k] != base.get(k) for k in ('machine_id', 'gpu_indices', 'gpu_count')):
+            self._allocate_now(candidate, records, self.clock(), exclude_id)
         conflicts = _conflicts(candidate, records, exclude_id)
+        changed = base is None or any(candidate[k] != base.get(k) for k in ('machine_id', 'gpu_indices', 'gpu_count', 'start_at', 'end_at'))
         return {'candidate': {key: candidate[key] for key in EDITABLE}, 'conflicts': conflicts,
-                'requires_confirmation': bool(conflicts), 'long_term': _long_term(candidate)}
+                'requires_confirmation': False, 'blocked': bool(conflicts) and changed, 'long_term': _long_term(candidate)}
+
+    def _allocate_now(self, candidate, records, now, exclude_id=None):
+        with self._connect() as db:
+            sample = db.execute('SELECT at,complete,owners FROM usage_last WHERE machine=?', (candidate['machine_id'],)).fetchone()
+            if not sample or not sample[1] or not -30 <= now - sample[0] <= 120:
+                raise ReservationError('无法确认 GPU 当前是否空闲，请等待实时采样恢复后再登记。', 409, 'usage_unavailable')
+            try:
+                uid = self.usage.resolve(db, candidate['machine_id'], candidate.get('server_username', ''), now)
+            except ValueError as error:
+                raise ReservationError(str(error)) from None
+        owners = json.loads(sample[2])
+        busy = {int(g) for g, users in owners.items() if any(owner != uid for owner in users)}
+        overlap = [r for r in records if r['id'] != exclude_id and r['machine_id'] == candidate['machine_id']
+                   and not r.get('cancelled_at') and _seconds(r['start_at']) < _seconds(candidate['end_at']) and _effective_end(r) > now]
+        reserved = {g for r in overlap for g in r['gpu_indices']}
+        selected = candidate['gpu_indices']
+        if selected:
+            if busy.intersection(selected):
+                raise ReservationError('所选 GPU 当前有其他账号的任务，请选择空闲 GPU。', 409, 'gpu_busy')
+        else:
+            free = sorted(set(range(HOSTS[candidate['machine_id']])) - busy - reserved)
+            points = {now, *(max(now, _seconds(r['start_at'])) for r in overlap)}
+            unspecified = max((sum(r['gpu_count'] for r in overlap if not r['gpu_indices'] and _seconds(r['start_at']) <= point < _effective_end(r)) for point in points), default=0)
+            free = free[unspecified:]
+            if len(free) < candidate['gpu_count']:
+                raise ReservationError('当前空闲且未登记的 GPU 数量不足，请减少张数或稍后再试。', 409, 'gpu_busy')
+            candidate['gpu_indices'] = free[:candidate['gpu_count']]
 
     def create(self, payload, request_id):
         def apply(records, now):
             candidate = _normalize(payload)
+            _start_now(candidate, now)
             _check_duration(candidate, now)
+            self._allocate_now(candidate, records, now)
             conflicts = _conflicts(candidate, records)
             self._confirm(payload, conflicts)
             after = dict(candidate, id=str(uuid.uuid4()), created_at=_iso(now), updated_at=_iso(now),
@@ -468,10 +511,14 @@ class ReservationStore:
             self._version(before, expected_version)
             self._check_open(before)
             candidate = _normalize(payload, before)
+            _start_now(candidate, now, before)
             _check_duration(candidate, now, before)
             candidate['registration_periods'] = _change_periods(before, candidate, now)
+            if any(candidate[k] != before.get(k) for k in ('machine_id', 'gpu_indices', 'gpu_count')):
+                self._allocate_now(candidate, records, now, reservation_id)
             conflicts = _conflicts(candidate, records, reservation_id)
-            self._confirm(payload, conflicts)
+            if any(candidate[k] != before.get(k) for k in ('machine_id', 'gpu_indices', 'gpu_count', 'start_at', 'end_at')):
+                self._confirm(payload, conflicts)
             after = dict(before, **candidate)
             after.update(updated_at=_iso(now), version=before['version'] + 1,
                          conflict_acknowledged=bool(conflicts), acknowledged_conflict_ids=[c['id'] for c in conflicts])

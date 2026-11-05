@@ -15,6 +15,7 @@ if (process.argv[2] === '--timezone-child') {
   assert.throws(() => utils.beijingISO('2026-11-01'), /完整/);
   assert.equal(utils.isLongTerm('2026-11-01T00:00:00+08:00', '2026-11-08T00:00:00+08:00'), false);
   assert.equal(utils.isLongTerm('2026-11-01T00:00:00+08:00', '2026-11-08T00:00:01+08:00'), true);
+  assert.equal(utils.formISO('2026-11-05T22:39', '2026-11-05T14:39:57.489165Z'), '2026-11-05T14:39:57.489165Z', 'Metadata edits preserve server start time including seconds');
   const start = utils.beijingISO('2026-11-01T00:00'), end = utils.beijingISO('2026-12-01T00:00');
   assert.equal((Date.parse(end) - Date.parse(start)) / 3600000, 720, 'A month-long registration must retain the entire period');
   process.exit(0);

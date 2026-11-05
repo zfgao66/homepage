@@ -1,4 +1,5 @@
 import concurrent.futures
+import contextlib
 import datetime as dt
 import json
 import pathlib
@@ -26,6 +27,7 @@ class ReservationTests(unittest.TestCase):
         self.store = ReservationStore(self.path, clock=lambda: self.now)
         with self.store.usage.connect() as db:
             db.executemany('INSERT OR REPLACE INTO usage_accounts VALUES (?,?,?,?)', [(host, 'wkli', 1001, self.now) for host in HOSTS])
+            db.executemany('INSERT OR REPLACE INTO usage_last VALUES (?,?,?,?,?)', [(host, self.now, 'fixture', '{}', 1) for host in HOSTS])
 
     def payload(self, **changes):
         result = {'machine_id': '10.20.5.73', 'name': '张同学', 'wechat': 'zhang_gpu',
@@ -38,16 +40,22 @@ class ReservationTests(unittest.TestCase):
     def create(self, **changes):
         with self.store.usage.connect() as db:
             db.execute('UPDATE usage_accounts SET observed=?', (self.now,))
+            db.execute('UPDATE usage_last SET at=?', (self.now,))
         payload = self.payload(**changes)
         # Long plans in these historical-statistics fixtures predate the 7-day policy.
         try:
             legacy = dt.datetime.fromisoformat(payload['end_at']) - dt.datetime.fromisoformat(payload['start_at']) > dt.timedelta(days=7)
         except (ValueError, TypeError):
             legacy = False
-        if legacy:
-            with mock.patch('reservations._check_duration'):
-                return self.store.create(payload, str(uuid.uuid4()))
-        return self.store.create(payload, str(uuid.uuid4()))
+        # Seed historical fixtures; new policy tests use the store directly.
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch('reservations._start_now'))
+            stack.enter_context(mock.patch.object(ReservationStore, '_allocate_now'))
+            if legacy:
+                stack.enter_context(mock.patch('reservations._check_duration'))
+            if changes.get('conflict_ack'):
+                stack.enter_context(mock.patch.object(ReservationStore, '_confirm'))
+            return self.store.create(payload, str(uuid.uuid4()))
 
     def assertError(self, function, code='validation_error', status=400):
         with self.assertRaises(ReservationError) as raised:
@@ -120,12 +128,14 @@ class ReservationTests(unittest.TestCase):
         self.assertFalse(second['has_conflict'])
         overlap = self.payload(gpu_count=1, gpu_indices=[1], end_at=iso(self.t0 + 1800), wechat='li_gpu')
         preview = self.store.preview(overlap)
-        self.assertTrue(preview['requires_confirmation'])
+        self.assertFalse(preview['requires_confirmation'])
+        self.assertTrue(preview['blocked'])
         self.assertEqual(preview['conflicts'][0]['reason'], 'gpu_overlap')
         self.assertEqual(preview['conflicts'][0]['wechat'], first['wechat'])
         key = str(uuid.uuid4())
-        self.assertError(lambda: self.store.create(overlap, key), 'conflict_confirmation_required', 409)
-        accepted = self.store.create(dict(overlap, conflict_ack=True), key)
+        self.assertError(lambda: self.store.create(overlap, key), 'reservation_conflict', 409)
+        self.assertError(lambda: self.store.create(dict(overlap, conflict_ack=True), key), 'reservation_conflict', 409)
+        accepted = self.create(**dict(overlap, conflict_ack=True))
         self.assertTrue(accepted['has_conflict'])
         self.assertTrue(accepted['conflict_acknowledged'])
         self.assertEqual(len(self.store.list_records(history=True)), 3)
@@ -136,7 +146,9 @@ class ReservationTests(unittest.TestCase):
         self.create(start_at=iso(self.t0 + 3600), end_at=iso(self.t0 + 7200))
         candidate = self.payload(start_at=iso(self.t0), end_at=iso(self.t0 + 7200))
         self.assertEqual(self.store.preview(candidate)['conflicts'], [])
-        accepted = self.store.create(candidate, str(uuid.uuid4()))
+        # Preserve the legacy unspecified-card fixture for the peak-capacity calculation.
+        with mock.patch.object(ReservationStore, '_allocate_now'):
+            accepted = self.store.create(candidate, str(uuid.uuid4()))
         over_capacity = self.payload(gpu_count=1, gpu_indices=[3], end_at=iso(self.t0 + 7200))
         conflicts = self.store.preview(over_capacity)['conflicts']
         self.assertEqual(len(conflicts), 3)
@@ -161,7 +173,7 @@ class ReservationTests(unittest.TestCase):
         with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
             results = list(executor.map(run, (1, 2)))
         self.assertEqual(sum(isinstance(result, dict) for result in results), 1)
-        self.assertIn('conflict_confirmation_required', results)
+        self.assertIn('reservation_conflict', results)
         self.assertEqual(len(self.store.list_records(history=True)), 1)
 
     def test_idempotency_retry_exact_response_even_after_later_edit(self):
@@ -207,7 +219,7 @@ class ReservationTests(unittest.TestCase):
         cancelled = self.store.action(record['id'], 'cancel', {}, 2, str(uuid.uuid4()))
         self.assertEqual(cancelled['status'], 'cancelled')
         self.assertEqual(cancelled['elapsed_gpu_hours'], 0)
-        self.assertEqual(self.store.preview(self.payload(start_at=record['start_at'], end_at=record['end_at'], gpu_count=4))['conflicts'], [])
+        self.assertError(lambda: self.store.preview(self.payload(start_at=record['start_at'], end_at=record['end_at'], gpu_count=4)), 'future_start_not_allowed')
         self.assertError(lambda: self.store.update(record['id'], {'notes': 'again'}, 3, str(uuid.uuid4())), 'record_closed', 409)
         events = self.store.history(record['id'])
         self.assertEqual([event['action'] for event in events], ['create', 'edit', 'cancel'])
@@ -225,6 +237,7 @@ class ReservationTests(unittest.TestCase):
         self.assertEqual(self.store.overview()['active_gpu_count'], 0)
         with self.store.usage.connect() as db:
             db.execute('UPDATE usage_accounts SET observed=?', (self.now,))
+            db.execute('UPDATE usage_last SET at=?', (self.now,))
         self.assertEqual(self.store.preview(self.payload(start_at=iso(self.now), end_at=iso(self.now + DAY), gpu_count=4))['conflicts'], [])
 
     def test_released_overlap_clears_current_badge_but_preserves_history(self):
@@ -293,9 +306,11 @@ class ReservationTests(unittest.TestCase):
         later = self.create(gpu_indices=[0, 1], start_at=iso(self.t0 + 3600), end_at=iso(self.t0 + 7200), wechat='li_gpu')
         self.now += 1800
         payload = {'end_at': iso(self.t0 + 7200)}
-        error = self.assertError(lambda: self.store.action(record['id'], 'extend', payload, 1, str(uuid.uuid4())), 'conflict_confirmation_required', 409)
+        error = self.assertError(lambda: self.store.action(record['id'], 'extend', payload, 1, str(uuid.uuid4())), 'reservation_conflict', 409)
         self.assertEqual(error.details['conflicts'][0]['id'], later['id'])
-        extended = self.store.action(record['id'], 'extend', dict(payload, conflict_ack=True), 1, str(uuid.uuid4()))
+        self.assertError(lambda: self.store.action(record['id'], 'extend', dict(payload, conflict_ack=True), 1, str(uuid.uuid4())), 'reservation_conflict', 409)
+        with mock.patch.object(ReservationStore, '_confirm'):
+            extended = self.store.action(record['id'], 'extend', dict(payload, conflict_ack=True), 1, str(uuid.uuid4()))
         self.assertEqual(len(extended['registration_periods']), 1)
         self.now += 3600
         own = next(person for person in self.store.statistics(7)['people'] if person['wechat'] == 'zhang_gpu')

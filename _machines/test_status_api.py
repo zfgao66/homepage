@@ -1,5 +1,6 @@
 """Real HTTP integration tests; all fixture state stays in temporary SQLite files."""
 import datetime
+import contextlib
 import http.client
 import http.cookies
 import json
@@ -113,12 +114,13 @@ class DirectStatusTests(unittest.TestCase):
     def create(self, browser, **changes):
         with self.server.registrations.usage.connect() as db:
             db.execute('UPDATE usage_accounts SET observed=?', (self.now,))
+            db.execute('UPDATE usage_last SET at=?', (self.now,))
         payload = self.payload(**changes)
-        # Seed historical long records to verify compatibility with the new limit.
-        if changes.get('end_at') and (datetime.datetime.fromisoformat(payload['end_at']) - datetime.datetime.fromisoformat(payload['start_at'])).total_seconds() > 7 * DAY:
-            with mock.patch('reservations._check_duration'):
-                status, _, data = browser.request('POST', '/api/registrations', payload, request_id=str(uuid.uuid4()))
-        else:
+        # Historical fixtures may start in the future; direct API policy tests do not patch this.
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch('reservations._start_now'))
+            if changes.get('end_at') and (datetime.datetime.fromisoformat(payload['end_at']) - datetime.datetime.fromisoformat(payload['start_at'])).total_seconds() > 7 * DAY:
+                stack.enter_context(mock.patch('reservations._check_duration'))
             status, _, data = browser.request('POST', '/api/registrations', payload, request_id=str(uuid.uuid4()))
         self.assertEqual(status, 201, data)
         return data['registration']
@@ -147,6 +149,33 @@ class DirectStatusTests(unittest.TestCase):
         self.assertEqual(listed[0]['usage']['account_status'], 'bound')
         self.assertIsNone(listed[0]['usage']['occupied_gpu_hours'])
         self.assertIsNone(browser.request('GET', '/api/statistics?days=7')[2]['people'][0]['usage']['occupied_gpu_hours'])
+
+    def test_future_start_is_rejected_and_past_start_becomes_now(self):
+        browser = self.browser()
+        payload = self.payload(start_at=status_api.timestamp(self.now + 3600))
+        for path in ('/api/registrations', '/api/registrations/preview'):
+            status, _, data = browser.request('POST', path, payload, request_id=str(uuid.uuid4()))
+            self.assertEqual((status,data['code']),(400,'future_start_not_allowed'))
+        payload['start_at']=status_api.timestamp(self.now-3600)
+        status, _, data=browser.request('POST','/api/registrations',payload,request_id=str(uuid.uuid4()))
+        self.assertEqual(status,201)
+        self.assertEqual(datetime.datetime.fromisoformat(data['registration']['start_at'].replace('Z','+00:00')).timestamp(),self.now)
+
+    def test_live_gpu_busy_and_unknown_cannot_be_registered(self):
+        browser=self.browser()
+        with self.server.registrations.usage.connect() as db:
+            db.execute('UPDATE usage_last SET owners=? WHERE machine=?', (json.dumps({'0':[2000]}), '10.20.6.38'))
+        payload=self.payload(gpu_count=1,gpu_indices=[0])
+        status,_,data=browser.request('POST','/api/registrations',payload,request_id=str(uuid.uuid4()))
+        self.assertEqual((status,data['code']),(409,'gpu_busy'))
+        payload['gpu_indices']=[]
+        status,_,data=browser.request('POST','/api/registrations',payload,request_id=str(uuid.uuid4()))
+        self.assertEqual(status,201)
+        self.assertEqual(data['registration']['gpu_indices'],[1])
+        with self.server.registrations.usage.connect() as db:
+            db.execute('UPDATE usage_last SET complete=0 WHERE machine=?', ('10.20.6.38',))
+        status,_,data=browser.request('POST','/api/registrations',self.payload(gpu_count=1,gpu_indices=[2]),request_id=str(uuid.uuid4()))
+        self.assertEqual((status,data['code']),(409,'usage_unavailable'))
 
     def test_latest_only_and_stale_age_grows_without_new_collection(self):
         self.store.publish(self.snapshot)
@@ -252,19 +281,18 @@ class DirectStatusTests(unittest.TestCase):
         browser = self.browser()
         first = self.create(browser, end_at=status_api.timestamp(self.started + 30 * DAY))
         payload = self.payload(name='李同学', wechat='li_fixture', gpu_count=1, gpu_indices=[1],
-                               start_at=status_api.timestamp(self.started + 10 * DAY), end_at=status_api.timestamp(self.started + 11 * DAY))
+                               start_at=status_api.timestamp(self.started), end_at=status_api.timestamp(self.started + DAY))
         preview = browser.request('POST', '/api/registrations/preview', payload)
         self.assertEqual(preview[0], 200)
         self.assertEqual(preview[2]['conflicts'][0]['wechat'], first['wechat'])
         key = str(uuid.uuid4())
         rejected = browser.request('POST', '/api/registrations', payload, request_id=key)
-        self.assertEqual((rejected[0], rejected[2]['code']), (409, 'conflict_confirmation_required'))
+        self.assertEqual((rejected[0], rejected[2]['code']), (409, 'reservation_conflict'))
         self.assertEqual(rejected[2]['details']['conflicts'][0]['id'], first['id'])
         payload['conflict_ack'] = True
         accepted = browser.request('POST', '/api/registrations', payload, request_id=key)
-        self.assertEqual(accepted[0], 201)
-        self.assertTrue(accepted[2]['registration']['has_conflict'])
-        self.assertEqual(len(browser.request('GET', '/api/registrations')[2]['registrations']), 2)
+        self.assertEqual(accepted[0], 409)
+        self.assertEqual(len(browser.request('GET', '/api/registrations')[2]['registrations']), 1)
 
     def test_mutations_require_origin_and_csrf_including_preview_and_logout(self):
         browser = self.browser()
@@ -308,11 +336,11 @@ class DirectStatusTests(unittest.TestCase):
         self.assertEqual(sorted(result[0] for result in results), [201, 409])
         rejected_index = next(index for index, result in enumerate(results) if result[0] == 409)
         rejected = results[rejected_index]
-        self.assertEqual(rejected[2]['code'], 'conflict_confirmation_required')
+        self.assertEqual(rejected[2]['code'], 'reservation_conflict')
         self.assertEqual(len(clients[0].request('GET', '/api/registrations')[2]['registrations']), 1)
         accepted = clients[rejected_index].request('POST', '/api/registrations', dict(payloads[rejected_index], conflict_ack=True), request_id=str(uuid.uuid4()))
-        self.assertEqual(accepted[0], 201)
-        self.assertEqual(len(clients[0].request('GET', '/api/registrations')[2]['registrations']), 2)
+        self.assertEqual(accepted[0], 409)
+        self.assertEqual(len(clients[0].request('GET', '/api/registrations')[2]['registrations']), 1)
 
     def test_invalid_and_oversized_request_bodies_fail_without_writes(self):
         browser = self.browser()

@@ -7,8 +7,9 @@
     if (!Number.isFinite(date.getTime()) || beijingValue(date) !== value) throw new Error('日期或时间无效，请重新选择。');
     return date.toISOString();
   };
+  const formISO = (value, original) => original && value === beijingValue(original) ? original : beijingISO(value);
   const isLongTerm = (start, end) => new Date(end) - new Date(start) > 7 * 86400000;
-  window.MachinesManagementUtils = Object.freeze({beijingValue, beijingISO, isLongTerm});
+  window.MachinesManagementUtils = Object.freeze({beijingValue, beijingISO, isLongTerm, formISO});
   const $ = id => document.getElementById(id);
   if (!$('machines-login-form')) return;
   const apiRoot = '/machines-api', statuses = {active: '登记使用中', scheduled: '即将开始', expired: '已到期', ended: '已提前结束', cancelled: '已取消'};
@@ -91,7 +92,8 @@
     }
   }
   function contact(record) {
-    const line = el('div', 'registration-contact'); line.append(el('span', '', `微信：${record.wechat}`));
+    const line = el('div', 'registration-contact'); line.append(el('span', '', `微信：${record.wechat || '待补充'}`));
+    if (!record.wechat) return line;
     const copy = button('复制微信', () => copyWechat(record.wechat, copy)); line.append(copy); return line;
   }
   function description(label, text, long = false) {
@@ -243,13 +245,12 @@
   function showConflicts(target, conflicts, ackInput) {
     target.replaceChildren(); target.hidden = !conflicts.length;
     if (!conflicts.length) return;
-    target.append(el('h3', '', '所选时间存在重叠登记，请先微信协调'));
+    target.append(el('h3', '', '所选 GPU 已有登记，暂不可重复申请'));
     conflicts.forEach(record => {
       const card = el('div', 'conflict-person'); card.append(el('p', '', `${record.name} · ${record.gpu_count} 张 GPU · ${formatDate(record.start_at)} 至 ${formatDate(record.end_at)}`), contact(record));
       if (record.reason) card.append(el('p', 'management-muted', ({gpu_overlap: '指定 GPU 编号与已有登记重叠。', capacity_exceeded: '同一时间申请的 GPU 总数超过服务器可用卡数。'}[record.reason] || '同一时段存在可能影响资源安排的登记。'))); target.append(card);
     });
-    const label = el('label', 'management-inline-check'); label.append(ackInput, el('span', '', '我已了解以上冲突，将通过微信协调，仍要提交这条登记。')); target.append(label);
-    target.append(el('p', 'management-muted', '继续提交会保留双方登记并标记冲突，不会覆盖他人的申请。'));
+    target.append(el('p', 'management-muted', '请等待已有登记释放，或修改 GPU 编号和时间。不能确认冲突后继续提交。'));
   }
   function openForm(machineId, record = null, mode = 'create') {
     if (mode === 'extend' && !record?.server_username) mode = 'edit';
@@ -268,10 +269,12 @@
     for (let index = 1; index <= machine.gpu_count; index++) { const option = el('option', '', String(index)); option.value = String(index); count.append(option); }
     count.value = String(record?.gpu_count || 1); countLabel.append(count); grid.append(countLabel);
     const start = field(grid, '计划开始时间 *（北京时间）', 'start_at', 'datetime-local', beijingValue(record?.start_at || new Date()), {required: true});
-    const durationLabel = el('label', 'management-field', mode === 'extend' ? '续期时长（从当前时间起；未来预约从开始时间起）' : '预计使用时长'), duration = el('select');
+    start.readOnly = true;
+    grid.append(el('p', 'management-muted', '不允许提前预约。新登记在提交时立即开始，开始时间由服务器确认。'));
+    const durationLabel = el('label', 'management-field', mode === 'extend' ? '续期时长（从当前时间起）' : '预计使用时长'), duration = el('select');
     [[8, '8 小时'], [24, '24 小时'], [48, '48 小时'], [72, '72 小时'], [168, '7 天'], ['custom', '自定义结束时间']].forEach(([value, text]) => { const option = el('option', '', text); option.value = String(value); duration.append(option); });
     duration.value = record ? 'custom' : '24'; durationLabel.append(duration); grid.append(durationLabel);
-    grid.append(el('p', 'management-muted', '每次登记最多 7 天。续期后的结束时间最多为当前时间（未来预约为开始时间）起 7 天。'));
+    grid.append(el('p', 'management-muted', '每次登记最多 7 天。续期后的结束时间最多为当前时间起 7 天。'));
     const end = field(grid, '预计结束时间 *（北京时间）', 'end_at', 'datetime-local', beijingValue(record?.end_at || Date.now() + 24 * 3600000), {required: true});
     const indices = el('fieldset', 'gpu-choice'); indices.append(el('legend', '', '指定 GPU 编号（选填；不选则仅登记数量）'));
     const indexInputs = []; for (let index = 0; index < machine.gpu_count; index++) { const label = el('label'), checkbox = el('input'); checkbox.type = 'checkbox'; checkbox.value = String(index); checkbox.checked = Boolean(record?.gpu_indices?.includes(index)); label.append(checkbox, el('span', '', `GPU ${index}`)); indices.append(label); indexInputs.push(checkbox); }
@@ -317,9 +320,9 @@
       try {
         const selected = indexInputs.filter(input => input.checked).map(input => Number(input.value)), gpuCount = Number(count.value);
         if (selected.length && selected.length !== gpuCount) throw new Error('指定 GPU 编号数量必须与申请数量一致。');
-        const startAt = beijingISO(start.value), endAt = beijingISO(end.value);
+        const startAt = formISO(start.value, record?.start_at), endAt = formISO(end.value, record?.end_at);
         if (Date.parse(endAt) <= Date.parse(startAt)) throw new Error('结束时间必须晚于开始时间。');
-        const unchangedTime = record && startAt === new Date(record.start_at).toISOString() && endAt === new Date(record.end_at).toISOString();
+        const unchangedTime = record && startAt === record.start_at && endAt === record.end_at;
         const durationAnchor = record ? Math.max(Date.parse(startAt), Date.now()) : Date.parse(startAt);
         if (!unchangedTime && Date.parse(endAt) - durationAnchor > 7 * 86400000) throw new Error('每次登记最多 7 天，请缩短使用时间。');
         payload = {machine_id: machineId, server_username: username.value.trim(), name: name.value.trim(), wechat: wechat.value.trim(), gpu_count: gpuCount, gpu_indices: selected, start_at: startAt, end_at: endAt, purpose: purpose.value.trim(), notes: notes.value.trim(), usage_pattern: pattern.value.trim()};
@@ -337,10 +340,10 @@
         if (previewSignature !== signature) {
           const preview = await api('/registrations/preview', {method: 'POST', body: {...payload, ...(record ? {exclude_id: record.id} : {})}});
           if (!isCurrentForm()) return;
-          previewSignature = signature; ack.checked = false; showConflicts(conflictBox, preview.conflicts || [], ack);
-          if (preview.conflicts?.length) { message(feedback, '发现重叠登记。请阅读联系人信息并明确确认后继续。', true); conflictBox.scrollIntoView({block: 'nearest'}); return; }
+          previewSignature = signature; ack.checked = false; showConflicts(conflictBox, preview.blocked === false ? [] : (preview.conflicts || []), ack);
+          if (preview.blocked === true || (preview.blocked === undefined && preview.conflicts?.length)) { message(feedback, '已有有效登记，不能重复申请。请修改 GPU 编号或时间。', true); conflictBox.scrollIntoView({block: 'nearest'}); return; }
         }
-        if (!conflictBox.hidden && !ack.checked) { message(feedback, '请先确认已了解重叠登记，并通过微信协调。', true); return; }
+        if (!conflictBox.hidden) { message(feedback, '已有有效登记，不能重复申请。', true); return; }
         const body = mode === 'extend' ? {end_at: payload.end_at, expected_version: record.version, conflict_ack: ack.checked} : {...payload, ...(record ? {expected_version: record.version} : {}), conflict_ack: ack.checked};
         const path = mode === 'create' ? '/registrations' : `/registrations/${encodeURIComponent(record.id)}${mode === 'extend' ? '/extend' : ''}`;
         const nextSignature = JSON.stringify({path, body}); if (mutationSignature !== nextSignature) { mutationSignature = nextSignature; mutationKey = uid(); }
@@ -353,7 +356,7 @@
       } catch (error) {
         if (!authenticated) return;
         if (!isCurrentForm()) { message($('registrations-message'), `先前表单的操作未完成：${error.message}`, true); return; }
-        if (error.status === 409 && error.details?.conflicts?.length) { previewSignature = signature; ack.checked = false; mutationSignature = ''; showConflicts(conflictBox, error.details.conflicts, ack); message(feedback, '刚刚有新的重叠登记，请重新查看并确认冲突。', true); }
+        if (error.status === 409 && error.details?.conflicts?.length) { previewSignature = signature; ack.checked = false; mutationSignature = ''; showConflicts(conflictBox, error.details.conflicts, ack); message(feedback, '刚刚有其他人完成登记，请重新选择可用 GPU。', true); }
         else if (error.status === 409) { message(feedback, `${error.message} 请关闭表单并刷新登记后重新编辑，避免覆盖他人的修改。`, true); await refreshAll(); }
         else message(feedback, error.message, true);
       } finally {
@@ -392,7 +395,7 @@
     try {
       const data = await api(`/registrations/${encodeURIComponent(record.id)}/history`); if (!authenticated || requestedDialog !== dialogGeneration) return;
       root.replaceChildren(el('p', 'management-muted', `${record.machine_id} · 所有时间均为北京时间`));
-      const labels = {account_verified: '采样确认服务器账号', create: '创建登记', edit: '编辑登记', extend: '延长时间', end: '提前结束', cancel: '取消预约'};
+      const labels = {account_verified: '采样确认服务器账号', admin_create: '管理员登记', create: '创建登记', edit: '编辑登记', extend: '延长时间', end: '提前结束', cancel: '取消预约'};
       const fields = {name: '申请人', wechat: '微信号', server_username: '服务器账号', gpu_count: 'GPU 数量', gpu_indices: 'GPU 编号', start_at: '开始时间', end_at: '结束时间', purpose: '研究用途', notes: '备注', usage_pattern: '使用方式'};
       (data.events || []).forEach(event => {
         const article = el('article', 'registration-card'); article.append(el('h3', '', labels[event.action] || event.action || '登记变更'), el('p', 'management-muted', formatDate(event.created_at || event.at || event.timestamp)));
