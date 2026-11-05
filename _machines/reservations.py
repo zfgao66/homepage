@@ -464,30 +464,18 @@ class ReservationStore:
                 'requires_confirmation': False, 'blocked': bool(conflicts) and changed, 'long_term': _long_term(candidate)}
 
     def _allocate_now(self, candidate, records, now, exclude_id=None):
-        with self._connect() as db:
-            sample = db.execute('SELECT at,complete,owners FROM usage_last WHERE machine=?', (candidate['machine_id'],)).fetchone()
-            if not sample or not sample[1] or not -30 <= now - sample[0] <= 120:
-                raise ReservationError('无法确认 GPU 当前是否空闲，请等待实时采样恢复后再登记。', 409, 'usage_unavailable')
-            try:
-                uid = self.usage.resolve(db, candidate['machine_id'], candidate.get('server_username', ''), now)
-            except ValueError as error:
-                raise ReservationError(str(error)) from None
-        owners = json.loads(sample[2])
-        busy = {int(g) for g, users in owners.items() if any(owner != uid for owner in users)}
+        # Registration availability is independent of running GPU processes.
         overlap = [r for r in records if r['id'] != exclude_id and r['machine_id'] == candidate['machine_id']
                    and not r.get('cancelled_at') and _seconds(r['start_at']) < _seconds(candidate['end_at']) and _effective_end(r) > now]
         reserved = {g for r in overlap for g in r['gpu_indices']}
         selected = candidate['gpu_indices']
-        if selected:
-            if busy.intersection(selected):
-                raise ReservationError('所选 GPU 当前有其他账号的任务，请选择空闲 GPU。', 409, 'gpu_busy')
-        else:
-            free = sorted(set(range(HOSTS[candidate['machine_id']])) - busy - reserved)
+        if not selected:
+            free = sorted(set(range(HOSTS[candidate['machine_id']])) - reserved)
             points = {now, *(max(now, _seconds(r['start_at'])) for r in overlap)}
             unspecified = max((sum(r['gpu_count'] for r in overlap if not r['gpu_indices'] and _seconds(r['start_at']) <= point < _effective_end(r)) for point in points), default=0)
             free = free[unspecified:]
             if len(free) < candidate['gpu_count']:
-                raise ReservationError('当前空闲且未登记的 GPU 数量不足，请减少张数或稍后再试。', 409, 'gpu_busy')
+                raise ReservationError('未登记的 GPU 数量不足，请减少张数或等待已有登记释放。', 409, 'reservation_conflict')
             candidate['gpu_indices'] = free[:candidate['gpu_count']]
 
     def create(self, payload, request_id):

@@ -161,21 +161,30 @@ class DirectStatusTests(unittest.TestCase):
         self.assertEqual(status,201)
         self.assertEqual(datetime.datetime.fromisoformat(data['registration']['start_at'].replace('Z','+00:00')).timestamp(),self.now)
 
-    def test_live_gpu_busy_and_unknown_cannot_be_registered(self):
+    def test_registration_ignores_live_gpu_usage_and_missing_sampling(self):
         browser=self.browser()
         with self.server.registrations.usage.connect() as db:
-            db.execute('UPDATE usage_last SET owners=? WHERE machine=?', (json.dumps({'0':[2000]}), '10.20.6.38'))
+            db.execute('UPDATE usage_last SET owners=? WHERE machine=?', (json.dumps({'0':[2000],'1':[2000],'2':[2000],'3':[2000]}), '10.20.6.38'))
+        status,_,data=browser.request('POST','/api/registrations/preview',self.payload(gpu_count=4,gpu_indices=[]))
+        self.assertEqual(status,200)
+        self.assertEqual(data['candidate']['gpu_indices'],[0,1,2,3])
+        self.assertFalse(data['blocked'])
         payload=self.payload(gpu_count=1,gpu_indices=[0])
         status,_,data=browser.request('POST','/api/registrations',payload,request_id=str(uuid.uuid4()))
-        self.assertEqual((status,data['code']),(409,'gpu_busy'))
+        self.assertEqual(status,201)  # Other accounts' running processes do not reserve a GPU.
         payload['gpu_indices']=[]
         status,_,data=browser.request('POST','/api/registrations',payload,request_id=str(uuid.uuid4()))
         self.assertEqual(status,201)
         self.assertEqual(data['registration']['gpu_indices'],[1])
         with self.server.registrations.usage.connect() as db:
             db.execute('UPDATE usage_last SET complete=0 WHERE machine=?', ('10.20.6.38',))
+        status,_,data=browser.request('POST','/api/registrations/preview',self.payload(gpu_count=1,gpu_indices=[2]))
+        self.assertEqual(status,200)
+        self.assertFalse(data['blocked'])
         status,_,data=browser.request('POST','/api/registrations',self.payload(gpu_count=1,gpu_indices=[2]),request_id=str(uuid.uuid4()))
-        self.assertEqual((status,data['code']),(409,'usage_unavailable'))
+        self.assertEqual(status,201)  # Missing telemetry is not a registration block.
+        status,_,data=browser.request('POST','/api/registrations',self.payload(gpu_count=1,gpu_indices=[0],conflict_ack=True),request_id=str(uuid.uuid4()))
+        self.assertEqual((status,data['code']),(409,'reservation_conflict'))
 
     def test_latest_only_and_stale_age_grows_without_new_collection(self):
         self.store.publish(self.snapshot)

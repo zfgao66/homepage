@@ -114,7 +114,7 @@
     const percent = value => value == null ? '待采集' : `${decimal(value)}%`;
     panel.append(el('p', '', `已登记 ${decimal(usage.elapsed_registered_gpu_hours)} GPU 小时 · 有数据覆盖 ${decimal(usage.observed_registered_gpu_hours)} GPU 小时`));
     panel.append(el('p', '', `实际占用 ${usage.occupied_gpu_hours == null ? '待采集' : decimal(usage.occupied_gpu_hours) + ' GPU 小时'} · 登记使用率 ${percent(usage.usage_percent)} · 数据覆盖率 ${percent(usage.coverage_percent)}`));
-    panel.append(el('p', 'management-muted', '使用率按有采样覆盖的时间计算；同账号同卡多进程去重。占用含等待/显存驻留，不代表计算效率。历史采样保留 35 天。'));
+    panel.append(el('p', 'management-muted', '覆盖率是登记期间采样完整的比例，缺失时间不计为空闲。使用率只按有数据的时间计算；同账号同卡多进程去重。占用含等待/显存驻留，不代表计算效率。历史采样保留 35 天。'));
     return panel;
   }
   function recordCard(record, history = false) {
@@ -159,7 +159,7 @@
       const heading = el('div', 'management-section-heading'); heading.append(el('h3', '', `${id} · GPU 使用登记`));
       const controls = el('div', 'management-actions'), count = el('span', 'registration-count', '正在读取登记');
       controls.append(count, button('申请使用 GPU', () => openForm(id), 'primary')); heading.append(controls);
-      const scope = el('p', 'management-muted registration-scope', '有效登记包含使用中和待开始的计划；登记与实际 GPU 占用分别显示。');
+      const scope = el('p', 'management-muted registration-scope', '只能从现在开始登记；是否可申请只看已有有效登记，实时 GPU 占用仅供参考。');
       const list = el('div', 'registrations-list'); section.append(heading, scope, list); card.append(section);
       registrationRows.set(id, {section, list, count});
       added = true;
@@ -174,7 +174,7 @@
       const people = new Set(current.map(record => record.wechat.normalize('NFKC').trim().toLowerCase())).size;
       const activeCount = current.filter(record => record.status === 'active').length, scheduledCount = current.length - activeCount;
       count.textContent = `有效登记 ${current.length} 条 · ${people} 人（使用中 ${activeCount} 条 / 待开始 ${scheduledCount} 条）`;
-      list.replaceChildren(...(current.length ? current.map(record => recordCard(record)) : [el('p', 'management-muted', '暂无有效登记。请结合实时监控确认资源后再申请。')]));
+      list.replaceChildren(...(current.length ? current.map(record => recordCard(record)) : [el('p', 'management-muted', '暂无有效登记，可直接申请使用 GPU。')]));
       list.querySelectorAll('.registration-card').forEach(card => { if (expanded.has(card.dataset.recordId)) card.querySelectorAll('details').forEach(details => { details.open = true; }); });
     });
     renderHistory();
@@ -357,7 +357,7 @@
         if (!authenticated) return;
         if (!isCurrentForm()) { message($('registrations-message'), `先前表单的操作未完成：${error.message}`, true); return; }
         if (error.status === 409 && error.details?.conflicts?.length) { previewSignature = signature; ack.checked = false; mutationSignature = ''; showConflicts(conflictBox, error.details.conflicts, ack); message(feedback, '刚刚有其他人完成登记，请重新选择可用 GPU。', true); }
-        else if (error.status === 409) { message(feedback, `${error.message} 请关闭表单并刷新登记后重新编辑，避免覆盖他人的修改。`, true); await refreshAll(); }
+        else if (error.status === 409 && error.code === 'version_conflict') { message(feedback, `${error.message} 请关闭表单并刷新登记后重新编辑，避免覆盖他人的修改。`, true); await refreshAll(); }
         else message(feedback, error.message, true);
       } finally {
         disabledStates.forEach(([input, disabled]) => { input.disabled = disabled; });
