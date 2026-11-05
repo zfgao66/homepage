@@ -3,6 +3,7 @@ import pathlib
 import tempfile
 import unittest
 import uuid
+from unittest import mock
 from usage_accounting import UsageStore
 from reservations import ReservationStore, ReservationError
 
@@ -70,7 +71,8 @@ class UsageTests(unittest.TestCase):
     def test_offline_account_pending_then_verified_without_backfill(self):
         t=self.start
         registrations=ReservationStore(self.path,clock=lambda:self.now)
-        record=registrations.create({'machine_id':'10.20.6.38','server_username':'wkli','name':'虚构','wechat':'fixture','gpu_count':1,'gpu_indices':[0],'start_at':iso(t),'end_at':iso(t+3600)},str(uuid.uuid4()))
+        with mock.patch.object(ReservationStore, '_allocate_now'):
+            record=registrations.create({'machine_id':'10.20.6.38','server_username':'wkli','name':'虚构','wechat':'fixture','gpu_count':1,'gpu_indices':[0],'start_at':iso(t),'end_at':iso(t+3600)},str(uuid.uuid4()))
         self.assertEqual(registrations.list_records()[0]['usage']['account_status'],'pending')
         self.sample(t+30,{'0':[1001]});self.sample(t+60,{'0':[1001]})
         result=registrations.list_records()[0]
