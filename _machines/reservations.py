@@ -17,6 +17,7 @@ import sqlite3
 import time
 import unicodedata
 import uuid
+from usage_accounting import UsageStore, USERNAME
 
 
 HOSTS = {'10.20.6.38': 4, '10.20.5.8': 4, '10.20.5.73': 4,
@@ -25,7 +26,7 @@ HOSTS = {'10.20.6.38': 4, '10.20.5.8': 4, '10.20.5.73': 4,
 TEXT_LIMITS = {'name': 80, 'wechat': 80, 'purpose': 500,
                'notes': 4000, 'usage_pattern': 300}
 EDITABLE = frozenset((*TEXT_LIMITS, 'machine_id', 'gpu_count', 'gpu_indices',
-                      'start_at', 'end_at'))
+                      'start_at', 'end_at', 'server_username'))
 DAY = 86400
 
 
@@ -148,6 +149,12 @@ def _normalize(payload, base=None):
                     or any(index < 0 or index >= HOSTS[result['machine_id']] for index in indices)):
         raise ReservationError('指定的 GPU 编号须有效、无重复，且数量与申请数量一致')
     result['gpu_indices'] = sorted(indices)
+    username = result.get('server_username', '')
+    if not isinstance(username, str) or (username and not USERNAME.fullmatch(username)):
+        raise ReservationError('请填写有效的服务器账号名，例如 wkli。')
+    if not username and (base is None or 'server_username' in payload):
+        raise ReservationError('服务器账号名必填，例如 wkli。')
+    result['server_username'] = username
     for field, limit in TEXT_LIMITS.items():
         value = result.get(field, '')
         if not isinstance(value, str):
@@ -272,6 +279,7 @@ class ReservationStore:
                     response TEXT NOT NULL, created_at TEXT NOT NULL);
             ''')
         os.chmod(self.path, 0o600)
+        self.usage = UsageStore(self.path, clock=clock)
 
     @contextlib.contextmanager
     def _connect(self):
@@ -334,6 +342,7 @@ class ReservationStore:
                 now = self.clock()
                 records = self._records(conn)
                 before, after = apply(records, now)
+                self._bind_usage(conn, before, after, now)
                 conn.execute('INSERT INTO reservations(id,data) VALUES (?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data',
                              (after['id'], _json(after)))
                 conn.execute('INSERT INTO reservation_events(reservation_id,action,at,before_data,after_data) VALUES (?,?,?,?,?)',
@@ -349,13 +358,61 @@ class ReservationStore:
                     conn.execute('ROLLBACK')
                 raise
 
+    def _bind_usage(self, conn, before, after, now):
+        username = after.get('server_username', '')
+        if not username:
+            return
+        fields = ('machine_id', 'server_username', 'gpu_count', 'gpu_indices', 'start_at', 'end_at')
+        if before and all(before.get(k) == after.get(k) for k in fields):
+            return
+        if (before and before.get('usage_segments') and before.get('server_username') == username
+                and before['machine_id'] == after['machine_id']):
+            uid = before['usage_segments'][-1]['uid']
+        else:
+            try:
+                uid = self.usage.resolve(conn, after['machine_id'], username, now)
+            except ValueError as error:
+                raise ReservationError(str(error)) from None
+        segments = json.loads(json.dumps((before or {}).get('usage_segments', [])))
+        if segments:
+            segments[-1]['until'] = now
+        segments.append({k: after[k] for k in fields} | {'uid': uid, 'since': now, 'until': None})
+        after['usage_segments'] = segments
+
+    def usage_allocations(self, record):
+        periods = [(a, min(b, _effective_end(record))) for a, b in _plan_periods(record)]
+        if record.get('cancelled_at'):
+            return []
+        segments = record.get('usage_segments', [])
+        result = []
+        # Unbound time remains in the denominator as missing data, never as idle.
+        first = segments[0]['since'] if segments else self.clock()
+        for start, end in periods:
+            if min(end, first) > start:
+                result.append((record['machine_id'], None, record['gpu_indices'], record['gpu_count'], start, min(end, first)))
+        for segment in segments:
+            start = max(segment['since'], _seconds(segment['start_at']))
+            end = min(segment['until'] or self.clock(), _seconds(segment['end_at']), _effective_end(record))
+            # Renewals can contain gaps; only their actual registered periods count.
+            for a, b in periods:
+                left, right = max(start, a), min(end, b)
+                if right > left:
+                    result.append((segment['machine_id'], segment['uid'], segment['gpu_indices'], segment['gpu_count'], left, right))
+        return result
+
+    def with_usage(self, record, lower=None, upper=None):
+        result = _decorate(record, self.clock())
+        result['usage'] = self.usage.measure(self.usage_allocations(record), lower or _seconds(record['start_at']), upper or self.clock())
+        result['usage']['account_status'] = ('bound' if record['usage_segments'][-1]['uid'] is not None else 'pending') if record.get('usage_segments') else 'missing'
+        return result
+
     def list_records(self, history=False, machine_id=None):
         if machine_id is not None and machine_id not in HOSTS:
             raise ReservationError('无效的服务器 IP')
         with self._connect() as conn:
             records = self._records(conn)
         now = self.clock()
-        result = [_decorate(record, now, records) for record in records
+        result = [dict(_decorate(record, now, records), usage=self.with_usage(record)['usage']) for record in records
                   if (machine_id is None or record['machine_id'] == machine_id)
                   and (history or _status(record, now) in ('active', 'scheduled'))]
         order = {'active': 0, 'scheduled': 1, 'expired': 2, 'ended': 3, 'cancelled': 4}
@@ -380,6 +437,12 @@ class ReservationStore:
         base = self._find(records, exclude_id) if exclude_id else None
         candidate = _normalize(payload, base)
         _check_duration(candidate, self.clock(), base)
+        if candidate.get('server_username') and (not base or not base.get('usage_segments') or candidate['server_username'] != base.get('server_username') or candidate['machine_id'] != base['machine_id']):
+            with self._connect() as conn:
+                try:
+                    self.usage.resolve(conn, candidate['machine_id'], candidate['server_username'], self.clock())
+                except ValueError as error:
+                    raise ReservationError(str(error)) from None
         if base:
             candidate['registration_periods'] = _change_periods(base, candidate, self.clock())
         conflicts = _conflicts(candidate, records, exclude_id)
@@ -514,7 +577,8 @@ class ReservationStore:
             long_seconds = self._integrate(long_records, lower, now)[1]
             active = [r for r in own if _status(r, now) == 'active']
             valid = [r for r in own if _status(r, now) in ('active', 'scheduled')]
-            result.append({'person_key': key, 'name': latest['name'], 'wechat': latest['wechat'],
+            measured = self.usage.measure([a for r in own for a in self.usage_allocations(r)], lower, now)
+            result.append({'usage': measured, 'person_key': key, 'name': latest['name'], 'wechat': latest['wechat'],
                            'booking_count': sum(lower <= _seconds(r['created_at']) <= now for r in own),
                            'gpu_hours': round(gpu_seconds / 3600, 4),
                            'active_reservations_count': len(active), 'valid_reservations_count': len(valid),

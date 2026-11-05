@@ -83,6 +83,9 @@ class DirectStatusTests(unittest.TestCase):
         with mock.patch.object(status_api, 'DASHBOARD_PATH', self.page):
             self.server = status_api.create_server(self.store, 0, management=self.management)
         self.server.registrations.clock = lambda: self.now
+        with self.server.registrations.usage.connect() as db:
+            db.executemany('INSERT OR REPLACE INTO usage_accounts VALUES (?,?,?,?)', [(host, 'wkli', 1001, self.now) for host in collector.HOSTS])
+            db.executemany('INSERT OR REPLACE INTO usage_last VALUES (?,?,?,?,?)', [(host, self.now, 'fixture', '{}', 1) for host in collector.HOSTS])
         self.server.sessions.clock = lambda: self.now
         self.thread = threading.Thread(target=lambda: self.server.serve_forever(poll_interval=.01), daemon=True)
         self.thread.start()
@@ -101,13 +104,15 @@ class DirectStatusTests(unittest.TestCase):
 
     def payload(self, **changes):
         data = {'machine_id': '10.20.6.38', 'name': '张同学', 'wechat': 'zhang_fixture',
-                'gpu_count': 2, 'gpu_indices': [0, 1], 'start_at': status_api.timestamp(self.started),
+                'server_username': 'wkli', 'gpu_count': 2, 'gpu_indices': [0, 1], 'start_at': status_api.timestamp(self.started),
                 'end_at': status_api.timestamp(self.started + DAY), 'purpose': '测试研究用途',
                 'notes': '夜间训练，使用前请先微信联系协调。', 'usage_pattern': '每天夜间使用'}
         data.update(changes)
         return data
 
     def create(self, browser, **changes):
+        with self.server.registrations.usage.connect() as db:
+            db.execute('UPDATE usage_accounts SET observed=?', (self.now,))
         payload = self.payload(**changes)
         # Seed historical long records to verify compatibility with the new limit.
         if changes.get('end_at') and (datetime.datetime.fromisoformat(payload['end_at']) - datetime.datetime.fromisoformat(payload['start_at'])).total_seconds() > 7 * DAY:
@@ -130,6 +135,18 @@ class DirectStatusTests(unittest.TestCase):
             self.assertEqual(result[0], 400)
         payload['end_at'] = status_api.timestamp(self.now + 7 * DAY)
         self.assertEqual(browser.request('POST', '/api/registrations', payload, request_id=str(uuid.uuid4()))[0], 201)
+
+    def test_account_is_required_and_verified_and_usage_is_returned(self):
+        browser = self.browser()
+        for username in ('', 'not-a-real-user'):
+            status, _, _ = browser.request('POST', '/api/registrations', self.payload(server_username=username), request_id=str(uuid.uuid4()))
+            self.assertEqual(status, 400)
+        created = self.create(browser)
+        listed = browser.request('GET', '/api/registrations')[2]['registrations']
+        self.assertEqual(listed[0]['server_username'], 'wkli')
+        self.assertEqual(listed[0]['usage']['account_status'], 'bound')
+        self.assertIsNone(listed[0]['usage']['occupied_gpu_hours'])
+        self.assertIsNone(browser.request('GET', '/api/statistics?days=7')[2]['people'][0]['usage']['occupied_gpu_hours'])
 
     def test_latest_only_and_stale_age_grows_without_new_collection(self):
         self.store.publish(self.snapshot)

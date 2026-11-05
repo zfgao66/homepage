@@ -52,7 +52,7 @@ class Element {
     return node('registration-dialog-content').querySelector('form');
   };
   const input = (form, name) => form.querySelectorAll('input, select, textarea').find(item => item.name === name);
-  const fill = (form, name) => {input(form, 'name').value = name; input(form, 'wechat').value = `${name}_wechat`;};
+  const fill = (form, name) => {input(form, 'name').value = name; input(form, 'wechat').value = `${name}_wechat`; input(form, 'server_username').value = 'wkli';};
   const submit = form => form.listeners.submit({preventDefault() {}});
   const reply = (request, data) => request.resolve({ok: true, status: 200, json: async () => data});
 

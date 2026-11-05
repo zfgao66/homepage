@@ -7,6 +7,8 @@ import io
 import json
 import os
 import pathlib
+import pwd
+from process_sampling import sample_gpu_processes
 import random
 import re
 import shutil
@@ -143,6 +145,19 @@ def snapshot(machine_id):
         result['gpu_error'] = 'not_installed'
         return result
     result['gpus'], result['gpu_error'] = collect_gpus(binary)
+    sample = sample_gpu_processes(binary)
+    if set(sample.get('gpu_indices', [])) != set(range(8 if machine_id == '10.20.1.21' else 4)):
+        sample['complete'] = False
+    owners = {}
+    for process in sample.pop('processes'):
+        owners.setdefault(str(process['gpu_index']), set()).add(process['uid'])
+    sample['owners'] = {gpu: sorted(uids) for gpu, uids in owners.items()}
+    try:
+        sample['accounts'] = [{'username': p.pw_name, 'uid': p.pw_uid} for p in pwd.getpwall()][:4096]
+        sample['boot_id'] = pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+    except OSError:
+        sample['complete'] = False
+    result['gpu_usage'] = sample
     return result
 
 

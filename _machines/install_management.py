@@ -20,7 +20,7 @@ CONFIG = pathlib.Path('/etc/machines-collector/config.json')
 NGINX = pathlib.Path('/etc/nginx/conf.d/machines-status-https.conf')
 DATABASE = pathlib.Path('/var/lib/machines-collector/registrations.sqlite3')
 FILES = {'collector.py', 'status_api.py', 'management_auth.py', 'reservations.py',
-         'dashboard.html', 'install_management.py', 'setup_status_https.py'}
+         'dashboard.html', 'install_management.py', 'setup_status_https.py', 'usage_accounting.py'}
 
 
 def nginx_config():

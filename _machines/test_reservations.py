@@ -24,16 +24,20 @@ class ReservationTests(unittest.TestCase):
         self.t0 = dt.datetime(2026, 10, 31, 0, tzinfo=dt.timezone.utc).timestamp()
         self.now = self.t0
         self.store = ReservationStore(self.path, clock=lambda: self.now)
+        with self.store.usage.connect() as db:
+            db.executemany('INSERT OR REPLACE INTO usage_accounts VALUES (?,?,?,?)', [(host, 'wkli', 1001, self.now) for host in HOSTS])
 
     def payload(self, **changes):
         result = {'machine_id': '10.20.5.73', 'name': '张同学', 'wechat': 'zhang_gpu',
-                  'gpu_count': 2, 'gpu_indices': [], 'start_at': iso(self.t0),
+                  'server_username': 'wkli', 'gpu_count': 2, 'gpu_indices': [], 'start_at': iso(self.t0),
                   'end_at': iso(self.t0 + DAY), 'purpose': '模型训练',
                   'notes': '间歇计算，使用前请微信协调。', 'usage_pattern': '每天夜间使用'}
         result.update(changes)
         return result
 
     def create(self, **changes):
+        with self.store.usage.connect() as db:
+            db.execute('UPDATE usage_accounts SET observed=?', (self.now,))
         payload = self.payload(**changes)
         # Long plans in these historical-statistics fixtures predate the 7-day policy.
         try:
@@ -219,6 +223,8 @@ class ReservationTests(unittest.TestCase):
         self.now += 3 * DAY
         self.assertEqual(self.store.statistics(7)['people'][0]['gpu_hours'], 8)
         self.assertEqual(self.store.overview()['active_gpu_count'], 0)
+        with self.store.usage.connect() as db:
+            db.execute('UPDATE usage_accounts SET observed=?', (self.now,))
         self.assertEqual(self.store.preview(self.payload(start_at=iso(self.now), end_at=iso(self.now + DAY), gpu_count=4))['conflicts'], [])
 
     def test_released_overlap_clears_current_badge_but_preserves_history(self):

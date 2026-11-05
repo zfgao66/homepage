@@ -244,3 +244,8 @@
   .machine-card .machine-registrations .management-section-heading>.management-actions { align-items:flex-start;flex-direction:column;gap:10px; }
   .machine-card .machine-registrations .management-section-heading>.management-actions>.primary { width:100%;min-height:44px; }
 }
+
+.registration-usage { margin:12px 0;padding:12px 14px;background:#f0f5f8;border:1px solid #d6e2e9;border-radius:6px;font-size:12px;line-height:1.75;overflow-wrap:anywhere; }
+.registration-usage p { margin:5px 0; }
+.person-usage { margin-top:16px;padding-top:12px;border-top:1px solid #dce2e7; }
+.person-usage h3 { margin:0;font-size:15px; }

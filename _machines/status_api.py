@@ -26,11 +26,17 @@ class LatestSnapshots:
         self.clock = clock
         self.records = {}
         self.lock = threading.Lock()
+        self.usage_store = None
 
     def publish(self, snapshot):
         machine_id = snapshot['machine_id']
         if machine_id not in self.hosts:
             raise ValueError('Unexpected machine')
+        if self.usage_store is not None:
+            try:
+                self.usage_store.ingest(snapshot)
+            except Exception as error:
+                print(json.dumps({'event': 'usage_ingest_error', 'type': type(error).__name__}), flush=True)
         with self.lock:
             self.records[machine_id] = (self.clock(), snapshot)
 
@@ -61,6 +67,7 @@ def create_server(store, port, management=None):
     database = pathlib.Path(management['database'])
     database.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     registrations = ReservationStore(database)
+    store.usage_store = registrations.usage
     sessions = SessionStore(database, management['password_hash'])
     origin = management.get('origin', 'https://43.155.209.84')
     dashboard = DASHBOARD_PATH.read_text() if DASHBOARD_PATH.exists() else None

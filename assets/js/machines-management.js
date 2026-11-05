@@ -101,6 +101,20 @@
     }
     return el('p', 'registration-description', `${label}：${text}`);
   }
+  function usagePanel(usage) {
+    const panel = el('div', 'registration-usage');
+    panel.append(el('strong', '', '实际使用统计（采样估算）'));
+    if (!usage || usage.account_status === 'missing') {
+      panel.append(el('p', '', '请编辑登记，补充服务器账号后开始统计；历史缺失时间不计为空闲。'));
+      return panel;
+    }
+    if (usage.account_status === 'pending') panel.append(el('p', '', '账号待核验：服务器暂不可达或清单未更新，恢复后自动核验并开始统计。'));
+    const percent = value => value == null ? '待采集' : `${decimal(value)}%`;
+    panel.append(el('p', '', `已登记 ${decimal(usage.elapsed_registered_gpu_hours)} GPU 小时 · 有数据覆盖 ${decimal(usage.observed_registered_gpu_hours)} GPU 小时`));
+    panel.append(el('p', '', `实际占用 ${usage.occupied_gpu_hours == null ? '待采集' : decimal(usage.occupied_gpu_hours) + ' GPU 小时'} · 登记使用率 ${percent(usage.usage_percent)} · 数据覆盖率 ${percent(usage.coverage_percent)}`));
+    panel.append(el('p', 'management-muted', '使用率按有采样覆盖的时间计算；同账号同卡多进程去重。占用含等待/显存驻留，不代表计算效率。历史采样保留 35 天。'));
+    return panel;
+  }
   function recordCard(record, history = false) {
     const card = el('article', 'registration-card'); card.dataset.recordId = record.id;
     const heading = el('div', 'registration-card-heading'); heading.append(el('h4', '', record.name));
@@ -110,6 +124,8 @@
     heading.append(badges); card.append(heading);
     if (history) card.append(el('p', 'management-muted', record.machine_id));
     card.append(contact(record));
+    card.append(el('p', 'management-muted', `服务器账号：${record.server_username || '待补充（请编辑登记）'}`));
+    card.append(usagePanel(record.usage));
     const gpuText = record.gpu_indices?.length ? record.gpu_indices.map(index => `GPU ${index}`).join('、') : '未指定编号';
     card.append(el('p', '', `申请 GPU：${gpuText}，共 ${record.gpu_count} 张`), el('p', '', `预计使用：${formatDate(record.start_at)} — ${formatDate(record.end_at)}`));
     if (record.ended_at) card.append(el('p', 'management-muted', `实际结束登记：${formatDate(record.ended_at)}`));
@@ -181,6 +197,12 @@
       values.forEach((value, index) => { const td = el('td', '', String(value ?? '—')); td.dataset.label = tr.children[index].textContent; row.append(td); }); body.append(row);
     }); table.append(body);
     $('statistics-results').replaceChildren(el('p', 'management-muted', `${formatDate(data.from)} 至 ${formatDate(data.to)} · 合计 ${decimal(data.total_gpu_hours)} GPU 登记卡时`), people.length ? table : el('p', '', '本时间段暂无登记。'));
+    people.forEach(person => {
+      const item = el('article', 'person-usage'); item.append(el('h3', '', `${person.name} · ${person.wechat}`), usagePanel({...person.usage, account_status: 'bound'}));
+      const own = records.filter(r => r.wechat.normalize('NFKC').trim().toLowerCase() === person.wechat.normalize('NFKC').trim().toLowerCase());
+      item.append(el('p', 'management-muted', `关联服务器账号：${[...new Set(own.map(r => `${r.machine_id} / ${r.server_username || '待补账号'}`))].join('；') || '无'}。同一服务器账号由多人共用时，只能统计账号整体占用。`));
+      $('statistics-results').append(item);
+    });
   }
   function applySaved(data) {
     if (!data?.registration || !authenticated) return;
@@ -230,6 +252,7 @@
     target.append(el('p', 'management-muted', '继续提交会保留双方登记并标记冲突，不会覆盖他人的申请。'));
   }
   function openForm(machineId, record = null, mode = 'create') {
+    if (mode === 'extend' && !record?.server_username) mode = 'edit';
     const machine = inventory.find(item => item.id === machineId);
     if (!machine) { message($('registrations-message'), '服务器清单不可用，请重新载入页面。', true); return; }
     const root = openDialog(mode === 'extend' ? '延长登记时间' : mode === 'edit' ? '编辑公共登记' : '申请使用 GPU');
@@ -240,6 +263,7 @@
     const grid = el('div', 'registration-form-grid'); form.append(grid);
     const name = field(grid, '申请人姓名 *', 'name', 'text', record?.name, {required: true, maxLength: 80, autoComplete: 'name'});
     const wechat = field(grid, '微信号 *', 'wechat', 'text', record?.wechat, {required: true, maxLength: 80});
+    const username = field(grid, '该服务器账号名 *（SSH 登录账号，例如 wkli）', 'server_username', 'text', record?.server_username, {required: true, maxLength: 64});
     const countLabel = el('label', 'management-field', 'GPU 申请数量 *'), count = el('select'); count.name = 'gpu_count'; count.required = true;
     for (let index = 1; index <= machine.gpu_count; index++) { const option = el('option', '', String(index)); option.value = String(index); count.append(option); }
     count.value = String(record?.gpu_count || 1); countLabel.append(count); grid.append(countLabel);
@@ -269,7 +293,7 @@
     const footer = el('div', 'management-actions dialog-footer'), submit = el('button', 'management-button primary', mode === 'create' ? '提交登记' : mode === 'extend' ? '确认续期' : '保存修改'); submit.type = 'submit';
     footer.append(submit, button('返回', () => $('registration-dialog').close())); form.append(footer);
     let previewSignature = '', mutationKey = '', mutationSignature = '', submitting = false;
-    if (mode === 'extend') { [name, wechat, count, start, pattern, purpose, notes, ...indexInputs].forEach(input => { input.disabled = true; }); }
+    if (mode === 'extend') { [name, wechat, username, count, start, pattern, purpose, notes, ...indexInputs].forEach(input => { input.disabled = true; }); }
     const showLong = () => { try { longNotice.hidden = !isLongTerm(beijingISO(start.value), beijingISO(end.value)); } catch { longNotice.hidden = true; } };
     const adjustEnd = () => {
       if (duration.value !== 'custom' && start.value) {
@@ -298,7 +322,8 @@
         const unchangedTime = record && startAt === new Date(record.start_at).toISOString() && endAt === new Date(record.end_at).toISOString();
         const durationAnchor = record ? Math.max(Date.parse(startAt), Date.now()) : Date.parse(startAt);
         if (!unchangedTime && Date.parse(endAt) - durationAnchor > 7 * 86400000) throw new Error('每次登记最多 7 天，请缩短使用时间。');
-        payload = {machine_id: machineId, name: name.value.trim(), wechat: wechat.value.trim(), gpu_count: gpuCount, gpu_indices: selected, start_at: startAt, end_at: endAt, purpose: purpose.value.trim(), notes: notes.value.trim(), usage_pattern: pattern.value.trim()};
+        payload = {machine_id: machineId, server_username: username.value.trim(), name: name.value.trim(), wechat: wechat.value.trim(), gpu_count: gpuCount, gpu_indices: selected, start_at: startAt, end_at: endAt, purpose: purpose.value.trim(), notes: notes.value.trim(), usage_pattern: pattern.value.trim()};
+        if (!payload.server_username) throw new Error('请填写服务器账号名，例如 wkli。');
         if (!payload.name || !payload.wechat) throw new Error('请填写姓名和微信号。');
         if (mode === 'extend' && Date.parse(endAt) <= Math.max(Date.parse(record.end_at), Date.now())) throw new Error('续期结束时间必须晚于原结束时间和当前时间。');
         if (confirmChange && !confirmChange.checked) throw new Error('请先勾选确认，说明您已核对这条公共登记的修改内容。');
@@ -367,8 +392,8 @@
     try {
       const data = await api(`/registrations/${encodeURIComponent(record.id)}/history`); if (!authenticated || requestedDialog !== dialogGeneration) return;
       root.replaceChildren(el('p', 'management-muted', `${record.machine_id} · 所有时间均为北京时间`));
-      const labels = {create: '创建登记', edit: '编辑登记', extend: '延长时间', end: '提前结束', cancel: '取消预约'};
-      const fields = {name: '申请人', wechat: '微信号', gpu_count: 'GPU 数量', gpu_indices: 'GPU 编号', start_at: '开始时间', end_at: '结束时间', purpose: '研究用途', notes: '备注', usage_pattern: '使用方式'};
+      const labels = {account_verified: '采样确认服务器账号', create: '创建登记', edit: '编辑登记', extend: '延长时间', end: '提前结束', cancel: '取消预约'};
+      const fields = {name: '申请人', wechat: '微信号', server_username: '服务器账号', gpu_count: 'GPU 数量', gpu_indices: 'GPU 编号', start_at: '开始时间', end_at: '结束时间', purpose: '研究用途', notes: '备注', usage_pattern: '使用方式'};
       (data.events || []).forEach(event => {
         const article = el('article', 'registration-card'); article.append(el('h3', '', labels[event.action] || event.action || '登记变更'), el('p', 'management-muted', formatDate(event.created_at || event.at || event.timestamp)));
         const changes = event.after || event.snapshot || event.data || {}; const before = event.before || {};
