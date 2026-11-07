@@ -152,8 +152,9 @@
 #registration-dialog-content { padding:20px 22px; }
 #registration-dialog-content>.registration-card { margin-top:12px; }
 .registration-form { display:grid;gap:15px; }
-.registration-form-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px; }
+.registration-form-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;align-items:start; }
 .management-field { display:grid;gap:7px;font-size:13px;min-width:0; }
+.management-field .management-muted { margin:0; }
 .management-field textarea { resize:vertical;min-height:100px; }
 .gpu-choice { display:flex;flex-wrap:wrap;gap:9px 18px;margin:0;padding:12px;border:1px solid #d9e0e7;border-radius:6px;min-width:0; }
 .gpu-choice legend { font-size:13px;padding:0 5px; }

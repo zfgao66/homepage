@@ -56,6 +56,11 @@ class Element {
   const submit = form => form.listeners.submit({preventDefault() {}});
   const reply = (request, data) => request.resolve({ok: true, status: 200, json: async () => data});
 
+  const invalidForm = open(); fill(invalidForm, 'Format');
+  input(invalidForm,'server_username').value = 'wkli,zfgao';
+  await submit(invalidForm); assert.equal(pending.length,0,'Invalid account separators must not reach the API');
+  node('registration-dialog-close').listeners.click();
+
   // Closing a pending preview must not submit its old snapshot or disturb the replacement form.
   const first = open(); fill(first, 'First'); const firstSubmission = submit(first);
   assert.equal(input(first, 'name').disabled, true);
@@ -71,9 +76,12 @@ class Element {
   assert.equal(input(first, 'name').disabled, false, 'Only the original controls are restored');
 
   // A save already sent may finish, but must not close a newly opened dialog.
+  input(replacement,'server_username').value = ' zfgao  wkli ';
   const secondSubmission = submit(replacement); const secondPreview = pending.shift(); reply(secondPreview, {conflicts: []}); await flush();
+  assert.equal(JSON.parse(secondPreview.options.body).server_username,'zfgao wkli');
   const save = pending.shift(); assert.match(save.url, /\/registrations$/);
   const payload = JSON.parse(save.options.body);
+  assert.equal(payload.server_username,'zfgao wkli');
   node('registration-dialog-close').listeners.click(); const newest = open(); fill(newest, 'Unsaved newest');
   const saved = {...payload, id: 'saved-record', version: 1, status: 'active', long_term: false, continuous_days: 1, planned_gpu_hours: 24, conflicts: []}; stored = [saved];
   reply(save, {registration: saved}); await secondSubmission; await flush();

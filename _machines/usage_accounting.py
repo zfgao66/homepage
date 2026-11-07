@@ -9,6 +9,28 @@ import time
 
 RETENTION_DAYS = 35
 USERNAME = re.compile(r'[A-Za-z_][A-Za-z0-9_.@-]{0,63}\Z')
+MAX_USERNAMES = 10
+
+
+def parse_usernames(value):
+    """One or more SSH names, separated only by ordinary spaces."""
+    if not isinstance(value, str) or len(value) > MAX_USERNAMES * 65 - 1:
+        raise ValueError('最多填写 10 个服务器账号，每个账号不超过 64 个字符。')
+    names = re.split(r' +', value.strip(' '))
+    if not names[0] or any(not USERNAME.fullmatch(name) for name in names):
+        raise ValueError('请只填写 SSH 账号名，多个账号用英文空格分隔，例如 zfgao wkli；不要填写逗号、中文、密码或换行。')
+    if len(names) > MAX_USERNAMES:
+        raise ValueError('最多填写 10 个服务器账号。')
+    if len(set(names)) != len(names):
+        raise ValueError('服务器账号不能重复填写。')
+    return names
+
+
+def segment_uids(segment):
+    """Read the multi-account binding and the original single-UID history."""
+    if 'uids' in segment:
+        return segment['uids']
+    return [segment['uid']] if segment.get('uid') is not None else None
 
 
 def seconds(value):
@@ -82,15 +104,20 @@ class UsageStore:
             for record_id, raw in records:
                 record = json.loads(raw)
                 segments = record.get('usage_segments', [])
-                if (record.get('machine_id') != machine or not segments or segments[-1]['uid'] is not None
+                if (record.get('machine_id') != machine or not segments or segment_uids(segments[-1]) is not None
                     or record.get('ended_at') or record.get('cancelled_at') or seconds(record['end_at']) <= at):
                     continue
-                username = record.get('server_username')
-                if username not in catalog:
+                try:
+                    usernames = parse_usernames(record.get('server_username'))
+                except ValueError:
+                    continue
+                if any(username not in catalog for username in usernames):
                     continue
                 before = json.dumps(record, ensure_ascii=False, sort_keys=True, separators=(',', ':'))
                 segments[-1]['until'] = at
-                segments.append(dict(segments[-1], since=at, until=None, uid=catalog[username]))
+                bound = dict(segments[-1], since=at, until=None, uids=sorted({catalog[name] for name in usernames}))
+                bound.pop('uid', None)
+                segments.append(bound)
                 record['version'] += 1
                 stamp = dt.datetime.fromtimestamp(at, dt.timezone.utc).isoformat()
                 record['updated_at'] = stamp
@@ -115,13 +142,18 @@ class UsageStore:
         if not row or not -30 <= now - row[1] <= 600:
             if not health or now - health[0] > 600:
                 return None
-            raise ValueError('该服务器账号不存在或账号清单超过 10 分钟未更新，请检查账号名，或等待采样恢复后重试。')
+            raise ValueError(f'服务器账号“{username}”不存在或账号清单超过 10 分钟未更新，请检查账号名，或等待采样恢复后重试。')
         return row[0]
+
+    def resolve_many(self, db, machine, usernames, now):
+        uids = [self.resolve(db, machine, name, now) for name in parse_usernames(usernames)]
+        # Do not present a partial account group as fully observed.
+        return None if any(uid is None for uid in uids) else sorted(set(uids))
 
     def measure(self, allocations, lower, upper):
         """Union per account/machine; capacity uses explicit union or max count.
 
-        allocations: (machine, uid, gpu_indices, count, start, end).
+        allocations: (machine, uids or legacy uid, gpu_indices, count, start, end).
         Each sample interval uses the preceding observed owner set, with <=90s gaps.
         """
         if upper <= lower:
@@ -131,6 +163,7 @@ class UsageStore:
             hosts = sorted({a[0] for a in allocations})
             for host in hosts:
                 own = [a for a in allocations if a[0] == host and a[4] < upper and a[5] > lower]
+                own = [(a[0], None if a[1] is None else frozenset([a[1]] if isinstance(a[1], int) else a[1]), *a[2:]) for a in own]
                 if not own:
                     continue
                 cuts = sorted({lower, upper} | {max(lower, a[4]) for a in own} | {min(upper, a[5]) for a in own})
@@ -151,7 +184,7 @@ class UsageStore:
                             continue
                         covered += duration * capacity
                         occupied = {int(g) for g, uids in owners.items()
-                                    if any(r[1] in uids and (not r[2] or int(g) in r[2]) for r in live)}
+                                    if any(r[1].intersection(uids) and (not r[2] or int(g) in r[2]) for r in live)}
                         used += duration * min(capacity, len(occupied))
         return self.result(planned, covered, used)
 
@@ -163,4 +196,4 @@ class UsageStore:
                 'usage_percent': round(used / covered * 100, 2) if covered > 0 else None,
                 'coverage_percent': round(covered / planned * 100, 2) if planned > 0 else None,
                 'retention_days': RETENTION_DAYS,
-                'method': '采样占用卡时 ÷ 有数据覆盖的登记卡时；同账号同卡多进程去重。缺失数据不计为空闲，非计算效率。'}
+                'method': '采样占用卡时 ÷ 有数据覆盖的登记卡时；登记的多个账号合并，同卡同时占用去重。缺失数据不计为空闲，非计算效率。'}

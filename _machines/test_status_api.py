@@ -150,6 +150,25 @@ class DirectStatusTests(unittest.TestCase):
         self.assertIsNone(listed[0]['usage']['occupied_gpu_hours'])
         self.assertIsNone(browser.request('GET', '/api/statistics?days=7')[2]['people'][0]['usage']['occupied_gpu_hours'])
 
+    def test_multi_account_http_format_and_verification(self):
+        browser=self.browser()
+        with self.server.registrations.usage.connect() as db:
+            db.execute('INSERT INTO usage_accounts VALUES (?,?,?,?)',('10.20.6.38','zfgao',1002,self.now))
+        for username in ('wkli,zfgao','wkli，zfgao','wkli\tzfgao','wkli\nzfgao','wkli wkli','wkli missing'):
+            for path in ('/api/registrations/preview','/api/registrations'):
+                status,_,data=browser.request('POST',path,self.payload(server_username=username),request_id=str(uuid.uuid4()))
+                self.assertEqual(status,400,(username,path,data))
+                if 'missing' in username:
+                    self.assertIn('missing',data['error'])
+        self.assertEqual(browser.request('GET','/api/registrations')[2]['registrations'],[])
+        status,_,preview=browser.request('POST','/api/registrations/preview',self.payload(server_username=' zfgao  wkli '))
+        self.assertEqual(status,200)
+        self.assertEqual(preview['candidate']['server_username'],'zfgao wkli')
+        status,_,created=browser.request('POST','/api/registrations',self.payload(server_username=' zfgao  wkli '),request_id=str(uuid.uuid4()))
+        self.assertEqual(status,201)
+        self.assertEqual(created['registration']['usage_segments'][-1]['uids'],[1001,1002])
+        self.assertEqual(browser.request('GET','/api/registrations')[2]['registrations'][0]['usage']['account_status'],'bound')
+
     def test_future_start_is_rejected_and_past_start_becomes_now(self):
         browser = self.browser()
         payload = self.payload(start_at=status_api.timestamp(self.now + 3600))

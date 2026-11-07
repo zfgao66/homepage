@@ -17,7 +17,7 @@ import sqlite3
 import time
 import unicodedata
 import uuid
-from usage_accounting import UsageStore, USERNAME
+from usage_accounting import UsageStore, parse_usernames, segment_uids
 
 
 HOSTS = {'10.20.6.38': 4, '10.20.5.8': 4, '10.20.5.73': 4,
@@ -150,10 +150,13 @@ def _normalize(payload, base=None):
         raise ReservationError('指定的 GPU 编号须有效、无重复，且数量与申请数量一致')
     result['gpu_indices'] = sorted(indices)
     username = result.get('server_username', '')
-    if not isinstance(username, str) or (username and not USERNAME.fullmatch(username)):
-        raise ReservationError('请填写有效的服务器账号名，例如 wkli。')
     if not username and (base is None or 'server_username' in payload):
-        raise ReservationError('服务器账号名必填，例如 wkli。')
+        raise ReservationError('服务器账号名必填；多个账号用英文空格分隔，例如 zfgao wkli。')
+    if username:
+        try:
+            username = ' '.join(parse_usernames(username))
+        except ValueError as error:
+            raise ReservationError(str(error)) from None
     result['server_username'] = username
     for field, limit in TEXT_LIMITS.items():
         value = result.get(field, '')
@@ -377,16 +380,16 @@ class ReservationStore:
             return
         if (before and before.get('usage_segments') and before.get('server_username') == username
                 and before['machine_id'] == after['machine_id']):
-            uid = before['usage_segments'][-1]['uid']
+            uids = segment_uids(before['usage_segments'][-1])
         else:
             try:
-                uid = self.usage.resolve(conn, after['machine_id'], username, now)
+                uids = self.usage.resolve_many(conn, after['machine_id'], username, now)
             except ValueError as error:
                 raise ReservationError(str(error)) from None
         segments = json.loads(json.dumps((before or {}).get('usage_segments', [])))
         if segments:
             segments[-1]['until'] = now
-        segments.append({k: after[k] for k in fields} | {'uid': uid, 'since': now, 'until': None})
+        segments.append({k: after[k] for k in fields} | {'uids': uids, 'since': now, 'until': None})
         after['usage_segments'] = segments
 
     def usage_allocations(self, record):
@@ -407,13 +410,13 @@ class ReservationStore:
             for a, b in periods:
                 left, right = max(start, a), min(end, b)
                 if right > left:
-                    result.append((segment['machine_id'], segment['uid'], segment['gpu_indices'], segment['gpu_count'], left, right))
+                    result.append((segment['machine_id'], segment_uids(segment), segment['gpu_indices'], segment['gpu_count'], left, right))
         return result
 
     def with_usage(self, record, lower=None, upper=None):
         result = _decorate(record, self.clock())
         result['usage'] = self.usage.measure(self.usage_allocations(record), lower or _seconds(record['start_at']), upper or self.clock())
-        result['usage']['account_status'] = ('bound' if record['usage_segments'][-1]['uid'] is not None else 'pending') if record.get('usage_segments') else 'missing'
+        result['usage']['account_status'] = ('bound' if segment_uids(record['usage_segments'][-1]) is not None else 'pending') if record.get('usage_segments') else 'missing'
         return result
 
     def list_records(self, history=False, machine_id=None):
@@ -451,7 +454,7 @@ class ReservationStore:
         if candidate.get('server_username') and (not base or not base.get('usage_segments') or candidate['server_username'] != base.get('server_username') or candidate['machine_id'] != base['machine_id']):
             with self._connect() as conn:
                 try:
-                    self.usage.resolve(conn, candidate['machine_id'], candidate['server_username'], self.clock())
+                    self.usage.resolve_many(conn, candidate['machine_id'], candidate['server_username'], self.clock())
                 except ValueError as error:
                     raise ReservationError(str(error)) from None
         if base:

@@ -9,7 +9,15 @@
   };
   const formISO = (value, original) => original && value === beijingValue(original) ? original : beijingISO(value);
   const isLongTerm = (start, end) => new Date(end) - new Date(start) > 7 * 86400000;
-  window.MachinesManagementUtils = Object.freeze({beijingValue, beijingISO, isLongTerm, formISO});
+  const normalizeUsernames = value => {
+    if (typeof value !== 'string' || value.length > 649) throw new Error('最多填写 10 个服务器账号，每个账号不超过 64 个字符。');
+    const names = value.replace(/^ +| +$/g, '').split(/ +/);
+    if (names.some(name => !/^[A-Za-z_][A-Za-z0-9_.@-]{0,63}(?![\s\S])/.test(name))) throw new Error('请只填写 SSH 账号名，多个账号用英文空格分隔，例如 zfgao wkli；不要填写逗号、中文、密码或换行。');
+    if (names.length > 10) throw new Error('最多填写 10 个服务器账号。');
+    if (new Set(names).size !== names.length) throw new Error('服务器账号不能重复填写。');
+    return names.join(' ');
+  };
+  window.MachinesManagementUtils = Object.freeze({beijingValue, beijingISO, isLongTerm, formISO, normalizeUsernames});
   const $ = id => document.getElementById(id);
   if (!$('machines-login-form')) return;
   const apiRoot = '/machines-api', statuses = {active: '登记使用中', scheduled: '即将开始', expired: '已到期', ended: '已提前结束', cancelled: '已取消'};
@@ -110,11 +118,11 @@
       panel.append(el('p', '', '请编辑登记，补充服务器账号后开始统计；历史缺失时间不计为空闲。'));
       return panel;
     }
-    if (usage.account_status === 'pending') panel.append(el('p', '', '账号待核验：服务器暂不可达或清单未更新，恢复后自动核验并开始统计。'));
+    if (usage.account_status === 'pending') panel.append(el('p', '', '账号待核验：服务器暂不可达或清单未更新，全部账号核验后自动开始合并统计。'));
     const percent = value => value == null ? '待采集' : `${decimal(value)}%`;
     panel.append(el('p', '', `已登记 ${decimal(usage.elapsed_registered_gpu_hours)} GPU 小时 · 有数据覆盖 ${decimal(usage.observed_registered_gpu_hours)} GPU 小时`));
     panel.append(el('p', '', `实际占用 ${usage.occupied_gpu_hours == null ? '待采集' : decimal(usage.occupied_gpu_hours) + ' GPU 小时'} · 登记使用率 ${percent(usage.usage_percent)} · 数据覆盖率 ${percent(usage.coverage_percent)}`));
-    panel.append(el('p', 'management-muted', '覆盖率是登记期间采样完整的比例，缺失时间不计为空闲。使用率只按有数据的时间计算；同账号同卡多进程去重。占用含等待/显存驻留，不代表计算效率。历史采样保留 35 天。'));
+    panel.append(el('p', 'management-muted', '覆盖率是登记期间采样完整的比例，缺失时间不计为空闲。使用率只按有数据的时间计算；多个账号合并，同卡同时占用只计一次。占用含等待/显存驻留，不代表计算效率。历史采样保留 35 天。'));
     return panel;
   }
   function recordCard(record, history = false) {
@@ -264,7 +272,11 @@
     const grid = el('div', 'registration-form-grid'); form.append(grid);
     const name = field(grid, '申请人姓名 *', 'name', 'text', record?.name, {required: true, maxLength: 80, autoComplete: 'name'});
     const wechat = field(grid, '微信号 *', 'wechat', 'text', record?.wechat, {required: true, maxLength: 80});
-    const username = field(grid, '该服务器账号名 *（SSH 登录账号，例如 wkli）', 'server_username', 'text', record?.server_username, {required: true, maxLength: 64});
+    const username = field(grid, '该服务器账号 *（多个账号用英文空格分隔）', 'server_username', 'text', record?.server_username, {required: true, maxLength: 649, placeholder: '例如：zfgao wkli', autoCapitalize: 'none', spellcheck: false});
+    username.pattern = ' *[A-Za-z_][A-Za-z0-9_.@\\-]{0,63}(?: +[A-Za-z_][A-Za-z0-9_.@\\-]{0,63}){0,9} *';
+    username.title = '只填写 SSH 账号名，多个账号用英文空格分隔，例如 zfgao wkli。';
+    const usernameHint = el('p', 'management-muted', '可填 1–10 个 SSH 账号，每个不超过 64 个字符，只用英文空格分隔。请勿填密码、逗号或中文。所有账号合并统计，同卡同时使用不重复计时。');
+    usernameHint.id = 'server-username-hint'; username.setAttribute('aria-describedby', usernameHint.id); username.after(usernameHint);
     const countLabel = el('label', 'management-field', 'GPU 申请数量 *'), count = el('select'); count.name = 'gpu_count'; count.required = true;
     for (let index = 1; index <= machine.gpu_count; index++) { const option = el('option', '', String(index)); option.value = String(index); count.append(option); }
     count.value = String(record?.gpu_count || 1); countLabel.append(count); grid.append(countLabel);
@@ -325,8 +337,7 @@
         const unchangedTime = record && startAt === record.start_at && endAt === record.end_at;
         const durationAnchor = record ? Math.max(Date.parse(startAt), Date.now()) : Date.parse(startAt);
         if (!unchangedTime && Date.parse(endAt) - durationAnchor > 7 * 86400000) throw new Error('每次登记最多 7 天，请缩短使用时间。');
-        payload = {machine_id: machineId, server_username: username.value.trim(), name: name.value.trim(), wechat: wechat.value.trim(), gpu_count: gpuCount, gpu_indices: selected, start_at: startAt, end_at: endAt, purpose: purpose.value.trim(), notes: notes.value.trim(), usage_pattern: pattern.value.trim()};
-        if (!payload.server_username) throw new Error('请填写服务器账号名，例如 wkli。');
+        payload = {machine_id: machineId, server_username: normalizeUsernames(username.value), name: name.value.trim(), wechat: wechat.value.trim(), gpu_count: gpuCount, gpu_indices: selected, start_at: startAt, end_at: endAt, purpose: purpose.value.trim(), notes: notes.value.trim(), usage_pattern: pattern.value.trim()};
         if (!payload.name || !payload.wechat) throw new Error('请填写姓名和微信号。');
         if (mode === 'extend' && Date.parse(endAt) <= Math.max(Date.parse(record.end_at), Date.now())) throw new Error('续期结束时间必须晚于原结束时间和当前时间。');
         if (confirmChange && !confirmChange.checked) throw new Error('请先勾选确认，说明您已核对这条公共登记的修改内容。');
