@@ -1,6 +1,7 @@
 """Bounded, persistent sampled GPU occupancy. Never measures compute efficiency."""
 import datetime as dt
 import contextlib
+import functools
 import json
 import math
 import re
@@ -35,6 +36,11 @@ def segment_uids(segment):
 
 def seconds(value):
     return dt.datetime.fromisoformat(value.replace('Z', '+00:00')).timestamp()
+
+
+@functools.lru_cache(maxsize=256)
+def decode_owners(encoded):
+    return tuple((int(gpu), frozenset(uids)) for gpu, uids in json.loads(encoded).items())
 
 
 class UsageStore:
@@ -167,8 +173,6 @@ class UsageStore:
                 if not own:
                     continue
                 cuts = sorted({lower, upper} | {max(lower, a[4]) for a in own} | {min(upper, a[5]) for a in own})
-                intervals = db.execute('SELECT start,end,owners FROM usage_intervals WHERE machine=? AND end>? AND start<? ORDER BY start', (host, lower, upper)).fetchall()
-                intervals = [(a, b, json.loads(o)) for a, b, o in intervals]
                 for start, end in zip(cuts, cuts[1:]):
                     live = [a for a in own if a[4] < end and a[5] > start]
                     if not live or end <= start:
@@ -178,14 +182,22 @@ class UsageStore:
                     planned += (end - start) * capacity
                     if any(a[1] is None for a in live):
                         continue
-                    for a, b, owners in intervals:
+                    # Read just the intervals intersecting this allocation slice, using the end-time index.
+                    intervals = db.execute(
+                        'SELECT start,end,owners FROM usage_intervals WHERE machine=? AND end>? AND start<? ORDER BY end',
+                        (host, start, end),
+                    )
+                    for a, b, encoded in intervals:
                         duration = min(b, end) - max(a, start)
                         if duration <= 0:
                             continue
                         covered += duration * capacity
-                        occupied = {int(g) for g, uids in owners.items()
-                                    if any(r[1].intersection(uids) and (not r[2] or int(g) in r[2]) for r in live)}
-                        used += duration * min(capacity, len(occupied))
+                        occupied = sum(
+                            any((not indices or gpu in indices) and not uids.isdisjoint(owners)
+                                for _, uids, indices, _, _, _ in live)
+                            for gpu, owners in decode_owners(encoded)
+                        )
+                        used += duration * min(capacity, occupied)
         return self.result(planned, covered, used)
 
     @staticmethod

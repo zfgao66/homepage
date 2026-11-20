@@ -42,11 +42,19 @@ class Element {
     fetch: (url, options) => {
       calls.push({url, options});
       if (options.method !== 'GET') return new Promise(resolve => pending.push({url, options, resolve}));
-      const data = url.includes('/registrations?') ? {registrations: stored} : url.includes('/overview') ? {active_gpu_count: 0, long_term_count: 0, expiring_count: 0} : {days: 7, people: [], total_gpu_hours: 0};
+      const data = url.includes('/registrations') ? {registrations: stored} : url.includes('/overview') ? {active_gpu_count: 0, long_term_count: 0, expiring_count: 0} : {days: 7, people: [], total_gpu_hours: 0};
       return Promise.resolve({ok: true, status: 200, json: async () => data});
     }
   };
   vm.runInNewContext(source, context); await flush();
+  assert.ok(calls.some(request => request.url.endsWith('/registrations')));
+  assert.ok(!calls.some(request => request.url.includes('history=1')));
+  node('history-show').checked = true;
+  node('history-show').listeners.change();
+  await flush();
+  assert.ok(calls.some(request => request.url.includes('history=1')));
+  node('history-show').checked = false;
+  node('history-show').listeners.change();
   const open = () => {
     const apply = node('machines-list').querySelectorAll('button').find(button => button.textContent === '申请使用 GPU'); apply.listeners.click();
     return node('registration-dialog-content').querySelector('form');

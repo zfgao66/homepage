@@ -25,6 +25,7 @@
   const formatDate = value => value && Number.isFinite(Date.parse(value)) ? dateFormatter.format(new Date(value)) : '—';
   const decimal = value => Number.isFinite(Number(value)) ? Number(value).toLocaleString('zh-CN', {maximumFractionDigits: 1}) : '—';
   let authenticated = false, csrf = '', records = [], overview = null, inventory = [], loading = false, sessionGeneration = 0, dialogGeneration = 0, registrationRevision = 0, refreshPending = false;
+  let historyRecords = null, historyRequest = 0, statisticsRequest = 0;
   const requests = new Set(), registrationRows = new Map();
   try { inventory = JSON.parse($('machines-inventory')?.textContent || '[]'); } catch { /* The login remains usable when inventory is malformed. */ }
   const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; };
@@ -37,10 +38,11 @@
   function lock(text = '') {
     authenticated = false; csrf = ''; sessionGeneration++; loading = false; refreshPending = false;
     requests.forEach(controller => controller.abort()); requests.clear();
-    window.MachinesMonitor?.stop(); records = []; overview = null; registrationRows.clear();
+    window.MachinesMonitor?.stop(); records = []; overview = null; historyRecords = null; registrationRows.clear();
     $('machines-app').hidden = true; $('machines-login').hidden = false;
     if ($('registration-dialog').open) $('registration-dialog').close();
     $('registration-dialog-content').replaceChildren(); $('history-results').replaceChildren(); $('statistics-results').replaceChildren();
+    message($('statistics-message'), ''); message($('history-message'), '');
     ['registration-active-cards', 'registration-long-term', 'registration-expiring'].forEach(id => { $(id).textContent = '—'; });
     if ($('machines-initial-session')) $('machines-initial-session').textContent = '{"authenticated":false}';
     message($('machines-login-message'), text, Boolean(text));
@@ -54,13 +56,21 @@
       if (method !== 'GET') { headers['Content-Type'] = 'application/json'; if (!login) headers['X-CSRF-Token'] = csrf; }
       if (key) headers['Idempotency-Key'] = key;
       const response = await fetch(`${apiRoot}${path}`, {method, credentials: 'same-origin', cache: 'no-store', headers, body: body === undefined ? undefined : JSON.stringify(body), signal: controller.signal});
-      let data; try { data = await response.json(); } catch { throw new Error('服务器返回了无法读取的内容，请稍后刷新。'); }
+      if ([502, 503, 504].includes(response.status)) {
+        throw new Error(key ? '暂未收到保存结果。请保留当前表单并原样重试，以免重复登记。' : '服务器暂时未能响应，请稍后重试。');
+      }
+      let data; try { data = await response.json(); } catch (error) {
+        if (controller.signal.aborted) throw error;
+        throw new Error('服务器返回了无法读取的内容，请稍后刷新。');
+      }
       if (capturedGeneration !== sessionGeneration) throw new Error('访问会话已变更，请重试。');
       if (response.status === 401 && !login) { lock('访问会话已结束，请重新输入课题组密码。'); throw new Error('请重新登录。'); }
       if (!response.ok) { const error = new Error(data.error || '操作未完成，请重试。'); Object.assign(error, {status: response.status, code: data.code, details: data.details || {}}); throw error; }
       return data;
     } catch (error) {
-      if (error.name === 'AbortError') throw new Error('连接超时或已取消。提交结果可能尚未返回，请保持表单并重试，避免重新创建相同登记。');
+      if (controller.signal.aborted || error.name === 'AbortError' || error instanceof TypeError) {
+        throw new Error(key ? '暂未收到保存结果。请保留当前表单并原样重试，以免重复登记。' : '连接超时或中断，请稍后重试。');
+      }
       throw error;
     } finally { clearTimeout(timeout); requests.delete(controller); }
   }
@@ -190,15 +200,43 @@
   function renderHistory() {
     const visible = $('history-show').checked; $('history-controls').hidden = !visible; $('history-results').hidden = !visible;
     if (!visible || !authenticated) return;
+    if (historyRecords === null) {
+      $('history-results').replaceChildren(el('p', 'management-muted', '正在读取历史登记…'));
+      return;
+    }
     const machine = $('history-machine').value, query = $('history-search').value.trim().toLowerCase();
-    const selected = sortRecords(records.filter(record => (!machine || record.machine_id === machine) && (!query || `${record.name} ${record.wechat}`.toLowerCase().includes(query))));
+    const selected = sortRecords(historyRecords.filter(record => (!machine || record.machine_id === machine) && (!query || `${record.name} ${record.wechat}`.toLowerCase().includes(query))));
     $('history-results').replaceChildren(el('p', 'management-muted', `共 ${selected.length} 条记录`), ...selected.map(record => recordCard(record, true)));
+  }
+  async function refreshHistory() {
+    if (!authenticated || !$('history-show').checked) return;
+    const generation = sessionGeneration, revision = registrationRevision, request = ++historyRequest;
+    const isCurrent = () => authenticated && generation === sessionGeneration && revision === registrationRevision
+      && request === historyRequest && $('history-show').checked;
+    try {
+      const data = await api('/registrations?history=1');
+      if (!isCurrent()) return;
+      message($('history-message'), '');
+      historyRecords = data.registrations || [];
+      renderHistory();
+    } catch (error) {
+      if (!isCurrent()) return;
+      if (historyRecords === null) $('history-results').replaceChildren();
+      message($('history-message'), `历史登记读取失败。 ${error.message}`, true);
+    }
   }
   async function refreshStatistics() {
     if (!authenticated) return;
-    const generation = sessionGeneration, days = $('statistics-days').value;
-    const data = await api(`/statistics?days=${encodeURIComponent(days)}`);
-    if (!authenticated || generation !== sessionGeneration || days !== $('statistics-days').value) return;
+    const generation = sessionGeneration, days = $('statistics-days').value, request = ++statisticsRequest;
+    const isCurrent = () => authenticated && generation === sessionGeneration && request === statisticsRequest;
+    let data;
+    try { data = await api(`/statistics?days=${encodeURIComponent(days)}`); }
+    catch (error) {
+      if (isCurrent()) message($('statistics-message'), `使用统计读取失败。 ${error.message}`, true);
+      return;
+    }
+    if (!isCurrent()) return;
+    message($('statistics-message'), '');
     $('statistics-method').textContent = data.method_text || '统计窗口内已经发生的登记时长，不代表实际计算用量。同一微信号在同一服务器的重叠申请，按指定 GPU 并集与最大同时申请张数中的较大值去重；不同服务器分别累加。申请次数按本时段创建的登记统计，含后来取消的申请。';
     const people = data.people || [], table = el('table', 'registration-statistics-table');
     const head = el('thead'), tr = el('tr'); ['申请人', '申请次数', '登记 GPU 卡时', '当前有效申请', '长期登记时长'].forEach(title => { const th = el('th', '', title); th.scope = 'col'; tr.append(th); }); head.append(tr); table.append(head);
@@ -209,8 +247,8 @@
     $('statistics-results').replaceChildren(el('p', 'management-muted', `${formatDate(data.from)} 至 ${formatDate(data.to)} · 合计 ${decimal(data.total_gpu_hours)} GPU 登记卡时`), people.length ? table : el('p', '', '本时间段暂无登记。'));
     people.forEach(person => {
       const item = el('article', 'person-usage'); item.append(el('h3', '', `${person.name} · ${person.wechat}`), usagePanel({...person.usage, account_status: 'bound'}));
-      const own = records.filter(r => r.wechat.normalize('NFKC').trim().toLowerCase() === person.wechat.normalize('NFKC').trim().toLowerCase());
-      item.append(el('p', 'management-muted', `关联服务器账号：${[...new Set(own.map(r => `${r.machine_id} / ${r.server_username || '待补账号'}`))].join('；') || '无'}。同一服务器账号由多人共用时，只能统计账号整体占用。`));
+      const accounts = (person.server_accounts || []).map(([machine, name]) => `${machine} / ${name || '待补账号'}`);
+      item.append(el('p', 'management-muted', `关联服务器账号：${accounts.join('；') || '无'}。同一服务器账号由多人共用时，只能统计账号整体占用。`));
       $('statistics-results').append(item);
     });
   }
@@ -218,6 +256,9 @@
     if (!data?.registration || !authenticated) return;
     registrationRevision++;
     records = [...records.filter(record => record.id !== data.registration.id), data.registration];
+    if (historyRecords !== null) {
+      historyRecords = [...historyRecords.filter(record => record.id !== data.registration.id), data.registration];
+    }
     renderRegistrations();
   }
   async function refreshAll(force = false) {
@@ -225,7 +266,7 @@
     if (loading) { if (force === true) refreshPending = true; return; }
     loading = true; const generation = sessionGeneration, revision = registrationRevision; $('refresh-registrations').disabled = true;
     try {
-      const [list, summary] = await Promise.all([api('/registrations?history=1'), api('/overview')]);
+      const [list, summary] = await Promise.all([api('/registrations'), api('/overview')]);
       if (!authenticated || generation !== sessionGeneration) return;
       if (revision !== registrationRevision) { refreshPending = true; return; }
       records = list.registrations || []; overview = summary;
@@ -233,8 +274,9 @@
       $('registration-long-term').textContent = String(summary.long_term_count ?? '—');
       $('registration-expiring').textContent = String(summary.expiring_count ?? '—');
       ensureRegistrationRows(); renderRegistrations(); message($('registrations-message'), '登记无需审批，提交后立即公示。所有成员都可维护公共登记；操作不会终止计算任务。');
-      await refreshStatistics();
-    } catch (error) { if (authenticated) message($('registrations-message'), `登记更新失败：${error.message}`, true); }
+      void refreshStatistics();
+      void refreshHistory();
+    } catch (error) { if (authenticated && generation === sessionGeneration) message($('registrations-message'), `登记列表读取失败。 ${error.message}`, true); }
     finally { if (generation === sessionGeneration) { loading = false; $('refresh-registrations').disabled = false; if (refreshPending && authenticated) { refreshPending = false; refreshAll(); } } }
   }
   function openDialog(title) {
@@ -418,8 +460,14 @@
     } catch (error) { if (authenticated && requestedDialog === dialogGeneration) root.replaceChildren(el('p', 'management-message', error.message)); }
   }
   inventory.forEach(machine => { const option = el('option', '', machine.id); option.value = machine.id; $('history-machine').append(option); });
-  $('history-show').addEventListener('change', renderHistory); $('history-machine').addEventListener('change', renderHistory); $('history-search').addEventListener('input', renderHistory);
-  $('statistics-days').addEventListener('change', () => refreshStatistics().catch(error => { if (authenticated) message($('registrations-message'), error.message, true); }));
+  $('history-show').addEventListener('change', () => {
+    $('history-message').hidden = !$('history-show').checked;
+    message($('history-message'), '');
+    renderHistory();
+    void refreshHistory();
+  });
+  $('history-machine').addEventListener('change', renderHistory); $('history-search').addEventListener('input', renderHistory);
+  $('statistics-days').addEventListener('change', refreshStatistics);
   $('refresh-registrations').addEventListener('click', refreshAll);
   setInterval(() => { if (authenticated && !document.hidden && !$('registration-dialog').open) refreshAll(); }, 30000);
   let initial = null; try { initial = JSON.parse($('machines-initial-session')?.textContent || 'null'); } catch { /* Verify the server session if the embedded state is missing. */ }

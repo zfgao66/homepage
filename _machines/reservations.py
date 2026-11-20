@@ -308,6 +308,11 @@ class ReservationStore:
     def _records(conn):
         return [json.loads(row[0]) for row in conn.execute('SELECT data FROM reservations')]
 
+    def revision(self):
+        # Edits and automatic account binding both append events in the same transaction.
+        with self._connect() as conn:
+            return conn.execute('SELECT COALESCE(MAX(sequence), 0) FROM reservation_events').fetchone()[0]
+
     @staticmethod
     def _find(records, reservation_id):
         for record in records:
@@ -392,20 +397,20 @@ class ReservationStore:
         segments.append({k: after[k] for k in fields} | {'uids': uids, 'since': now, 'until': None})
         after['usage_segments'] = segments
 
-    def usage_allocations(self, record):
+    def usage_allocations(self, record, now):
         periods = [(a, min(b, _effective_end(record))) for a, b in _plan_periods(record)]
         if record.get('cancelled_at'):
             return []
         segments = record.get('usage_segments', [])
         result = []
         # Unbound time remains in the denominator as missing data, never as idle.
-        first = segments[0]['since'] if segments else self.clock()
+        first = segments[0]['since'] if segments else now
         for start, end in periods:
             if min(end, first) > start:
                 result.append((record['machine_id'], None, record['gpu_indices'], record['gpu_count'], start, min(end, first)))
         for segment in segments:
             start = max(segment['since'], _seconds(segment['start_at']))
-            end = min(segment['until'] or self.clock(), _seconds(segment['end_at']), _effective_end(record))
+            end = min(segment['until'] or now, _seconds(segment['end_at']), _effective_end(record))
             # Renewals can contain gaps; only their actual registered periods count.
             for a, b in periods:
                 left, right = max(start, a), min(end, b)
@@ -413,11 +418,11 @@ class ReservationStore:
                     result.append((segment['machine_id'], segment_uids(segment), segment['gpu_indices'], segment['gpu_count'], left, right))
         return result
 
-    def with_usage(self, record, lower=None, upper=None):
-        result = _decorate(record, self.clock())
-        result['usage'] = self.usage.measure(self.usage_allocations(record), lower or _seconds(record['start_at']), upper or self.clock())
-        result['usage']['account_status'] = ('bound' if segment_uids(record['usage_segments'][-1]) is not None else 'pending') if record.get('usage_segments') else 'missing'
-        return result
+    def record_usage(self, record, now):
+        usage = self.usage.measure(self.usage_allocations(record, now), _seconds(record['start_at']), now)
+        segments = record.get('usage_segments', [])
+        usage['account_status'] = ('bound' if segment_uids(segments[-1]) is not None else 'pending') if segments else 'missing'
+        return usage
 
     def list_records(self, history=False, machine_id=None):
         if machine_id is not None and machine_id not in HOSTS:
@@ -425,7 +430,7 @@ class ReservationStore:
         with self._connect() as conn:
             records = self._records(conn)
         now = self.clock()
-        result = [dict(_decorate(record, now, records), usage=self.with_usage(record)['usage']) for record in records
+        result = [dict(_decorate(record, now, records), usage=self.record_usage(record, now)) for record in records
                   if (machine_id is None or record['machine_id'] == machine_id)
                   and (history or _status(record, now) in ('active', 'scheduled'))]
         order = {'active': 0, 'scheduled': 1, 'expired': 2, 'ended': 3, 'cancelled': 4}
@@ -555,8 +560,11 @@ class ReservationStore:
         return self._write(action, reservation_id, payload, expected_version, request_id, apply)
 
     def overview(self):
-        records = self.list_records()
         now = self.clock()
+        with self._connect() as conn:
+            raw_records = self._records(conn)
+        records = [dict(r, status=status, long_term=_long_term(r)) for r in raw_records
+                   if (status := _status(r, now)) in ('active', 'scheduled')]
         active = [r for r in records if r['status'] == 'active']
         return {'total_gpus': sum(HOSTS.values()), 'active_gpu_count': sum(r['gpu_count'] for r in active),
                 'active_reservations_count': len(active), 'valid_reservations_count': len(records),
@@ -615,7 +623,7 @@ class ReservationStore:
             long_seconds = self._integrate(long_records, lower, now)[1]
             active = [r for r in own if _status(r, now) == 'active']
             valid = [r for r in own if _status(r, now) in ('active', 'scheduled')]
-            measured = self.usage.measure([a for r in own for a in self.usage_allocations(r)], lower, now)
+            measured = self.usage.measure([a for r in own for a in self.usage_allocations(r, now)], lower, now)
             result.append({'usage': measured, 'person_key': key, 'name': latest['name'], 'wechat': latest['wechat'],
                            'booking_count': sum(lower <= _seconds(r['created_at']) <= now for r in own),
                            'gpu_hours': round(gpu_seconds / 3600, 4),
@@ -623,6 +631,7 @@ class ReservationStore:
                            'active_gpu_count': sum(r['gpu_count'] for r in active),
                            'long_term_hours': round(long_seconds / 3600, 4),
                            'long_term_gpu_hours': round(long_gpu_seconds / 3600, 4),
+                           'server_accounts': sorted({(r['machine_id'], r.get('server_username', '')) for r in own}),
                            'current_records': [_decorate(r, now) for r in valid]})
         result.sort(key=lambda row: (-row['gpu_hours'], row['person_key']))
         return {'days': days, 'from': _iso(lower), 'to': _iso(now), 'people': result,

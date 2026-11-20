@@ -15,6 +15,8 @@ import urllib.parse
 
 DASHBOARD_PATH = pathlib.Path(__file__).with_name('dashboard.html')
 DASHBOARD_MARKER = '__MACHINES_LATEST_SNAPSHOT__'
+REPORT_TTL = 30
+MAX_CACHED_REPORT_BYTES = 512 * 1024
 
 def timestamp(seconds):
     return datetime.datetime.fromtimestamp(seconds, datetime.timezone.utc).isoformat()
@@ -71,6 +73,33 @@ def create_server(store, port, management=None):
     sessions = SessionStore(database, management['password_hash'])
     origin = management.get('origin', 'https://43.155.209.84')
     dashboard = DASHBOARD_PATH.read_text() if DASHBOARD_PATH.exists() else None
+    report_lock = threading.Lock()
+    report_cache = {}
+
+    def cached_payload(key, revision, now):
+        cached = report_cache.get(key)
+        if cached and cached[0] == revision and 0 <= now - cached[1] < REPORT_TTL:
+            return cached[2]
+        return None
+
+    def report(key, load):
+        # A cached list remains readable while a different report is being built.
+        payload = cached_payload(key, registrations.revision(), registrations.clock())
+        if payload is not None:
+            return payload
+        # Serialize cold report builds so concurrent readers share work under the CPU quota.
+        with report_lock:
+            now = registrations.clock()
+            revision = registrations.revision()
+            payload = cached_payload(key, revision, now)
+            if payload is not None:
+                return payload
+            payload = json.dumps(load(), ensure_ascii=False, allow_nan=False).encode()
+            if len(payload) <= MAX_CACHED_REPORT_BYTES:
+                report_cache[key] = (revision, now, payload)
+            else:
+                report_cache.pop(key, None)
+            return payload
 
     class Handler(http.server.BaseHTTPRequestHandler):
         server_version = 'MachinesManagement'
@@ -97,6 +126,9 @@ def create_server(store, port, management=None):
 
         def reply(self, status, body, extra=None):
             payload = json.dumps(body, ensure_ascii=False, allow_nan=False).encode()
+            self.reply_json(status, payload, extra)
+
+        def reply_json(self, status, payload, extra=None):
             self.headers_common(status, len(payload), extra=extra)
             if self.command != 'HEAD':
                 self.wfile.write(payload)
@@ -179,8 +211,17 @@ def create_server(store, port, management=None):
             elif path == '/api/status':
                 self.reply(200, store.response())
             elif path == '/api/registrations':
-                records = registrations.list_records(history=query.get('history', ['0'])[0] == '1', machine_id=query.get('machine_id', [None])[0])
-                self.reply(200, {'registrations': records, 'generated_at': timestamp(time.time())})
+                history = query.get('history', ['0'])[0] == '1'
+                machine_id = query.get('machine_id', [None])[0]
+
+                def listing():
+                    records = registrations.list_records(history=history, machine_id=machine_id)
+                    return {'registrations': records, 'generated_at': timestamp(registrations.clock())}
+
+                if machine_id is None:
+                    self.reply_json(200, report(('registrations', history), listing))
+                else:
+                    self.reply(200, listing())
             elif path == '/api/overview':
                 self.reply(200, registrations.overview())
             elif path == '/api/statistics':
@@ -188,7 +229,7 @@ def create_server(store, port, management=None):
                     days = int(query.get('days', ['7'])[0])
                 except ValueError:
                     raise AuthError('统计周期应为 7 天或 30 天。', 400, 'validation_error')
-                self.reply(200, registrations.statistics(days))
+                self.reply_json(200, report(('statistics', days), lambda: registrations.statistics(days)))
             elif re.fullmatch(r'/api/registrations/[a-f0-9-]{36}/history', path):
                 self.reply(200, {'events': registrations.history(path.split('/')[3])})
             else:

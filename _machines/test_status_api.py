@@ -1,5 +1,6 @@
 """Real HTTP integration tests; all fixture state stays in temporary SQLite files."""
 import datetime
+import concurrent.futures
 import contextlib
 import http.client
 import http.cookies
@@ -304,6 +305,24 @@ class DirectStatusTests(unittest.TestCase):
         history = second.request('GET', '/api/registrations?history=1')[2]['registrations']
         self.assertEqual(len(history), 2)
         self.assertTrue(all(row['status'] == 'expired' for row in history))
+
+    def test_concurrent_reports_share_work_and_refresh_after_commit_or_ttl(self):
+        first, second = self.browser(), self.browser()
+        store = self.server.registrations
+        with mock.patch.object(store, 'list_records', wraps=store.list_records) as listing:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+                futures = [pool.submit(browser.request, 'GET', '/api/registrations') for browser in (first, second)]
+                for future in futures:
+                    self.assertEqual(future.result()[2]['registrations'], [])
+            self.assertEqual(listing.call_count, 1)
+            self.assertEqual(first.request('GET', '/api/overview')[0], 200)
+            self.assertEqual(listing.call_count, 1)
+            saved = self.create(first)
+            self.assertEqual(second.request('GET', '/api/registrations')[2]['registrations'][0]['id'], saved['id'])
+            self.assertEqual(listing.call_count, 2)
+            self.now += status_api.REPORT_TTL
+            self.assertEqual(first.request('GET', '/api/registrations')[0], 200)
+            self.assertEqual(listing.call_count, 3)
 
     def test_conflict_confirmation_preserves_both_records_and_contacts(self):
         browser = self.browser()

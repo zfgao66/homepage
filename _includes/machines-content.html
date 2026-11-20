@@ -52,12 +52,12 @@
       <div class="management-section-heading"><h2 id="registration-history-title">公共登记记录</h2><label class="management-inline-check"><input id="history-show" type="checkbox"> 查询全部历史</label></div>
       <p class="management-muted">可查询到期、提前结束及取消的记录；每条记录均可查看变更历史。</p>
       <div id="history-controls" class="management-filters" hidden><label>服务器<select id="history-machine"><option value="">全部服务器</option></select></label><label>姓名或微信号<input id="history-search" type="search" maxlength="80" placeholder="输入姓名或微信号"></label></div>
-      <div id="history-results" hidden></div>
+      <p id="history-message" class="management-message" role="status" hidden></p><div id="history-results" hidden></div>
     </section>
     <section class="management-panel" aria-labelledby="registration-statistics-title">
       <div class="management-section-heading"><h2 id="registration-statistics-title">使用登记统计</h2><label>统计范围<select id="statistics-days"><option value="7">最近 7 天</option><option value="30">最近 30 天</option></select></label></div>
       <p class="management-muted">登记卡时是申请的 GPU 数量 × 有效登记时长，不等于真实 GPU 计算卡时。提前结束、续期和重叠登记按统计规则处理。</p>
-      <p id="statistics-method" class="management-muted"></p><div id="statistics-results" aria-live="polite">正在读取统计…</div>
+      <p id="statistics-method" class="management-muted"></p><p id="statistics-message" class="management-message" role="status"></p><div id="statistics-results" aria-live="polite">正在读取统计…</div>
     </section>
     <noscript><p>请启用浏览器 JavaScript，以登录并查看机器状态和使用登记。</p></noscript>
   </div>
