@@ -29,8 +29,9 @@
   const requests = new Set(), registrationRows = new Map();
   try { inventory = JSON.parse($('machines-inventory')?.textContent || '[]'); } catch { /* The login remains usable when inventory is malformed. */ }
   const machineLabel = id => {
-    const hostname = inventory.find(machine => machine.id === id)?.hostname;
-    return hostname ? `${hostname} · ${id}` : id;
+    const machine = inventory.find(machine => machine.id === id);
+    const name = machine?.display_name || machine?.hostname;
+    return name ? `${name} · ${id}` : id;
   };
   const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; };
   const button = (text, action, className = '') => { const node = el('button', `management-button ${className}`, text); node.type = 'button'; node.addEventListener('click', action); return node; };

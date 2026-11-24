@@ -176,11 +176,12 @@
     const card = element("article", "machine-card"), heading = element("header", "machine-card-heading");
     card.dataset.machineId = item.id;
     const identity = element("div", "machine-card-identity");
-    const title = element("h2", "machine-card-ip", item.hostname || item.id);
+    const name = item.display_name || item.hostname;
+    const title = element("h2", "machine-card-ip", name || item.id);
     title.id = `machine-${item.id.replace(/\./g, "-")}`;
     card.setAttribute("aria-labelledby", title.id);
     identity.append(title);
-    if (item.hostname) {
+    if (name) {
       const address = item.ssh_port && item.ssh_port !== 22 ? `${item.id} · SSH ${item.ssh_port}` : item.id;
       identity.append(element("p", "machine-card-address", address));
     }
