@@ -11,9 +11,9 @@ import time
 
 import agent
 import status_api
+from reservations import HOSTS as GPU_COUNTS
 
-HOSTS = ('10.20.6.38', '10.20.5.8', '10.20.5.73', '10.20.5.100',
-         '10.20.5.51', '10.20.6.135', '10.20.1.21')
+HOSTS = tuple(GPU_COUNTS)
 
 
 def parse_snapshot(text, machine_id, now=None):
@@ -107,7 +107,7 @@ def main():
     args = parser.parse_args()
     config = json.loads(args.config.read_text())
     if set(config['tokens']) != set(HOSTS):
-        raise ValueError('Expected the seven approved machines')
+        raise ValueError('Configured machines must match the approved inventory')
     interval = max(15, int(config.get('interval', 30)))
     if args.once:
         results = run_cycle(config)

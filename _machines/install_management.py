@@ -9,6 +9,7 @@ import datetime
 import json
 import os
 import pathlib
+import secrets
 import sqlite3
 import subprocess
 import time
@@ -19,6 +20,10 @@ ROOT = pathlib.Path('/opt/machines-collector')
 CONFIG = pathlib.Path('/etc/machines-collector/config.json')
 NGINX = pathlib.Path('/etc/nginx/conf.d/machines-status-https.conf')
 DATABASE = pathlib.Path('/var/lib/machines-collector/registrations.sqlite3')
+SSH_CONFIG = CONFIG.with_name('ssh_config')
+KNOWN_HOSTS = CONFIG.with_name('known_hosts')
+NEW_HOST = '10.20.1.25'
+NEW_HOST_KEY_NAME = f'[{NEW_HOST}]:10001'
 FILES = {'collector.py', 'status_api.py', 'management_auth.py', 'reservations.py',
          'dashboard.html', 'install_management.py', 'setup_status_https.py', 'usage_accounting.py'}
 
@@ -67,6 +72,29 @@ def run(*args):
     subprocess.run(args, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
+def enroll_5090(config, host_key, old):
+    parts = host_key.split()
+    if len(parts) != 3 or parts[:2] != [NEW_HOST_KEY_NAME, 'ssh-ed25519']:
+        raise ValueError('Expected the confirmed ED25519 host key for the 5090 node')
+    key = base64.b64decode(parts[2], validate=True)
+    if not key.startswith(b'\0\0\0\x0bssh-ed25519\0\0\0\x20') or len(key) != 51:
+        raise ValueError('Invalid ED25519 host key')
+    if config['ssh_config'] != str(SSH_CONFIG):
+        raise ValueError('Unexpected collector SSH configuration path')
+    known_hosts = old[str(KNOWN_HOSTS)].decode()
+    existing = [line.split() for line in known_hosts.splitlines() if line.startswith(NEW_HOST_KEY_NAME + ' ')]
+    if existing and existing != [parts]:
+        raise ValueError('The 5090 host key already exists with a different value')
+    if not existing:
+        known_hosts = known_hosts.rstrip('\n') + '\n' + ' '.join(parts) + '\n'
+    ssh = old[str(SSH_CONFIG)].decode()
+    stanza = f'Host {NEW_HOST}\n    User wkli\n    Port 10001\n    ProxyJump machines-gateway\n\n'
+    if stanza not in ssh:
+        ssh = stanza + ssh
+    config['tokens'].setdefault(NEW_HOST, secrets.token_hex(32))
+    return {SSH_CONFIG: ssh.encode(), KNOWN_HOSTS: known_hosts.encode()}
+
+
 def install(payload):
     if os.geteuid() != 0 or set(payload['files']) != FILES:
         raise ValueError('Root and the exact release manifest are required')
@@ -80,7 +108,11 @@ def install(payload):
     backup.mkdir(parents=True, mode=0o700)
     os.chmod(backup.parent, 0o700)
     paths = [ROOT / name for name in FILES] + [CONFIG, NGINX]
+    if 'new_5090_host_key' in payload:
+        paths += [SSH_CONFIG, KNOWN_HOSTS]
     old = {str(path): path.read_bytes() if path.exists() else None for path in paths}
+    config = json.loads(old[str(CONFIG)])
+    ssh_files = enroll_5090(config, payload['new_5090_host_key'], old) if 'new_5090_host_key' in payload else {}
     # One pre-deployment backup, not a continuing stream of monitoring history.
     for index, (name, data) in enumerate(old.items()):
         if data is not None:
@@ -90,13 +122,14 @@ def install(payload):
         with sqlite3.connect(DATABASE) as source, sqlite3.connect(backup / 'registrations.sqlite3') as target:
             source.backup(target)
         os.chmod(backup / 'registrations.sqlite3', 0o600)
-    config = json.loads(old[str(CONFIG)])
     config['serve_status']['management'] = {'database': str(DATABASE), 'password_hash': payload['password_hash'], 'origin': 'https://43.155.209.84'}
     config['endpoint'] = ''  # Stop publishing monitoring data to the old public backup.
     try:
         run('systemctl', 'stop', 'machines-collector.service')
         for name, contents in files.items():
             atomic(ROOT / name, contents)
+        for path, contents in ssh_files.items():
+            atomic(path, contents)
         atomic(CONFIG, json.dumps(config, ensure_ascii=False, indent=2).encode(), 0o600)
         atomic(NGINX, nginx_config().encode())
         run('/usr/sbin/nginx', '-t')

@@ -28,6 +28,10 @@
   let historyRecords = null, historyRequest = 0, statisticsRequest = 0;
   const requests = new Set(), registrationRows = new Map();
   try { inventory = JSON.parse($('machines-inventory')?.textContent || '[]'); } catch { /* The login remains usable when inventory is malformed. */ }
+  const machineLabel = id => {
+    const hostname = inventory.find(machine => machine.id === id)?.hostname;
+    return hostname ? `${hostname} · ${id}` : id;
+  };
   const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; };
   const button = (text, action, className = '') => { const node = el('button', `management-button ${className}`, text); node.type = 'button'; node.addEventListener('click', action); return node; };
   const message = (target, text, warning = false) => { target.textContent = text; target.dataset.warning = String(warning); };
@@ -142,7 +146,7 @@
     if (record.long_term) badges.append(el('span', 'registration-badge long-term', '长期使用登记'));
     if (record.has_conflict) badges.append(el('span', 'registration-badge conflict', '存在重叠登记 · 请协调'));
     heading.append(badges); card.append(heading);
-    if (history) card.append(el('p', 'management-muted', record.machine_id));
+    if (history) card.append(el('p', 'management-muted', machineLabel(record.machine_id)));
     card.append(contact(record));
     card.append(el('p', 'management-muted', `服务器账号：${record.server_username || '待补充（请编辑登记）'}`));
     card.append(usagePanel(record.usage));
@@ -174,7 +178,7 @@
       const id = card.dataset.machineId;
       if (registrationRows.has(id)) return;
       const section = el('section', 'machine-registrations'); section.setAttribute('aria-label', `${id} GPU 使用登记`);
-      const heading = el('div', 'management-section-heading'); heading.append(el('h3', '', `${id} · GPU 使用登记`));
+      const heading = el('div', 'management-section-heading'); heading.append(el('h3', '', `${machineLabel(id)} · GPU 使用登记`));
       const controls = el('div', 'management-actions'), count = el('span', 'registration-count', '正在读取登记');
       controls.append(count, button('申请使用 GPU', () => openForm(id), 'primary')); heading.append(controls);
       const scope = el('p', 'management-muted registration-scope', '只能从现在开始登记；是否可申请只看已有有效登记，实时 GPU 占用仅供参考。');
@@ -310,7 +314,7 @@
     const form = el('form', 'registration-form'); root.append(form);
     const formGeneration = dialogGeneration;
     const isCurrentForm = () => authenticated && formGeneration === dialogGeneration && $('registration-dialog').open && root.contains(form);
-    form.append(el('p', 'management-muted', `${machine.id} · ${machine.gpu_model} × ${machine.gpu_count} · 所有时间均为北京时间（UTC+8）`));
+    form.append(el('p', 'management-muted', `${machineLabel(machine.id)} · ${machine.gpu_model} × ${machine.gpu_count} · 所有时间均为北京时间（UTC+8）`));
     const grid = el('div', 'registration-form-grid'); form.append(grid);
     const name = field(grid, '申请人姓名 *', 'name', 'text', record?.name, {required: true, maxLength: 80, autoComplete: 'name'});
     const wechat = field(grid, '微信号 *', 'wechat', 'text', record?.wechat, {required: true, maxLength: 80});
@@ -459,7 +463,7 @@
       if (!data.events?.length) root.append(el('p', '', '暂无变更历史。'));
     } catch (error) { if (authenticated && requestedDialog === dialogGeneration) root.replaceChildren(el('p', 'management-message', error.message)); }
   }
-  inventory.forEach(machine => { const option = el('option', '', machine.id); option.value = machine.id; $('history-machine').append(option); });
+  inventory.forEach(machine => { const option = el('option', '', machineLabel(machine.id)); option.value = machine.id; $('history-machine').append(option); });
   $('history-show').addEventListener('change', () => {
     $('history-message').hidden = !$('history-show').checked;
     message($('history-message'), '');

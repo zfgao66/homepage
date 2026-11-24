@@ -175,9 +175,16 @@
   function machineCard(item) {
     const card = element("article", "machine-card"), heading = element("header", "machine-card-heading");
     card.dataset.machineId = item.id;
-    const title = element("h2", "machine-card-ip", item.id); title.id = `machine-${item.id.replace(/\./g, "-")}`;
+    const identity = element("div", "machine-card-identity");
+    const title = element("h2", "machine-card-ip", item.hostname || item.id);
+    title.id = `machine-${item.id.replace(/\./g, "-")}`;
     card.setAttribute("aria-labelledby", title.id);
-    heading.append(title, element("p", "machine-card-hardware", `${item.gpu_model} · ${item.gpu_count} 张 GPU`));
+    identity.append(title);
+    if (item.hostname) {
+      const address = item.ssh_port && item.ssh_port !== 22 ? `${item.id} · SSH ${item.ssh_port}` : item.id;
+      identity.append(element("p", "machine-card-address", address));
+    }
+    heading.append(identity, element("p", "machine-card-hardware", `${item.gpu_model} · ${item.gpu_count} 张 GPU`));
     const monitor = machineMonitor(item); card.append(heading, monitor);
     return {card, monitor};
   }

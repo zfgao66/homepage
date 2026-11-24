@@ -93,11 +93,17 @@ class ReservationTests(unittest.TestCase):
         self.assertEqual(len(reopened.list_records(history=True)), 1)
         self.assertEqual(len(reopened.history(record['id'])), 1)
 
-    def test_inventory_h100_eight_and_long_term_boundary(self):
-        self.assertEqual(sum(HOSTS.values()), 32)
+    def test_inventory_and_eight_card_registration(self):
+        inventory = json.loads((pathlib.Path(__file__).resolve().parents[1] / 'assets/machines/inventory.json').read_text())
+        self.assertEqual(HOSTS, {machine['id']: machine['gpu_count'] for machine in inventory})
+        self.assertEqual(len(inventory), len({machine['hostname'] for machine in inventory}))
+        self.assertEqual(sum(HOSTS.values()), 40)
         record = self.create(machine_id='10.20.1.21', gpu_count=8, gpu_indices=list(range(8)), end_at=iso(self.t0 + 7 * DAY))
         self.assertFalse(record['long_term'])
         self.assertError(lambda: self.create(machine_id='10.20.1.21', gpu_count=9))
+        record = self.store.create(self.payload(machine_id='10.20.1.25', gpu_count=8), str(uuid.uuid4()))
+        self.assertEqual(record['gpu_indices'], list(range(8)))
+        self.assertError(lambda: self.create(machine_id='10.20.1.25', gpu_count=9))
         self.assertTrue(self.create(machine_id='10.20.6.38', end_at=iso(self.t0 + 7 * DAY + 1))['long_term'])
 
     def test_beijing_month_boundary_and_validation(self):
@@ -351,7 +357,7 @@ class ReservationTests(unittest.TestCase):
         self.create(end_at=iso(self.t0 + 12 * 3600))
         self.create(machine_id='10.20.6.38', start_at=iso(self.t0 + DAY), end_at=iso(self.t0 + 31 * DAY))
         overview = self.store.overview()
-        self.assertEqual(overview['total_gpus'], 32)
+        self.assertEqual(overview['total_gpus'], 40)
         self.assertEqual(overview['active_gpu_count'], 2)
         self.assertEqual(overview['long_term_count'], 1)
         self.assertEqual(overview['expiring_count'], 1)

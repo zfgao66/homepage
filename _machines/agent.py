@@ -146,7 +146,7 @@ def snapshot(machine_id):
         return result
     result['gpus'], result['gpu_error'] = collect_gpus(binary)
     sample = sample_gpu_processes(binary)
-    if set(sample.get('gpu_indices', [])) != set(range(8 if machine_id == '10.20.1.21' else 4)):
+    if set(sample.get('gpu_indices', [])) != set(range(8 if machine_id in ('10.20.1.21', '10.20.1.25') else 4)):
         sample['complete'] = False
     owners = {}
     for process in sample.pop('processes'):

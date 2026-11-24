@@ -17,7 +17,7 @@ STATE = pathlib.Path('/var/lib/machines-collector')
 ETC = pathlib.Path('/etc/machines-collector')
 UNIT = pathlib.Path('/etc/systemd/system/machines-collector.service')
 HOSTS = ('10.20.6.38', '10.20.5.8', '10.20.5.73', '10.20.5.100',
-         '10.20.5.51', '10.20.6.135', '10.20.1.21')
+         '10.20.5.51', '10.20.6.135', '10.20.1.21', '10.20.1.25')
 
 
 def atomic(path, content, mode=0o644):
@@ -81,6 +81,11 @@ def install(config):
     User wkli
     HostKeyAlias 10.20.6.38
 
+Host 10.20.1.25
+    User wkli
+    Port 10001
+    ProxyJump machines-gateway
+
 Host __HOSTS__
     User wkli
     Port 22
@@ -102,7 +107,7 @@ Host *
     ControlPersist 90
     ControlPath /run/machines-collector/ssh-%C
     LogLevel ERROR
-'''.replace('__HOSTS__', ' '.join(HOSTS))
+'''.replace('__HOSTS__', ' '.join(host for host in HOSTS if host != '10.20.1.25'))
     atomic(ETC / 'ssh_config', ssh_config.encode())
     atomic(ETC / 'known_hosts', config['known_hosts'].encode())
     runtime_config = {'endpoint': config['endpoint'], 'tokens': config['tokens'],

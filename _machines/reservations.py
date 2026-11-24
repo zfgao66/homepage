@@ -22,7 +22,7 @@ from usage_accounting import UsageStore, parse_usernames, segment_uids
 
 HOSTS = {'10.20.6.38': 4, '10.20.5.8': 4, '10.20.5.73': 4,
          '10.20.5.100': 4, '10.20.5.51': 4, '10.20.6.135': 4,
-         '10.20.1.21': 8}
+         '10.20.1.21': 8, '10.20.1.25': 8}
 TEXT_LIMITS = {'name': 80, 'wechat': 80, 'purpose': 500,
                'notes': 4000, 'usage_pattern': 300}
 EDITABLE = frozenset((*TEXT_LIMITS, 'machine_id', 'gpu_count', 'gpu_indices',

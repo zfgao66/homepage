@@ -8,8 +8,9 @@ import pathlib
 import re
 import sys
 
-HOSTS = ('10.20.6.38', '10.20.5.8', '10.20.5.73', '10.20.5.100',
-         '10.20.5.51', '10.20.6.135', '10.20.1.21')
+HOSTS = dict.fromkeys(('10.20.6.38', '10.20.5.8', '10.20.5.73', '10.20.5.100',
+                      '10.20.5.51', '10.20.6.135', '10.20.1.21'), 22)
+HOSTS['10.20.1.25'] = 10001
 
 print('__MONITOR_DEPLOY_READY__', flush=True)
 config = json.loads(base64.b64decode(sys.stdin.readline().strip()))
@@ -20,10 +21,13 @@ if config['role'] in ('machine', 'gateway-machine'):
     ip = config['machine_id']
     assert ip in HOSTS
     options = 'restrict,command="/usr/bin/python3 /opt/machines-monitor/agent.py --once --machine-id ' + ip + '"'
-    old_line = options + ' ' + ' '.join(key)
+    previous_lines = [options + ' ' + ' '.join(key)]
     if config['role'] == 'gateway-machine':
         assert ip == '10.20.6.38'
-        options = options.replace('restrict,', 'restrict,port-forwarding,', 1) + ',' + ','.join('permitopen="' + host + ':22"' for host in HOSTS)
+        gateway = options.replace('restrict,', 'restrict,port-forwarding,', 1)
+        destinations = [f'permitopen="{host}:{port}"' for host, port in HOSTS.items()]
+        previous_lines.append(','.join([gateway, *destinations[:-1]]) + ' ' + ' '.join(key))
+        options = ','.join([gateway, *destinations])
 elif config['role'] == 'remove':
     options = ''
 else:
@@ -47,9 +51,9 @@ with os.fdopen(fd, 'r+') as stream:
         stream.truncate()
     elif matching == [line]:
         pass
-    elif config['role'] == 'gateway-machine' and matching == [old_line]:
+    elif config['role'] == 'gateway-machine' and len(matching) == 1 and matching[0] in previous_lines:
         stream.seek(0)
-        stream.write(existing.replace(old_line, line))
+        stream.write(existing.replace(matching[0], line))
         stream.truncate()
     elif matching:
         raise RuntimeError('This key already has different restrictions')

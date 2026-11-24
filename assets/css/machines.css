@@ -202,6 +202,7 @@
 .machine-card { min-width:0;background:#fff;border:1px solid #b9cbd4;border-radius:10px;overflow:hidden;box-shadow:0 3px 10px #263b4f08; }
 .machine-card-heading { display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px 24px;padding:18px 22px;background:#eaf1f5;border-bottom:1px solid #c9d9e1; }
 .machine-card-ip { margin:0;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:21px;line-height:1.4;letter-spacing:.02em;color:#1d3548; }
+.machine-card-address { margin:2px 0 0;color:#4c6375;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:14px; }
 .machine-card-hardware { margin:0;font-size:16px;line-height:1.5;font-weight:600;color:#345165; }
 .machine-monitor { padding:18px 22px 22px; }
 .machine-monitor-status { display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;margin-bottom:17px; }

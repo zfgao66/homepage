@@ -7,6 +7,7 @@ const source = fs.readFileSync(path.join(__dirname, '../assets/js/machines.js'),
 const configuration = fs.readFileSync(path.join(__dirname, '../assets/js/machines-config.js'), 'utf8');
 const primary = 'https://primary.test/status', fallback = 'https://fallback.test/status';
 const inventory = ['10.20.6.38', '10.20.5.8'].map(id => ({id, gpu_count: 4, gpu_model: 'RTX 3090'}));
+inventory[0].hostname = 'fuxi-3090-02';
 const card = (index, utilization_pct = 0, memory_used_mib = 20) => ({index, utilization_pct, memory_used_mib, memory_total_mib: 24576});
 const payload = () => ({schema_version: 1, machines: inventory.map(item => ({id: item.id, status: 'online', age_seconds: 0, telemetry: {gpus: [0, 1, 2, 3].map(index => card(index))}}))});
 const flush = () => new Promise(setImmediate);
@@ -65,6 +66,7 @@ function boot({fail = [], httpFail = [], hang = [], bodyHang = [], hold = [], da
   await flush();
   assert.deepEqual(test.calls, [direct], 'The deployed dashboard uses one direct API and does not hide failure with an external fallback');
   assert.deepEqual(test.counts(), {total: '8', free: '8', used: '0', unknown: '0'});
+  assert.match(test.text(), /fuxi-3090-02\s+10\.20\.6\.38/);
   assert.equal(test.intervals[0].ms, 120000);
 
   for (const options of [{fail: [direct]}, {httpFail: [direct]}, {data: {error: 'Invalid response'}}, {hang: [direct]}, {bodyHang: [direct]}]) {
